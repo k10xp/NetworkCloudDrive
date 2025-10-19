@@ -1,20 +1,27 @@
 package com.cloud.NetworkCloudDrive.Models;
 
+import java.time.Clock;
+import java.time.Instant;
+
 public class JSONResponse {
     private String message;
     private String endpoint;
-    private String dateTime;
+    private Instant dateTime;
     private boolean success;
 
     public JSONResponse(String message, String endpoint, boolean success) {
         this.message = message;
         this.endpoint = endpoint;
         this.success = success;
+        Clock clock = Clock.systemUTC();
+        this.dateTime = Instant.now(clock);
     }
 
     public JSONResponse(String message, boolean success) {
         this.message = message;
         this.success = success;
+        Clock clock = Clock.systemUTC();
+        this.dateTime = Instant.now(clock);
     }
 
     public boolean isSuccess() {
@@ -33,12 +40,8 @@ public class JSONResponse {
         this.message = message;
     }
 
-    public String getDateTime() {
+    public Instant getDateTime() {
         return dateTime;
-    }
-
-    public void setDateTime(String dateTime) {
-        this.dateTime = dateTime;
     }
 
     public String getEndpoint() {

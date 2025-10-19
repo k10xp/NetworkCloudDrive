@@ -6,6 +6,10 @@ target/
 .mvn/
 .mvn/*
 
+# Storage/User Space
+root/
+root/*
+
 config/
 config/*
 logs/

@@ -5,7 +5,8 @@ public class CreateFileDTO {
     private String path;
     private String content;
 
-    public CreateFileDTO() {}
+    public CreateFileDTO() {
+    }
 
     public String getName() {
         return name;

@@ -1,93 +1,54 @@
 package com.cloud.NetworkCloudDrive.Services;
 
-import com.cloud.NetworkCloudDrive.Models.FileDetails;
+import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileRepository;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StreamUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 @Service
 public class FileService implements FileRepository {
-    @Autowired
-    private SQLiteRepository sqLiteRepository;
+    private final FileStorageProperties fileStorageProperties;
+    private final Path rootPath;
 
-//    public FileService(SQLiteRepository sqLiteRepository) {
-//        this.sqLiteRepository = sqLiteRepository;
-//    }
-//
-
-    @Override
-    public String getFileType(String pathWithName) {
-        return null;
+    public FileService(FileStorageProperties fileStorageProperties) {
+        this.rootPath = Paths.get(fileStorageProperties.getBasePath());
+        this.fileStorageProperties = fileStorageProperties;
     }
 
-    @Override
-    @Transactional
-    public FileDetails getFile(long id) {
-        try {
-            File getFile = new File(sqLiteRepository.findById(id).get().getPath());
-            if (!getFile.exists()) throw new IOException("File could not be found! File path: ");
-            FileDetails returned = new FileDetails(getFile.getName(), getFile.getPath(), !getFile.isFile());
-            returned.setSize(getFile.length()); //bytes
-            return returned;
-        } catch (Exception e) {
-            return null;
+    public String StoreFile(InputStream inputStream, String fileName) throws IOException {
+        Path userDirectory = rootPath.resolve("test_user1"); /* To be extended */
+        Files.createDirectories(userDirectory);
+        Path filePath = userDirectory.resolve(fileName);
+        try (OutputStream outputStream = Files.newOutputStream(userDirectory, StandardOpenOption.CREATE_NEW)) {
+            StreamUtils.copy(inputStream, outputStream);
         }
+        return rootPath.relativize(filePath).toString();
     }
 
-    @Override
-    public File getFolder(String pathWithName) {
-        File getFolder = new File(pathWithName);
-        if (!getFolder.exists() || getFolder.isFile()) {
-            return null;
+    public Resource RetrieveFile(String storedPath) throws IOException {
+        Path filePath = rootPath.resolve(storedPath).normalize().toAbsolutePath();
+        Path normalizedRoot = rootPath.normalize().toAbsolutePath();
+        if (!filePath.startsWith(normalizedRoot)) throw new SecurityException("Unauthorized access");
+        if (!Files.exists(filePath)) throw new IOException("File does not exist");
+        return new UrlResource(filePath.toUri());
+    }
+
+    private String getFileExtension(String fileName) {
+        StringBuilder ext = new StringBuilder();
+        for (int i = fileName.length() - 1; i > 0; i--) {
+            if (fileName.charAt(i) == '.') break;
+            ext.append(fileName.charAt(i));
         }
-        return getFolder;
-    }
-
-    @Override
-    public boolean RemoveFolder(String pathWithName) {
-        return false;
-    }
-
-    @Override
-    public boolean UpdateFileName(String oldName, String NewName, String path) {
-        return false;
-    }
-
-    @Override
-    public boolean MoveFile(String oldPath, String newPath) {
-        return false;
-    }
-
-    @Override
-    @Transactional
-    public boolean CreateFolder(String pathWithName) {
-        try {
-            File folder = new File(pathWithName);
-            if (folder.exists()) throw new Exception("Folder already exists");
-            boolean progress = folder.mkdirs();
-            if (!progress) throw new IOException("Cannot create directory, path: " + pathWithName);
-            FileDetails saveFolder = new FileDetails(folder.getName(), folder.getPath(), true);
-            sqLiteRepository.save(saveFolder);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @Override
-    @Transactional
-    public boolean CreateTextFile(String name, String path, String content) {
-        FileDetails file = new FileDetails(name, path, false);
-        try {
-            sqLiteRepository.save(file);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return ext.toString();
     }
 }
