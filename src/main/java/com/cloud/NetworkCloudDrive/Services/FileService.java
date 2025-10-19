@@ -25,6 +25,10 @@ public class FileService implements FileRepository {
         this.fileStorageProperties = fileStorageProperties;
     }
 
+    public boolean ValidateFile() {
+        return false;
+    }
+
     public String StoreFile(InputStream inputStream, String fileName) throws IOException {
         Path userDirectory = rootPath.resolve("test_user1"); /* To be extended */
         Files.createDirectories(userDirectory);

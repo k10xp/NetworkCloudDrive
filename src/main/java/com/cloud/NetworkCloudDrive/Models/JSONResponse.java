@@ -1,27 +1,25 @@
 package com.cloud.NetworkCloudDrive.Models;
 
-import java.time.Clock;
-import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 public class JSONResponse {
     private String message;
     private String endpoint;
-    private Instant dateTime;
+    private ZonedDateTime dateTime;
     private boolean success;
 
     public JSONResponse(String message, String endpoint, boolean success) {
         this.message = message;
         this.endpoint = endpoint;
         this.success = success;
-        Clock clock = Clock.systemUTC();
-        this.dateTime = Instant.now(clock);
+        this.dateTime = ZonedDateTime.now(ZoneId.systemDefault());
     }
 
     public JSONResponse(String message, boolean success) {
         this.message = message;
         this.success = success;
-        Clock clock = Clock.systemUTC();
-        this.dateTime = Instant.now(clock);
+        this.dateTime = ZonedDateTime.now(ZoneId.systemDefault());
     }
 
     public boolean isSuccess() {
@@ -40,7 +38,7 @@ public class JSONResponse {
         this.message = message;
     }
 
-    public Instant getDateTime() {
+    public ZonedDateTime getDateTime() {
         return dateTime;
     }
 
