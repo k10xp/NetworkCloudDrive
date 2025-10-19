@@ -8,6 +8,9 @@ target/
 
 config/
 config/*
+logs/
+logs/*
+filedatabase.db
 
 mvnw
 mvnw.cmd

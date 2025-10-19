@@ -1,15 +1,32 @@
-package com.cloud.entity;
+package com.cloud.NetworkCloudDrive.Models;
 
+import jakarta.persistence.*;
+
+@Entity
 public class FileDetails {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+
+    @Column(name = "name")
     private String name;
+    @Column(name = "path")
     private String path;
+    @Column(name = "size")
     private long size;
+    @Column(name = "folder")
     private boolean isFolder;
 
     public FileDetails(String name, String path, boolean isFolder) {
         this.name = name;
         this.path = path;
         this.isFolder = isFolder;
+    }
+
+    public FileDetails() {}
+
+    public long getId() {
+        return id;
     }
 
     public String getName() {

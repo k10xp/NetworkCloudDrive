@@ -1,4 +1,4 @@
-package com.cloud.enumurator;
+package com.cloud.NetworkCloudDrive.Enumerators;
 
 /*
 Split into imageTypes, documentTypes and more...
