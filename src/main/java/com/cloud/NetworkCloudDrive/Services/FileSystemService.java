@@ -19,12 +19,12 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 @Service
-public class IOService implements IORepository {
+public class FileSystemService implements IORepository {
     private final SQLiteFileRepository sqLiteFileRepository;
     private final SQLiteFolderRepository sqLiteFolderRepository;
-    private final Logger logger = LoggerFactory.getLogger(IOService.class);
+    private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
 
-    public IOService(SQLiteFileRepository sqLiteFileRepository, SQLiteFolderRepository sqLiteFolderRepository) {
+    public FileSystemService(SQLiteFileRepository sqLiteFileRepository, SQLiteFolderRepository sqLiteFolderRepository) {
         this.sqLiteFileRepository = sqLiteFileRepository;
         this.sqLiteFolderRepository = sqLiteFolderRepository;
     }

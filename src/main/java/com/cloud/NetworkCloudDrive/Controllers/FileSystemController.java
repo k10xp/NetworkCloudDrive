@@ -3,18 +3,18 @@ package com.cloud.NetworkCloudDrive.Controllers;
 import com.cloud.NetworkCloudDrive.DTOs.CreateFolderDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONResponse;
-import com.cloud.NetworkCloudDrive.Services.IOService;
+import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(path = "/api/io")
-public class IOController {
-    private final IOService ioService;
+@RequestMapping(path = "/api/filesystem")
+public class FileSystemController {
+    private final FileSystemService ioService;
 
-    public IOController(IOService fileService) {
-        this.ioService = fileService;
+    public FileSystemController(FileSystemService ioService) {
+        this.ioService = ioService;
     }
 
     @GetMapping(value = "/get", produces = MediaType.ALL_VALUE)
