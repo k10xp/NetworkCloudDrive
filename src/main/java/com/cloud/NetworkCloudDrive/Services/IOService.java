@@ -16,6 +16,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 @Service
 public class IOService implements IORepository {
@@ -32,12 +33,12 @@ public class IOService implements IORepository {
     @Transactional
     public FileMetadata getFileDetails(long id) {
         try {
-            boolean isPresent = sqLiteFileRepository.findById(id).isPresent();
-            if (!isPresent) {
-                throw new FileNotFoundException();
-            }
-            FileMetadata retrievedFile = sqLiteFileRepository.findById(id).get();
-            if (!Files.exists(Path.of(retrievedFile.getPath()))) throw new IOException("File could not be found! File path: ");
+            Optional<FileMetadata> checkFile = sqLiteFileRepository.findById(id);
+            boolean isPresent = checkFile.isPresent();
+            if (!isPresent) throw new FileNotFoundException("File does not exist.");
+            FileMetadata retrievedFile = checkFile.get();
+            if (!Files.exists(Path.of(retrievedFile.getPath())))
+                throw new IOException(String.format("File could not be found on the computer! File path: %s", retrievedFile.getPath()));
             retrievedFile.setSize(Files.size(Path.of(retrievedFile.getPath()))); //bytes
             return retrievedFile;
         } catch (Exception e) {

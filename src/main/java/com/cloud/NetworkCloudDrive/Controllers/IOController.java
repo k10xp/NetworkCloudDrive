@@ -26,9 +26,13 @@ public class IOController {
     public @ResponseBody ResponseEntity<Object> getFileDetails(@RequestParam long pathId) {
         FileMetadata file = ioService.getFileDetails(pathId);
         if (file == null) {
-            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("File does not exist");
+            return ResponseEntity.badRequest().
+                    contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONResponse("File does not exist", false));
         }
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(file);
+        return ResponseEntity.ok().
+                contentType(MediaType.APPLICATION_JSON).
+                body(file);
     }
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
