@@ -2,6 +2,7 @@ package com.cloud.NetworkCloudDrive.Services;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
+import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileSystemRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
@@ -14,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -22,10 +25,12 @@ import java.util.Optional;
 public class FileSystemService implements FileSystemRepository {
     private final SQLiteFileRepository sqLiteFileRepository;
     private final SQLiteFolderRepository sqLiteFolderRepository;
+    private final FileStorageProperties fileStorageProperties;
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
 
-    public FileSystemService(SQLiteFileRepository sqLiteFileRepository, SQLiteFolderRepository sqLiteFolderRepository) {
+    public FileSystemService(SQLiteFileRepository sqLiteFileRepository, SQLiteFolderRepository sqLiteFolderRepository, FileStorageProperties fileStorageProperties) {
         this.sqLiteFileRepository = sqLiteFileRepository;
+        this.fileStorageProperties = fileStorageProperties;
         this.sqLiteFolderRepository = sqLiteFolderRepository;
     }
 
@@ -34,8 +39,7 @@ public class FileSystemService implements FileSystemRepository {
     public FileMetadata getFileDetails(long id) {
         try {
             Optional<FileMetadata> checkFile = sqLiteFileRepository.findById(id);
-            boolean isPresent = checkFile.isPresent();
-            if (!isPresent) throw new FileNotFoundException("File does not exist.");
+            if (checkFile.isEmpty()) throw new FileNotFoundException("File does not exist.");
             FileMetadata retrievedFile = checkFile.get();
             if (!Files.exists(Path.of(retrievedFile.getPath())))
                 throw new IOException(String.format("File could not be found on the computer! File path: %s", retrievedFile.getPath()));
@@ -68,8 +72,38 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     @Override
-    public boolean UpdateFileName(String oldName, String NewName, String path) {
-        return false;
+    @Transactional
+    public boolean UpdateFileName(String newName, long id) {
+        try {
+            //TODO add check new file mimetype if its changed then validate and update it
+            //get metadata from db
+            Optional<FileMetadata> retrieveMetadata = sqLiteFileRepository.findById(id);
+            if (retrieveMetadata.isEmpty()) throw new FileNotFoundException();
+            FileMetadata fileMetadata = retrieveMetadata.get();
+            //find file
+            File checkExists = new File(fileMetadata.getPath());
+            if (!checkExists.exists()) throw new FileNotFoundException();
+            //rename file
+            File renamedFile = new File(checkExists.getParent() + newName);
+            //check duplicate
+            if (renamedFile.exists()) throw new FileAlreadyExistsException(renamedFile.getName());
+            if (!checkExists.renameTo(renamedFile)) throw new FileSystemException(renamedFile.getName());
+            //set new name and path
+            fileMetadata.setName(newName);
+            fileMetadata.setPath(renamedFile.getPath());
+            //save
+            sqLiteFileRepository.save(fileMetadata);
+            return true;
+        }  catch (FileNotFoundException fs) {
+            logger.error("File not found! Exception: {}", fs.getMessage());
+            return false;
+        } catch (FileAlreadyExistsException dup) {
+            logger.error("File with name {} already exists! Exception: {}", newName,dup.getMessage());
+            return false;
+        } catch (Exception e) {
+            logger.error("File system error. Exception: {}", e.getMessage());
+            return false;
+        }
     }
 
     @Override

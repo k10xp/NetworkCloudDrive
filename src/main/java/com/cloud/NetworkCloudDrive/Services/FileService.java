@@ -21,8 +21,8 @@ public class FileService implements FileRepository {
     private final Path rootPath;
 
     public FileService(FileStorageProperties fileStorageProperties) {
-        this.rootPath = Paths.get(fileStorageProperties.getBasePath());
         this.fileStorageProperties = fileStorageProperties;
+        this.rootPath = Paths.get(fileStorageProperties.getBasePath());
     }
 
     public boolean ValidateFile() {

@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 public class JSONResponse {
     private String message;
     private String endpoint;
-    private ZonedDateTime dateTime;
+    private final ZonedDateTime dateTime;
     private boolean success;
 
     public JSONResponse(String message, String endpoint, boolean success) {
