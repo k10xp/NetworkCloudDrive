@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/filesystem")
 public class FileSystemController {
-    private final FileSystemService ioService;
+    private final FileSystemService fileSystemService;
 
-    public FileSystemController(FileSystemService ioService) {
-        this.ioService = ioService;
+    public FileSystemController(FileSystemService fileSystemService) {
+        this.fileSystemService = fileSystemService;
     }
 
     @GetMapping(value = "/get", produces = MediaType.ALL_VALUE)
@@ -24,7 +24,7 @@ public class FileSystemController {
 
     @GetMapping(value = "/dir", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<Object> getFileDetails(@RequestParam long pathId) {
-        FileMetadata file = ioService.getFileDetails(pathId);
+        FileMetadata file = fileSystemService.getFileDetails(pathId);
         if (file == null) {
             return ResponseEntity.badRequest().
                     contentType(MediaType.APPLICATION_JSON).
@@ -37,7 +37,7 @@ public class FileSystemController {
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
     public JSONResponse CreateFolder(@RequestBody CreateFolderDTO folder) {
-        boolean success = ioService.CreateFolder(folder.getPath());
+        boolean success = fileSystemService.CreateFolder(folder.getPath());
         if (success)
             return new JSONResponse(
                     String.format("Folder at path %s was successfully created", folder.getPath()),

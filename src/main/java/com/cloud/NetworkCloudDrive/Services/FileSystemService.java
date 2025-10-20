@@ -2,7 +2,7 @@ package com.cloud.NetworkCloudDrive.Services;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
-import com.cloud.NetworkCloudDrive.Repositories.IORepository;
+import com.cloud.NetworkCloudDrive.Repositories.FileSystemRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import org.slf4j.Logger;
@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 @Service
-public class FileSystemService implements IORepository {
+public class FileSystemService implements FileSystemRepository {
     private final SQLiteFileRepository sqLiteFileRepository;
     private final SQLiteFolderRepository sqLiteFolderRepository;
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);

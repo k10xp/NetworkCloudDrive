@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.io.File;
 
 @Repository
-public interface IORepository {
+public interface FileSystemRepository {
     //get file type
     FileMetadata getFileDetails(long id);
 
