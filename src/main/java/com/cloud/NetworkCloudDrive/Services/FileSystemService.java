@@ -28,7 +28,11 @@ public class FileSystemService implements FileSystemRepository {
     private final FileStorageProperties fileStorageProperties;
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
 
-    public FileSystemService(SQLiteFileRepository sqLiteFileRepository, SQLiteFolderRepository sqLiteFolderRepository, FileStorageProperties fileStorageProperties) {
+    public FileSystemService(
+            SQLiteFileRepository sqLiteFileRepository,
+            SQLiteFolderRepository sqLiteFolderRepository,
+            FileStorageProperties fileStorageProperties
+    ) {
         this.sqLiteFileRepository = sqLiteFileRepository;
         this.fileStorageProperties = fileStorageProperties;
         this.sqLiteFolderRepository = sqLiteFolderRepository;
@@ -73,15 +77,11 @@ public class FileSystemService implements FileSystemRepository {
 
     @Override
     @Transactional
-    public boolean UpdateFileName(String newName, long id) {
+    public boolean UpdateFileName(String newName, FileMetadata file) {
         try {
             //TODO add check new file mimetype if its changed then validate and update it
-            //get metadata from db
-            Optional<FileMetadata> retrieveMetadata = sqLiteFileRepository.findById(id);
-            if (retrieveMetadata.isEmpty()) throw new FileNotFoundException();
-            FileMetadata fileMetadata = retrieveMetadata.get();
             //find file
-            File checkExists = new File(fileMetadata.getPath());
+            File checkExists = new File(file.getPath());
             if (!checkExists.exists()) throw new FileNotFoundException();
             //rename file
             File renamedFile = new File(checkExists.getParent() + newName);
@@ -89,26 +89,43 @@ public class FileSystemService implements FileSystemRepository {
             if (renamedFile.exists()) throw new FileAlreadyExistsException(renamedFile.getName());
             if (!checkExists.renameTo(renamedFile)) throw new FileSystemException(renamedFile.getName());
             //set new name and path
-            fileMetadata.setName(newName);
-            fileMetadata.setPath(renamedFile.getPath());
+            file.setName(newName);
+            file.setPath(renamedFile.getPath());
             //save
-            sqLiteFileRepository.save(fileMetadata);
+            sqLiteFileRepository.save(file);
             return true;
         }  catch (FileNotFoundException fs) {
             logger.error("File not found! Exception: {}", fs.getMessage());
-            return false;
         } catch (FileAlreadyExistsException dup) {
             logger.error("File with name {} already exists! Exception: {}", newName,dup.getMessage());
-            return false;
         } catch (Exception e) {
             logger.error("File system error. Exception: {}", e.getMessage());
-            return false;
         }
+        return false;
     }
 
+    @Transactional
     @Override
-    public boolean MoveFile(String oldPath, String newPath) {
+    public boolean MoveFile(FileMetadata file, String newPath) {
+        try {
+            //find file
+            File checkExists = new File(file.getPath());
+            if (!checkExists.exists()) throw new FileNotFoundException();
+            if (!checkExists.renameTo(new File(newPath))) throw new FileSystemException(file.getName());
+            //set new name and path
+            file.setPath(newPath);
+            //save
+            sqLiteFileRepository.save(file);
+            return true;
+        }  catch (FileNotFoundException fs) {
+            logger.error("File not found! Exception: {}", fs.getMessage());
+        } catch (FileAlreadyExistsException dup) {
+            logger.error("File at new path {} already exists! Exception: {}", newPath, dup.getMessage());
+        } catch (Exception e) {
+            logger.error("File system error. Exception: {}", e.getMessage());
+        }
         return false;
+
     }
 
     @Override
@@ -116,13 +133,16 @@ public class FileSystemService implements FileSystemRepository {
     public boolean CreateFolder(String pathWithName) {
         try {
             File folder = new File(pathWithName);
-            if (folder.exists()) throw new Exception("Folder already exists");
+            if (folder.exists()) throw new FileAlreadyExistsException("Folder already exists");
             boolean progress = folder.mkdirs();
             if (!progress) throw new IOException("Cannot create directory, path: " + pathWithName);
             FolderMetadata saveFolder = new FolderMetadata(folder.getName(), folder.getPath());
             sqLiteFolderRepository.save(saveFolder);
             return true;
-        } catch (Exception e) {
+        } catch (FileAlreadyExistsException dup) {
+            logger.error("Folder at path \"{}\" already exists! Exception: {}", pathWithName, dup.getMessage());
+            return false;
+        }catch (Exception e) {
             logger.error(e.getMessage());
             return false;
         }

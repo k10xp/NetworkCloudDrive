@@ -20,9 +20,9 @@ public interface FileSystemRepository {
     //Actions
     boolean RemoveFolder(String pathWithName);
 
-    boolean UpdateFileName(String newName, long id);
+    boolean UpdateFileName(String newName, FileMetadata file);
 
-    boolean MoveFile(String oldPath, String newPath);
+    boolean MoveFile(FileMetadata file, String newPath);
 
     boolean CreateFolder(String pathWithName);
 }

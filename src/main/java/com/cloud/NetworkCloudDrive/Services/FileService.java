@@ -1,7 +1,10 @@
 package com.cloud.NetworkCloudDrive.Services;
 
+import com.cloud.NetworkCloudDrive.Controllers.FileController;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import java.nio.file.StandardOpenOption;
 public class FileService implements FileRepository {
     private final FileStorageProperties fileStorageProperties;
     private final Path rootPath;
+    private final Logger logger = LoggerFactory.getLogger(FileService.class);
 
     public FileService(FileStorageProperties fileStorageProperties) {
         this.fileStorageProperties = fileStorageProperties;
@@ -33,9 +37,12 @@ public class FileService implements FileRepository {
         Path userDirectory = rootPath.resolve("test_user1"); /* To be extended */
         Files.createDirectories(userDirectory);
         Path filePath = userDirectory.resolve(fileName);
-        try (OutputStream outputStream = Files.newOutputStream(userDirectory, StandardOpenOption.CREATE_NEW)) {
+        logger.info("test1: {}", filePath);
+        try (OutputStream outputStream = Files.newOutputStream(filePath, StandardOpenOption.CREATE_NEW)) {
+            logger.info("random message");
             StreamUtils.copy(inputStream, outputStream);
         }
+        logger.info("test2: {}", rootPath.relativize(filePath));
         return rootPath.relativize(filePath).toString();
     }
 
