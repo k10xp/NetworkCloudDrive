@@ -8,6 +8,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.FileNotFoundException;
+
 @RestController
 @RequestMapping(path = "/api/filesystem")
 public class FileSystemController {
@@ -19,34 +21,39 @@ public class FileSystemController {
 
     @GetMapping(value = "/get", produces = MediaType.ALL_VALUE)
     public @ResponseBody ResponseEntity<Object> getFile(@RequestParam String name) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body("Not yet implemented test value = " + name);
+        return ResponseEntity.ok().
+                contentType(MediaType.APPLICATION_JSON).
+                body(String.format("Not yet implemented test value = %s\n", name));
     }
 
     @GetMapping(value = "/dir", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<Object> getFileDetails(@RequestParam long pathId) {
-        FileMetadata file = fileSystemService.getFileDetails(pathId);
-        if (file == null) {
+        try {
+            FileMetadata file = fileSystemService.GetFileMetadata(pathId);
+            if (file == null) throw new FileNotFoundException("File does not exist");
+            return ResponseEntity.ok().
+                    contentType(MediaType.APPLICATION_JSON).
+                    body(file);
+        } catch (Exception e) {
             return ResponseEntity.badRequest().
                     contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse("File does not exist", false));
+                    body(new JSONResponse(e.getMessage(), false));
         }
-        return ResponseEntity.ok().
-                contentType(MediaType.APPLICATION_JSON).
-                body(file);
     }
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
     public JSONResponse CreateFolder(@RequestBody CreateFolderDTO folder) {
-        boolean success = fileSystemService.CreateFolder(folder.getPath());
-        if (success)
+        try {
+            fileSystemService.CreateFolder(folder.getPath());
             return new JSONResponse(
                     String.format("Folder at path %s was successfully created", folder.getPath()),
                     "/api/files/create",
                     true);
-        else
+        } catch (Exception e) {
             return new JSONResponse(
                     String.format("Error creating folder at path %s", folder.getPath()),
                     "/api/files/create",
                     false);
+        }
     }
 }

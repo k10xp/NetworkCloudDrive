@@ -34,6 +34,14 @@ public class FolderMetadata {
         return id;
     }
 
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
     public ZonedDateTime getCreatedAt() {
         return createdAt;
     }

@@ -1,6 +1,5 @@
 package com.cloud.NetworkCloudDrive.Services;
 
-import com.cloud.NetworkCloudDrive.Controllers.FileController;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileRepository;
 import org.slf4j.Logger;
@@ -27,10 +26,6 @@ public class FileService implements FileRepository {
     public FileService(FileStorageProperties fileStorageProperties) {
         this.fileStorageProperties = fileStorageProperties;
         this.rootPath = Paths.get(fileStorageProperties.getBasePath());
-    }
-
-    public boolean ValidateFile() {
-        return false;
     }
 
     public String StoreFile(InputStream inputStream, String fileName) throws IOException {

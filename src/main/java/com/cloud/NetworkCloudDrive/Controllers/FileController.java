@@ -2,7 +2,7 @@ package com.cloud.NetworkCloudDrive.Controllers;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONResponse;
-import com.cloud.NetworkCloudDrive.Services.IOService;
+import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -18,21 +18,21 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping(path = "/api/file")
 public class FileController {
-    private final IOService ioService;
+    private final FileSystemService fileSystemService;
     private final Logger logger = LoggerFactory.getLogger(FileController.class);
 
-    public FileController(IOService ioService) {
-        this.ioService = ioService;
+    public FileController(FileSystemService fileSystemService) {
+        this.fileSystemService = fileSystemService;
     }
 
     @PostMapping("upload")
     public ResponseEntity<?> UploadFile(@RequestParam MultipartFile file) {
         try {
             logger.info("filename before upload: {}", file.getOriginalFilename());
-            FileMetadata fileUpload = ioService.UploadFile(file);
+            FileMetadata fileUpload = fileSystemService.UploadFile(file);
             return ResponseEntity.ok().body(fileUpload);
         } catch (Exception e) {
-            logger.error("File controller, {}", e.getMessage());
+            logger.error(e.getMessage());
         }
         return ResponseEntity.badRequest().body(new JSONResponse("Failed to upload file", "api/file/upload", false));
     }
@@ -40,13 +40,14 @@ public class FileController {
     @PostMapping("download")
     public ResponseEntity<?> DownloadFile(@RequestParam long fileId) {
         try {
-            FileMetadata metadata = ioService.GetFileMetadata(fileId);
-            Resource file = ioService.DownloadFile(fileId);
+            FileMetadata metadata = fileSystemService.GetFileMetadata(fileId);
+            Resource file = fileSystemService.getFile(fileId);
             return ResponseEntity.ok().header(
                     HttpHeaders.CONTENT_DISPOSITION,
                     "attachment; filename=\"" + metadata.getMimiType() + "\" ")
                     .contentType(MediaType.parseMediaType(metadata.getMimiType())).contentLength(metadata.getSize()).body(file);
         } catch (Exception e) {
+            logger.error(e.getMessage());
             return ResponseEntity.internalServerError().body(new JSONResponse("Failed to download file", false));
         }
     }

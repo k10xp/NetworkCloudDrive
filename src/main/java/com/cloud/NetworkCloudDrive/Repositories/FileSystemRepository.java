@@ -1,28 +1,34 @@
 package com.cloud.NetworkCloudDrive.Repositories;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
+import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 
 @Repository
 public interface FileSystemRepository {
     //get file type
-    FileMetadata getFileDetails(long id);
+    FileMetadata GetFileMetadata(long id) throws IOException;
 
     //Files
-    Resource getFile(long id);
+    Resource getFile(long id) throws IOException;
+
+    FileMetadata UploadFile(MultipartFile file) throws Exception;
 
     //Folders
-    File getFolder(String pathWithName);
+    File getFolder(String pathWithName) throws FileAlreadyExistsException;
 
     //Actions
-    boolean RemoveFolder(String pathWithName);
+    void RemoveFolder(FolderMetadata folder) throws Exception;
 
-    boolean UpdateFileName(String newName, FileMetadata file);
+    void UpdateFileName(String newName, FileMetadata file) throws Exception;
 
-    boolean MoveFile(FileMetadata file, String newPath);
+    void MoveFile(FileMetadata file, String newPath) throws Exception;
 
-    boolean CreateFolder(String pathWithName);
+    void CreateFolder(String pathWithName) throws Exception;
 }
