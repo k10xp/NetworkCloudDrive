@@ -1,8 +1,11 @@
 package com.cloud.NetworkCloudDrive.Models;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 //TODO add folder permissions
 
@@ -19,12 +22,12 @@ public class FolderMetadata {
     private String path;
 
     @Column(name = "createdAt")
-    private ZonedDateTime createdAt;
+    private String createdAt;
 
     public FolderMetadata(String name, String path) {
         this.name = name;
         this.path = path;
-        this.createdAt = ZonedDateTime.now(ZoneId.systemDefault());
+        this.createdAt = formatCreatedAt();
     }
 
     public FolderMetadata() {
@@ -42,8 +45,14 @@ public class FolderMetadata {
         this.path = path;
     }
 
-    public ZonedDateTime getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
+    }
+
+    private String formatCreatedAt() {
+        LocalDateTime today = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return today.format(formatter);
     }
 
     public String getName() {

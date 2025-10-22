@@ -9,21 +9,19 @@ import java.util.Set;
 @Component
 public class FileStorageProperties {
     private String basePath;
-    private Set<String> allowedMimeTypes;
+    private String OnlyUserName;
 
     public FileStorageProperties() {
         this.basePath = "./root";
-        this.allowedMimeTypes = Set.of(
-                //Images
-                "image/jpeg",
-                "image/jpg",
-                "image/png",
-                "image/gif",
-                "image/webp",
-                "image/webm",
-                //Compressed files
-                "application/zip"
-        );
+        this.OnlyUserName = "test_user1";
+    }
+
+    public String getOnlyUserName() {
+        return OnlyUserName;
+    }
+
+    public void setOnlyUserName(String onlyUserName) {
+        OnlyUserName = onlyUserName;
     }
 
     public String getBasePath() {
@@ -32,13 +30,5 @@ public class FileStorageProperties {
 
     public void setBasePath(String basePath) {
         this.basePath = basePath;
-    }
-
-    public Set<String> getAllowedMimeTypes() {
-        return allowedMimeTypes;
-    }
-
-    public void setAllowedMimeTypes(Set<String> allowedMimeTypes) {
-        this.allowedMimeTypes = allowedMimeTypes;
     }
 }

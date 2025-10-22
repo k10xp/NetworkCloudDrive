@@ -1,6 +1,7 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
+import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONResponse;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import org.slf4j.Logger;
@@ -26,22 +27,24 @@ public class FileController {
     }
 
     @PostMapping("upload")
-    public ResponseEntity<?> UploadFile(@RequestParam MultipartFile file) {
+    public ResponseEntity<?> UploadFile(@RequestParam MultipartFile file, @RequestParam long pathId) {
         try {
             logger.info("filename before upload: {}", file.getOriginalFilename());
-            FileMetadata fileUpload = fileSystemService.UploadFile(file);
+            FolderMetadata parentFolder = fileSystemService.getFolder(pathId);
+            FileMetadata fileUpload = fileSystemService.UploadFile(file, parentFolder);
             return ResponseEntity.ok().body(fileUpload);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
-        return ResponseEntity.badRequest().body(new JSONResponse("Failed to upload file", "api/file/upload", false));
+        return ResponseEntity.badRequest().body(new JSONResponse("Failed to upload file", false));
     }
 
     @PostMapping("download")
     public ResponseEntity<?> DownloadFile(@RequestParam long fileId) {
         try {
             FileMetadata metadata = fileSystemService.GetFileMetadata(fileId);
-            Resource file = fileSystemService.getFile(fileId);
+            Resource file = fileSystemService.getFile(metadata);
+            logger.info("passed controller");
             return ResponseEntity.ok().header(
                     HttpHeaders.CONTENT_DISPOSITION,
                     "attachment; filename=\"" + metadata.getMimiType() + "\" ")

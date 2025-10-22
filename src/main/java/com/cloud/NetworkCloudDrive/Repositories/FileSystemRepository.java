@@ -7,21 +7,22 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 
 @Repository
 public interface FileSystemRepository {
     //get file type
-    FileMetadata GetFileMetadata(long id) throws IOException;
+    FileMetadata GetFileMetadata(long id) throws Exception;
 
     //Files
-    Resource getFile(long id) throws IOException;
+    Resource getFile(FileMetadata file) throws Exception;
 
-    FileMetadata UploadFile(MultipartFile file) throws Exception;
+    FileMetadata UploadFile(MultipartFile file, FolderMetadata folder) throws Exception;
 
     //Folders
-    File getFolder(String pathWithName) throws FileAlreadyExistsException;
+    FolderMetadata getFolder(long fileId) throws Exception;
 
     //Actions
     void RemoveFolder(FolderMetadata folder) throws Exception;

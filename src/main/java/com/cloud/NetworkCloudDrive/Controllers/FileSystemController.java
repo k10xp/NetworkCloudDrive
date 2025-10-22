@@ -42,18 +42,16 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JSONResponse CreateFolder(@RequestBody CreateFolderDTO folder) {
+    public ResponseEntity<JSONResponse> CreateFolder(@RequestBody CreateFolderDTO folder) {
         try {
             fileSystemService.CreateFolder(folder.getPath());
-            return new JSONResponse(
+            return ResponseEntity.ok().body(new JSONResponse(
                     String.format("Folder at path %s was successfully created", folder.getPath()),
-                    "/api/files/create",
-                    true);
+                    true));
         } catch (Exception e) {
-            return new JSONResponse(
-                    String.format("Error creating folder at path %s", folder.getPath()),
-                    "/api/files/create",
-                    false);
+            return ResponseEntity.internalServerError().body(new JSONResponse(
+                    String.format("Error creating folder at path %s. Exception: %s", folder.getPath(), e.getMessage()),
+                    false));
         }
     }
 }

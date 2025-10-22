@@ -9,6 +9,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,8 +29,9 @@ public class FileService implements FileRepository {
         this.rootPath = Paths.get(fileStorageProperties.getBasePath());
     }
 
-    public String StoreFile(InputStream inputStream, String fileName) throws IOException {
-        Path userDirectory = rootPath.resolve("test_user1"); /* To be extended */
+    public String StoreFile(InputStream inputStream, String fileName, String parentPath) throws IOException {
+//        Path userDirectory = rootPath.resolve(fileStorageProperties.getOnlyUserName()); /* To be extended */
+        Path userDirectory = Path.of(parentPath);
         Files.createDirectories(userDirectory);
         Path filePath = userDirectory.resolve(fileName);
         logger.info("test1: {}", filePath);
@@ -41,10 +43,13 @@ public class FileService implements FileRepository {
         return rootPath.relativize(filePath).toString();
     }
 
-    public Resource RetrieveFile(String storedPath) throws IOException {
-        Path filePath = rootPath.resolve(storedPath).normalize().toAbsolutePath();
+    public Resource RetrieveFile(String storedPath) throws Exception {
+//        Path filePath = rootPath.resolve(storedPath).normalize().toAbsolutePath();
+        Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + storedPath);
+        logger.info("path: {}",filePath.toString());
         Path normalizedRoot = rootPath.normalize().toAbsolutePath();
-        if (!filePath.startsWith(normalizedRoot)) throw new SecurityException("Unauthorized access");
+        logger.info("normalized path: {}",normalizedRoot.toString());
+        if (filePath.startsWith(normalizedRoot)) throw new SecurityException("Unauthorized access");
         if (!Files.exists(filePath)) throw new IOException("File does not exist");
         return new UrlResource(filePath.toUri());
     }

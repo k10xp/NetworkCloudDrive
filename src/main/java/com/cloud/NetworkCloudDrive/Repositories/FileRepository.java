@@ -8,7 +8,7 @@ import java.io.InputStream;
 
 @Repository
 public interface FileRepository {
-    String StoreFile(InputStream inputStream, String fileName) throws IOException;
+    String StoreFile(InputStream inputStream, String fileName, String parentPath) throws IOException;
 
-    Resource RetrieveFile(String storedPath) throws IOException;
+    Resource RetrieveFile(String storedPath) throws Exception;
 }

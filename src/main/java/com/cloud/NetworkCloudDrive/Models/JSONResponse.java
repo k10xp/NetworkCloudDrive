@@ -5,16 +5,8 @@ import java.time.ZonedDateTime;
 
 public class JSONResponse {
     private String message;
-    private String endpoint;
     private final ZonedDateTime dateTime;
     private boolean success;
-
-    public JSONResponse(String message, String endpoint, boolean success) {
-        this.message = message;
-        this.endpoint = endpoint;
-        this.success = success;
-        this.dateTime = ZonedDateTime.now(ZoneId.systemDefault());
-    }
 
     public JSONResponse(String message, boolean success) {
         this.message = message;
@@ -40,13 +32,5 @@ public class JSONResponse {
 
     public ZonedDateTime getDateTime() {
         return dateTime;
-    }
-
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
     }
 }

@@ -32,7 +32,12 @@ public class FileSystemService implements FileSystemRepository {
     private final FileService fileService;
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
 
-    public FileSystemService(SQLiteFileRepository sqLiteFileRepository, SQLiteFolderRepository sqLiteFolderRepository, FileStorageProperties fileStorageProperties, FileService fileService) {
+    public FileSystemService(
+            SQLiteFileRepository sqLiteFileRepository,
+            SQLiteFolderRepository sqLiteFolderRepository,
+            FileStorageProperties fileStorageProperties,
+            FileService fileService
+    ) {
         this.sqLiteFileRepository = sqLiteFileRepository;
         this.fileStorageProperties = fileStorageProperties;
         this.sqLiteFolderRepository = sqLiteFolderRepository;
@@ -41,31 +46,37 @@ public class FileSystemService implements FileSystemRepository {
 
     @Override
     @Transactional
-    public FileMetadata GetFileMetadata(long id) throws IOException {
+    public FileMetadata GetFileMetadata(long id) throws Exception {
         Optional<FileMetadata> checkFile = sqLiteFileRepository.findById(id);
         if (checkFile.isEmpty()) throw new FileNotFoundException("File does not exist.");
         FileMetadata retrievedFile = checkFile.get();
-        if (!Files.exists(Path.of(retrievedFile.getPath())))
+        logger.info("File requested path: {}", retrievedFile.getPath());
+//        if (!Files.exists(Path.of(fileStorageProperties.getBasePath() + File.separator + retrievedFile.getPath())))
+        File fileCheck = new File(fileStorageProperties.getBasePath() + File.separator + retrievedFile.getPath());
+        if (!fileCheck.exists())
             throw new IOException(String.format("File could not be found on the computer! File path: %s", retrievedFile.getPath()));
-        retrievedFile.setSize(Files.size(Path.of(retrievedFile.getPath()))); //bytes
+        retrievedFile.setSize(fileCheck.length()); //bytes
+        logger.info("pass");
         return retrievedFile;
     }
 
     @Override
-    public Resource getFile(long id) throws IOException {
-        Optional<FileMetadata> file = sqLiteFileRepository.findById(id);
-        if (file.isEmpty()) throw new FileNotFoundException(String.format("File with id %d not found\n", id));
-        return fileService.RetrieveFile(file.get().getPath());
+    public Resource getFile(FileMetadata file) throws Exception {
+        logger.info("file metadata: {}", file.toString());
+        return fileService.RetrieveFile(file.getPath());
     }
 
 
     @Override
-    public File getFolder(String pathWithName) throws FileAlreadyExistsException {
-        File getFolder = new File(pathWithName);
+    public FolderMetadata getFolder(long fileId) throws Exception {
+        Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(fileId);
+        if (folderMetadata.isEmpty()) throw new FileNotFoundException();
+        FolderMetadata folder = folderMetadata.get();
+        File getFolder = new File(folder.getPath());
         if (!getFolder.exists() || getFolder.isFile()) {
-            throw new FileAlreadyExistsException(String.format("Folder with same name at path %s already exists", pathWithName));
+            throw new FileAlreadyExistsException(String.format("Folder with same name at path %s already exists", folder.getPath()));
         }
-        return getFolder;
+        return folder;
     }
 
     @Override
@@ -80,16 +91,11 @@ public class FileSystemService implements FileSystemRepository {
         sqLiteFolderRepository.delete(folder);
     }
 
-    private void ValidateFile(String mimeType) throws FileUploadException {
-        if (!fileStorageProperties.getAllowedMimeTypes().contains(mimeType)) throw new FileUploadException("MimeType not allowed");
-    }
-
     @Override
-    public FileMetadata UploadFile(MultipartFile file) throws Exception {
-        ValidateFile(file.getContentType());
+    public FileMetadata UploadFile(MultipartFile file, FolderMetadata folder) throws Exception {
         String storagePath;
         try (InputStream inputStream = file.getInputStream()) {
-            storagePath = fileService.StoreFile(inputStream, file.getOriginalFilename());
+            storagePath = fileService.StoreFile(inputStream, file.getOriginalFilename(), folder.getPath());
         }
         FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), storagePath, file.getContentType(), file.getSize());
         return sqLiteFileRepository.save(metadata);
@@ -98,7 +104,7 @@ public class FileSystemService implements FileSystemRepository {
     @Override
     @Transactional
     public void UpdateFileName(String newName, FileMetadata file) throws Exception {
-        //TODO add check new file mimetype if its changed then validate and update it
+        //TODO add check new file mimetype if its changed then update it
         //find file
         File checkExists = new File(file.getPath());
         if (!checkExists.exists()) throw new FileNotFoundException();
@@ -130,11 +136,17 @@ public class FileSystemService implements FileSystemRepository {
     @Override
     @Transactional
     public void CreateFolder(String pathWithName) throws Exception {
-        File folder = new File(pathWithName);
-        if (folder.exists()) throw new FileAlreadyExistsException("Folder already exists");
-        boolean progress = folder.mkdirs();
-        if (!progress) throw new IOException("Cannot create directory, path: " + pathWithName);
+        File folder = new File(
+                fileStorageProperties.getBasePath()
+                + File.separator
+                + fileStorageProperties.getOnlyUserName() + //get user folder when auth is implemented
+                File.separator +
+                pathWithName
+        );
+//        if (folder.exists()) throw new FileAlreadyExistsException("Folder already exists");
+        if (!folder.mkdirs()) throw new IOException("Cannot create directory, path: " + pathWithName);
         FolderMetadata saveFolder = new FolderMetadata(folder.getName(), folder.getPath());
+        logger.info("hellohello {}", saveFolder.getCreatedAt());
         sqLiteFolderRepository.save(saveFolder);
     }
 }
