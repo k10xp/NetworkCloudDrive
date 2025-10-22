@@ -2,6 +2,8 @@ package com.cloud.NetworkCloudDrive.Models;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 @Entity
 public class FileMetadata {
@@ -21,13 +23,14 @@ public class FileMetadata {
     private long size;
 
     @Column(name = "createdAt")
-    private Instant createdAt;
+    private ZonedDateTime createdAt;
 
     public FileMetadata(String name, String path, String mimiType, long size) {
         this.name = name;
         this.path = path;
         this.mimiType = mimiType;
         this.size = size;
+        this.createdAt = ZonedDateTime.now(ZoneId.systemDefault());
     }
 
     public FileMetadata() {
@@ -45,7 +48,7 @@ public class FileMetadata {
         return id;
     }
 
-    public Instant getCreatedAt() {
+    public ZonedDateTime getCreatedAt() {
         return createdAt;
     }
 
