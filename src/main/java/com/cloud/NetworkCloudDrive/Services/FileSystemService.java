@@ -6,7 +6,6 @@ import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileSystemRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
-import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -20,8 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 
 @Service
@@ -143,10 +140,9 @@ public class FileSystemService implements FileSystemRepository {
                 File.separator +
                 pathWithName
         );
-//        if (folder.exists()) throw new FileAlreadyExistsException("Folder already exists");
         if (!folder.mkdirs()) throw new IOException("Cannot create directory, path: " + pathWithName);
-        FolderMetadata saveFolder = new FolderMetadata(folder.getName(), folder.getPath());
-        logger.info("hellohello {}", saveFolder.getCreatedAt());
+        FolderMetadata saveFolder = new FolderMetadata(folder.getName(), fileStorageProperties.getOnlyUserName() + File.separator + pathWithName);
+        logger.info("hello, hello {}", saveFolder.getCreatedAt());
         sqLiteFolderRepository.save(saveFolder);
     }
 }
