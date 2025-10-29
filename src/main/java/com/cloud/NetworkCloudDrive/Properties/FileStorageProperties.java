@@ -3,6 +3,7 @@ package com.cloud.NetworkCloudDrive.Properties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.util.Set;
 
 @ConfigurationProperties(prefix = "app.file-storage")
@@ -12,8 +13,8 @@ public class FileStorageProperties {
     private String OnlyUserName;
 
     public FileStorageProperties() {
-        this.basePath = "./root";
         this.OnlyUserName = "test_user1";
+        this.basePath = "."+ File.separator + "root" + File.separator;
     }
 
     public String getOnlyUserName() {

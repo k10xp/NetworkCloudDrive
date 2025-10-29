@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
+import java.nio.file.Path;
 import java.util.Optional;
 
 @Service
@@ -65,12 +66,12 @@ public class FileSystemService implements FileSystemRepository {
 
 
     @Override
-    public FolderMetadata getFolder(long fileId) throws Exception {
+    public FolderMetadata getFolderMetadata(long fileId) throws Exception {
         Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(fileId);
         if (folderMetadata.isEmpty()) throw new FileNotFoundException();
         FolderMetadata folder = folderMetadata.get();
-        File getFolder = new File(folder.getPath());
-        if (!getFolder.exists() || getFolder.isFile()) {
+        File getFolder = new File( fileStorageProperties.getBasePath() + File.separator + folder.getPath());
+        if (!getFolder.exists()) {
             throw new FileAlreadyExistsException(String.format("Folder with same name at path %s already exists", folder.getPath()));
         }
         return folder;
@@ -89,10 +90,10 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     @Override
-    public FileMetadata UploadFile(MultipartFile file, FolderMetadata folder) throws Exception {
+    public FileMetadata UploadFile(MultipartFile file, String folderPath) throws Exception {
         String storagePath;
         try (InputStream inputStream = file.getInputStream()) {
-            storagePath = fileService.StoreFile(inputStream, file.getOriginalFilename(), folder.getPath());
+            storagePath = fileService.StoreFile(inputStream, file.getOriginalFilename(), folderPath);
         }
         FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), storagePath, file.getContentType(), file.getSize());
         return sqLiteFileRepository.save(metadata);
@@ -103,19 +104,24 @@ public class FileSystemService implements FileSystemRepository {
     public void UpdateFileName(String newName, FileMetadata file) throws Exception {
         //TODO add check new file mimetype if its changed then update it
         //find file
-        File checkExists = new File(file.getPath());
-        if (!checkExists.exists()) throw new FileNotFoundException();
+        File checkExists = new File(fileStorageProperties.getBasePath() + file.getPath());
+        if (!checkExists.exists()) throw new FileNotFoundException("File not found");
         //rename file
-        File renamedFile = new File(checkExists.getParent() + newName);
+        logger.info("DEBUG new name {}",Path.of(file.getPath()).getParent() + File.separator + newName + getFileExtension(file.getName()));
+        File renamedFile = new File(fileStorageProperties.getBasePath() + Path.of(file.getPath()).getParent() + File.separator + newName + getFileExtension(file.getName()));
         //check duplicate
-        if (renamedFile.exists()) throw new FileAlreadyExistsException(renamedFile.getName());
-        if (!checkExists.renameTo(renamedFile)) throw new FileSystemException(renamedFile.getName());
+        if (renamedFile.exists()) throw new FileAlreadyExistsException(String.format("File with name %s already exists", renamedFile.getName()));
+        String newMimeType = getMimeTypeFromExtension(renamedFile.toPath()); /* <- Extend */
+        if (!checkExists.renameTo(renamedFile)) throw new FileSystemException(String.format("Failed to rename the file to %s", renamedFile.getName()));
         //set new name and path
         file.setName(newName);
         file.setPath(renamedFile.getPath());
         //save
         sqLiteFileRepository.save(file);
+        logger.info("Renamed file full path: {}", renamedFile.getPath());
     }
+
+    private String getMimeTypeFromExtension(Path filePath) { return ""; }
 
     @Transactional
     @Override
@@ -144,5 +150,15 @@ public class FileSystemService implements FileSystemRepository {
         FolderMetadata saveFolder = new FolderMetadata(folder.getName(), fileStorageProperties.getOnlyUserName() + File.separator + pathWithName);
         logger.info("hello, hello {}", saveFolder.getCreatedAt());
         sqLiteFolderRepository.save(saveFolder);
+    }
+
+    private String getFileExtension(String fileName) {
+        StringBuilder ext = new StringBuilder();
+        boolean afterDot = false;
+        for (int i = 0; i < fileName.length(); i++) {
+            if (fileName.charAt(i) == '.') afterDot = !afterDot;
+            ext.append(afterDot ? fileName.charAt(i) : "");
+        }
+        return ext.toString();
     }
 }

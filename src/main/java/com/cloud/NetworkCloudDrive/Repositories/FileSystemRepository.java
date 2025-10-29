@@ -19,10 +19,10 @@ public interface FileSystemRepository {
     //Files
     Resource getFile(FileMetadata file) throws Exception;
 
-    FileMetadata UploadFile(MultipartFile file, FolderMetadata folder) throws Exception;
+    public FileMetadata UploadFile(MultipartFile file, String folderPath) throws Exception;
 
     //Folders
-    FolderMetadata getFolder(long fileId) throws Exception;
+    FolderMetadata getFolderMetadata(long fileId) throws Exception;
 
     //Actions
     void RemoveFolder(FolderMetadata folder) throws Exception;

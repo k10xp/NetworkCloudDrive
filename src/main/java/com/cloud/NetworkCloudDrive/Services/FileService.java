@@ -30,8 +30,7 @@ public class FileService implements FileRepository {
     }
 
     public String StoreFile(InputStream inputStream, String fileName, String parentPath) throws IOException {
-//        Path userDirectory = rootPath.resolve(fileStorageProperties.getOnlyUserName()); /* To be extended */
-        Path userDirectory = Path.of(parentPath);
+        Path userDirectory = rootPath.resolve(Path.of(parentPath)); /* To be extended */
         Files.createDirectories(userDirectory);
         Path filePath = userDirectory.resolve(fileName);
         logger.info("test1: {}", filePath);
@@ -46,20 +45,11 @@ public class FileService implements FileRepository {
     public Resource RetrieveFile(String storedPath) throws Exception {
 //        Path filePath = rootPath.resolve(storedPath).normalize().toAbsolutePath();
         Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + storedPath);
-        logger.info("path: {}",filePath.toString());
+        logger.info("path: {}",filePath);
         Path normalizedRoot = rootPath.normalize().toAbsolutePath();
-        logger.info("normalized path: {}",normalizedRoot.toString());
+        logger.info("normalized path: {}", normalizedRoot);
         if (filePath.startsWith(normalizedRoot)) throw new SecurityException("Unauthorized access");
         if (!Files.exists(filePath)) throw new IOException("File does not exist");
         return new UrlResource(filePath.toUri());
-    }
-
-    private String getFileExtension(String fileName) {
-        StringBuilder ext = new StringBuilder();
-        for (int i = fileName.length() - 1; i > 0; i--) {
-            if (fileName.charAt(i) == '.') break;
-            ext.append(fileName.charAt(i));
-        }
-        return ext.toString();
     }
 }

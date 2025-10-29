@@ -1,17 +1,23 @@
 package com.cloud.NetworkCloudDrive.Models;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class JSONResponse {
     private String message;
-    private final ZonedDateTime dateTime;
+    private final String dateTime;
     private boolean success;
 
     public JSONResponse(String message, boolean success) {
         this.message = message;
         this.success = success;
-        this.dateTime = ZonedDateTime.now(ZoneId.systemDefault());
+        this.dateTime = formatDateTime();
+    }
+
+    private String formatDateTime() {
+        LocalDateTime today = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        return today.format(formatter);
     }
 
     public boolean isSuccess() {
@@ -30,7 +36,7 @@ public class JSONResponse {
         this.message = message;
     }
 
-    public ZonedDateTime getDateTime() {
+    public String getDateTime() {
         return dateTime;
     }
 }
