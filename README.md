@@ -3,10 +3,10 @@
 ## File Structure Visual
 ux = user
 
-    u1 space
-      |   "  "  "  "
-      u1 u2 u3 u4 u5
-      |_|__|_|_|__|
-            |
-            |
-        root/base
+user 1 space user 2 space
+      |         |
+    user 1    user 2
+      |_________|
+           |
+           |
+       root/base
