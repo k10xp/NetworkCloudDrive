@@ -3,10 +3,10 @@
 ## File Structure Visual
 ux = user
 
-user 1 space user 2 space
-      |         |
-    user 1    user 2
-      |_________|
-           |
-           |
-       root/base
+```mermaid
+flowchart TD
+    A[Project Path] -->|Storage| B{root/base}
+    B -->|User 1 storage| D[User 1]
+    B -->|User 2 storage| E[User 2]
+```
+        
