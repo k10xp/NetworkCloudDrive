@@ -1,7 +1,6 @@
 # Network Cloud Drive
 
 ## File Structure Visual
-ux = user
 
 ```mermaid
 flowchart TD
