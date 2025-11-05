@@ -67,12 +67,34 @@ public class FileSystemController {
         }
     }
 
-    @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long id) {
+    @GetMapping(value = "get/foldermetadata", produces = MediaType.ALL_VALUE)
+    public @ResponseBody ResponseEntity<?> getFolder(@RequestParam long folderid) {
         try {
-            FolderMetadata folderMetadata = fileSystemService.getFolderMetadata(id);
+            FolderMetadata folderMetadata = fileSystemService.getFolderMetadata(folderid);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
+        } catch (Exception e) {
+            logger.error("Failed to get folder metadata for fileId: {}. {}", folderid, e.getMessage());
+            return ResponseEntity.internalServerError().
+                    contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONResponse(
+                            String.format("Failed to get folder metadata for fileId: %d. %s", folderid, e.getMessage()),
+                            false));
+        }
+    }
+
+    // Conflicted... Could be used for rescan action later
+    @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
+    public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) { /* use DTO with boolean for base path*/
+        try {
+            String folderPath;
+            if (folderid != 0) {
+                FolderMetadata folderMetadata = fileSystemService.getFolderMetadata(folderid);
+                folderPath = folderMetadata.getPath();
+            } else {
+                folderPath = fileStorageProperties.getOnlyUserName();
+            }
             List<Path> fileList;
-            try(Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() +  folderMetadata.getPath()))) {
+            try(Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() +  folderPath))) {
                 fileList = stream.toList();
             }
             return ResponseEntity.ok()

@@ -3,15 +3,15 @@ package com.cloud.NetworkCloudDrive.Models;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.sql.Date;
+import java.time.Instant;
 
-//TODO add folder permissions
+//TODO add folder permissions and fix createdAt to be more readable
 
 @Entity
 public class FolderMetadata {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(name = "name")
     private String name;
@@ -21,7 +21,7 @@ public class FolderMetadata {
 
     @Column(name = "createdAt")
     @CreationTimestamp
-    private Date createdAt;
+    private Instant createdAt;
 
     public FolderMetadata(String name, String path) {
         this.name = name;
@@ -31,12 +31,20 @@ public class FolderMetadata {
     public FolderMetadata() {
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public Date getCreatedAt() {
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 
     public String getPath() {

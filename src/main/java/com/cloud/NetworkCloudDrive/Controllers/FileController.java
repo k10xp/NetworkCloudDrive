@@ -32,7 +32,7 @@ public class FileController {
         try {
             logger.info("filename before upload: {}", file.getOriginalFilename());
             String folderPath;
-            if (folderid != 12) { //TODO fix magic number to save to base folder
+            if (folderid != 0) { //TODO fix magic number to save to base folder
                 FolderMetadata parentFolder = fileSystemService.getFolderMetadata(folderid);
                 folderPath = parentFolder.getPath();
             } else {

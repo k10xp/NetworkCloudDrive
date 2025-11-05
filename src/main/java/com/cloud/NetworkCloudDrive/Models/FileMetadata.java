@@ -3,7 +3,9 @@ package com.cloud.NetworkCloudDrive.Models;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.sql.Date;
+import java.time.Instant;
+
+//TODO fix createdAt to be more readable and add ownership (later after auth)
 
 @Entity
 public class FileMetadata {
@@ -24,7 +26,7 @@ public class FileMetadata {
 
     @Column(name = "createdAt")
     @CreationTimestamp
-    private Date createdAt;
+    private Instant createdAt;
 
     public FileMetadata(String name, String path, String mimiType, long size) {
         this.name = name;
@@ -38,6 +40,18 @@ public class FileMetadata {
 
     public String getPath() {
         return path;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 
     public void setPath(String path) {

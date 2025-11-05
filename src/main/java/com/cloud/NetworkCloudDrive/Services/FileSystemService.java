@@ -9,6 +9,9 @@ import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,8 +22,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class FileSystemService implements FileSystemRepository {
@@ -139,17 +147,53 @@ public class FileSystemService implements FileSystemRepository {
     @Override
     @Transactional
     public void CreateFolder(String pathWithName) throws Exception {
+        String rootPath = fileStorageProperties.getBasePath();
         File folder = new File(
-                fileStorageProperties.getBasePath()
-                + File.separator
-                + fileStorageProperties.getOnlyUserName() + //get user folder when auth is implemented
-                File.separator +
-                pathWithName
+                rootPath
+                        + fileStorageProperties.getOnlyUserName() + //get user folder when auth is implemented
+                        File.separator +
+                        pathWithName
         );
         if (!folder.mkdirs()) throw new IOException("Cannot create directory, path: " + pathWithName);
-        FolderMetadata saveFolder = new FolderMetadata(folder.getName(), fileStorageProperties.getOnlyUserName() + File.separator + pathWithName);
-        logger.info("hello, hello {}", saveFolder.getCreatedAt());
-        sqLiteFolderRepository.save(saveFolder);
+
+        //Find folders in path
+        List<FolderMetadata> foldersDiscovered = new ArrayList<>();
+        for(File file = new File(folder.getPath()); file != null; file = file.getParentFile()) {
+            logger.info("preceding folder name: {}", file.getName());
+            if (file.getName().equals(fileStorageProperties.getOnlyUserName())) break;
+            FolderMetadata parentFolders = new FolderMetadata();
+            parentFolders.setName(file.getName());
+            parentFolders.setPath(removeBeginningOfPath(file.getPath()));
+            foldersDiscovered.add(parentFolders);
+        }
+        //add them to db
+        addAllToFoldersDb(foldersDiscovered);
+    }
+
+    private String removeBeginningOfPath(String path) {
+        return path.replaceAll(fileStorageProperties.getBasePath(),"");
+    }
+
+    private List<FolderMetadata> checkIfParentFolderExistsInDb(File folder) {
+        File parentFolder = folder.getParentFile();
+        logger.info("parent folder: path {} name {}", parentFolder.getPath(), parentFolder.getName());
+        FolderMetadata dummyMetadata = new FolderMetadata();
+        dummyMetadata.setName(parentFolder.getName());
+        dummyMetadata.setId(null);
+        dummyMetadata.setCreatedAt(null);
+        dummyMetadata.setPath(null);
+        Example<FolderMetadata> folderMetadataExample = Example.of(dummyMetadata);
+        List<FolderMetadata> results = sqLiteFolderRepository.findAll(folderMetadataExample);
+        logger.info("Results size: {}", results.size());
+        return results;
+    }
+
+    private void addAllToFoldersDb(List<FolderMetadata> results) throws IOException {
+        if (results.isEmpty()) throw new IOException("Invalid path");
+        for (FolderMetadata f : results) {
+            logger.info("f add = name {} path {}", f.getName(), f.getPath());
+        }
+        sqLiteFolderRepository.saveAll(results);
     }
 
     private String getFileExtension(String fileName) {
