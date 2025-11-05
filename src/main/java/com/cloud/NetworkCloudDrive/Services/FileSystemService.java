@@ -98,13 +98,18 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     @Override
-    public FileMetadata UploadFile(MultipartFile file, String folderPath) throws Exception {
+    @Transactional
+    public List<FileMetadata> UploadFile(MultipartFile[] files, String folderPath) throws Exception {
         String storagePath;
-        try (InputStream inputStream = file.getInputStream()) {
-            storagePath = fileService.StoreFile(inputStream, file.getOriginalFilename(), folderPath);
+        List<FileMetadata> uploadedFiles = new ArrayList<>();
+        for (MultipartFile file : files) {
+            try (InputStream inputStream = file.getInputStream()) {
+                storagePath = fileService.StoreFile(inputStream, file.getOriginalFilename(), folderPath);
+            }
+            FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), storagePath, file.getContentType(), file.getSize());
+            uploadedFiles.add(metadata);
         }
-        FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), storagePath, file.getContentType(), file.getSize());
-        return sqLiteFileRepository.save(metadata);
+        return sqLiteFileRepository.saveAll(uploadedFiles);
     }
 
     @Override

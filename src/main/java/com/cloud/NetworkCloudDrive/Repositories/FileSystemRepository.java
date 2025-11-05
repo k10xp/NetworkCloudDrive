@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.util.List;
 
 @Repository
 public interface FileSystemRepository {
@@ -19,7 +20,7 @@ public interface FileSystemRepository {
     //Files
     Resource getFile(FileMetadata file) throws Exception;
 
-    public FileMetadata UploadFile(MultipartFile file, String folderPath) throws Exception;
+    List<FileMetadata> UploadFile(MultipartFile[] files, String folderPath) throws Exception;
 
     //Folders
     FolderMetadata getFolderMetadata(long fileId) throws Exception;

@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
 @RequestMapping(path = "/api/file")
 public class FileController {
@@ -28,17 +31,18 @@ public class FileController {
     }
 
     @PostMapping("upload")
-    public ResponseEntity<?> UploadFile(@RequestParam MultipartFile file, @RequestParam long folderid) {
+    public ResponseEntity<?> UploadFile(@RequestParam MultipartFile[] files, @RequestParam long folderid) {
         try {
-            logger.info("filename before upload: {}", file.getOriginalFilename());
+            if (files.length == 0) throw new NullPointerException();
+            logger.info("filename before upload: {}", files[0].getOriginalFilename());
             String folderPath;
-            if (folderid != 0) { //TODO fix magic number to save to base folder
+            if (folderid != 0) {
                 FolderMetadata parentFolder = fileSystemService.getFolderMetadata(folderid);
                 folderPath = parentFolder.getPath();
             } else {
                 folderPath = fileStorageProperties.getOnlyUserName();
             }
-            FileMetadata fileUpload = fileSystemService.UploadFile(file, folderPath);
+            List<FileMetadata> fileUpload = fileSystemService.UploadFile(files, folderPath);
             return ResponseEntity.ok().body(fileUpload);
         } catch (Exception e) {
             logger.error(e.getMessage());
