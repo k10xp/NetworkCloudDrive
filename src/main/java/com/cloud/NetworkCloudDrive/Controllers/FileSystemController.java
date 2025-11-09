@@ -1,6 +1,7 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
 import com.cloud.NetworkCloudDrive.DTOs.UpdateFileNameDTO;
+import com.cloud.NetworkCloudDrive.DTOs.UpdateFilePathDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONResponse;
@@ -12,12 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 @RestController
@@ -33,21 +32,76 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "update", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> updateFileName(@RequestBody UpdateFileNameDTO updateFileNameDTO, @RequestParam long fileid) {
+    public @ResponseBody ResponseEntity<JSONResponse> updateFileName(@RequestBody UpdateFileNameDTO updateFileNameDTO) {
         try {
-            FileMetadata oldFile = fileSystemService.GetFileMetadata(fileid);
-            fileSystemService.UpdateFileName(updateFileNameDTO.getSetName(), oldFile);
+            FileMetadata oldFile = fileSystemService.GetFileMetadata(updateFileNameDTO.getFileid());
+            String oldName = oldFile.getName();
+            fileSystemService.UpdateFileName(updateFileNameDTO.getName(), oldFile);
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format("Updated file with Id %d from %s to %s", fileid, oldFile.getName(), updateFileNameDTO.getSetName()),
+                            String.format(
+                                    "Updated file with Id %d from %s to %s",
+                                    updateFileNameDTO.getFileid(),
+                                    oldName,
+                                    updateFileNameDTO.getName()),
                             true));
         } catch (Exception e) {
             logger.error("Cannot update name: {}", e.getMessage());
             return ResponseEntity.badRequest().
                     contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format("Failed to update file with Id %d: %s", fileid, e.getMessage()),
+                            String.format("Failed to update file with Id %d: %s", updateFileNameDTO.getFileid(), e.getMessage()),
+                            false));
+        }
+    }
+
+    @PostMapping(value = "move", produces = MediaType.APPLICATION_JSON_VALUE)
+    public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFilePathDTO updateFilePathDTO) {
+        try {
+            FileMetadata fileToMove = fileSystemService.GetFileMetadata(updateFilePathDTO.getFileid());
+            FolderMetadata destinationFolder = fileSystemService.getFolderMetadata(updateFilePathDTO.getFolderid());
+            String oldPath = fileToMove.getPath();
+            fileSystemService.MoveFile(fileToMove, destinationFolder.getPath());
+            return ResponseEntity.ok().
+                    contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONResponse(
+                            String.format(
+                                    "Moved file with Id %d from %s to %s",
+                                    updateFilePathDTO.getFileid(),
+                                    oldPath,
+                                    destinationFolder.getPath()),
+                            true));
+        } catch (Exception e) {
+            logger.error("Cannot move name: {}", e.getMessage());
+            return ResponseEntity.badRequest().
+                    contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONResponse(
+                            String.format("Failed to move file with Id %d: %s", updateFilePathDTO.getFileid(), e.getMessage()),
+                            false));
+        }
+    }
+
+    @PostMapping(value = "remove", produces = MediaType.APPLICATION_JSON_VALUE)
+    public @ResponseBody ResponseEntity<JSONResponse> removeFolder(@RequestParam long folderid) {
+        try {
+            FolderMetadata folderToRemove = fileSystemService.getFolderMetadata(folderid);
+            String oldPath = folderToRemove.getPath();
+            fileSystemService.RemoveFolder(folderToRemove);
+            return ResponseEntity.ok().
+                    contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONResponse(
+                            String.format(
+                                    "Folder with Id %d at path %s was successfully removed",
+                                    folderToRemove.getId(),
+                                    oldPath
+                            ), true));
+        } catch (Exception e) {
+            logger.error("Cannot remove file #{}: {}",folderid, e.getMessage());
+            return ResponseEntity.badRequest().
+                    contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONResponse(
+                            String.format("Failed remove folder with Id %d: %s", folderid, e.getMessage()),
                             false));
         }
     }

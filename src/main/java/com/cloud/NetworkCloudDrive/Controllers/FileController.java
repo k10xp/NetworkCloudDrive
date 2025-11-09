@@ -5,6 +5,7 @@ import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONResponse;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
+import com.cloud.NetworkCloudDrive.Services.FileService;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,17 +16,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping(path = "/api/file")
 public class FileController {
     private final FileSystemService fileSystemService;
+    private final FileService fileService;
     private final FileStorageProperties fileStorageProperties;
     private final Logger logger = LoggerFactory.getLogger(FileController.class);
 
-    public FileController(FileSystemService fileSystemService, FileStorageProperties fileStorageProperties) {
+    public FileController(FileSystemService fileSystemService, FileStorageProperties fileStorageProperties, FileService fileService) {
+        this.fileService = fileService;
         this.fileSystemService = fileSystemService;
         this.fileStorageProperties = fileStorageProperties;
     }
@@ -42,7 +44,7 @@ public class FileController {
             } else {
                 folderPath = fileStorageProperties.getOnlyUserName();
             }
-            List<FileMetadata> fileUpload = fileSystemService.UploadFile(files, folderPath);
+            List<FileMetadata> fileUpload = fileService.UploadFile(files, folderPath);
             return ResponseEntity.ok().body(fileUpload);
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -54,7 +56,7 @@ public class FileController {
     public ResponseEntity<?> DownloadFile(@RequestParam long fileid) {
         try {
             FileMetadata metadata = fileSystemService.GetFileMetadata(fileid);
-            Resource file = fileSystemService.getFile(metadata);
+            Resource file = fileService.getFile(metadata);
             logger.info("passed controller");
             return ResponseEntity.ok().header(
                     HttpHeaders.CONTENT_DISPOSITION,

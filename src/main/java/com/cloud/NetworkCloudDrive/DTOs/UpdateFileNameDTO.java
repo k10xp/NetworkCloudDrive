@@ -1,16 +1,21 @@
 package com.cloud.NetworkCloudDrive.DTOs;
 
 public class UpdateFileNameDTO {
-    private String setName;
+    private long fileid;
+    private String name;
 
-    public UpdateFileNameDTO() {
+    public UpdateFileNameDTO() {}
+
+    public long getFileid() {
+        return this.fileid;
     }
-
-    public String getSetName() {
-        return setName;
+    public void setFileid(long fileid) {
+        this.fileid = fileid;
     }
-
-    public void setSetName(String setName) {
-        this.setName = setName;
+    public String getName() {
+        return this.name;
+    }
+    public void setName(String name) {
+        this.name = name;
     }
 }
