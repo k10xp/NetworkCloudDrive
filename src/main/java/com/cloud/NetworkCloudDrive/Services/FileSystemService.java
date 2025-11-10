@@ -195,7 +195,10 @@ public class FileSystemService implements FileSystemRepository {
         for(File file = new File(folder.getPath()); file != null; file = file.getParentFile()) {
             logger.info("preceding folder name: {}", file.getName());
             if (file.getName().equals(fileStorageProperties.getOnlyUserName())) break;
-            if (checkIfFolderExistsInDb(file)) continue; // overhead
+            if (checkIfFolderExistsInDb(file)) { // overhead
+                logger.warn("Folder with name {} and path {}, already exists in database", file.getName(), file.getPath());
+                continue;
+            }
             FolderMetadata parentFolders = new FolderMetadata();
             parentFolders.setName(file.getName());
             parentFolders.setPath(removeBeginningOfPath(file.getPath()));
@@ -216,10 +219,9 @@ public class FileSystemService implements FileSystemRepository {
         dummyMetadata.setName(folder.getName());
         dummyMetadata.setId(null);
         dummyMetadata.setCreatedAt(null);
-        dummyMetadata.setPath(folder.getPath());
+        dummyMetadata.setPath(removeBeginningOfPath(folder.getPath()));
         Example<FolderMetadata> folderMetadataExample = Example.of(dummyMetadata);
         List<FolderMetadata> results = sqLiteFolderRepository.findAll(folderMetadataExample);
-        logger.info("Results size: {}", results.size());
         return !results.isEmpty(); //empty = false || not empty = true
     }
 

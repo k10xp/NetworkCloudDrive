@@ -56,27 +56,21 @@ public class FileService implements FileRepository {
         Path userDirectory = rootPath.resolve(Path.of(parentPath)); /* To be extended */
         Files.createDirectories(userDirectory);
         Path filePath = userDirectory.resolve(fileName);
-        logger.info("test1: {}", filePath);
         try (OutputStream outputStream = Files.newOutputStream(filePath, StandardOpenOption.CREATE_NEW)) {
-            logger.info("random message");
             StreamUtils.copy(inputStream, outputStream);
         }
-        logger.info("test2: {}", rootPath.relativize(filePath));
         return rootPath.relativize(filePath).toString();
     }
 
     @Override
     public Resource getFile(FileMetadata file) throws Exception {
-        logger.info("file metadata: {}", file.toString());
         return RetrieveFile(file.getPath());
     }
 
     public Resource RetrieveFile(String storedPath) throws Exception {
 //        Path filePath = rootPath.resolve(storedPath).normalize().toAbsolutePath();
         Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + storedPath);
-        logger.info("path: {}",filePath);
         Path normalizedRoot = rootPath.normalize().toAbsolutePath();
-        logger.info("normalized path: {}", normalizedRoot);
         if (filePath.startsWith(normalizedRoot)) throw new SecurityException("Unauthorized access");
         if (!Files.exists(filePath)) throw new IOException("File does not exist");
         return new UrlResource(filePath.toUri());
