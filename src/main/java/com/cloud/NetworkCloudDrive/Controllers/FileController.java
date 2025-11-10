@@ -36,7 +36,6 @@ public class FileController {
     public ResponseEntity<?> UploadFile(@RequestParam MultipartFile[] files, @RequestParam long folderid) {
         try {
             if (files.length == 0) throw new NullPointerException();
-            logger.info("filename before upload: {}", files[0].getOriginalFilename());
             String folderPath;
             if (folderid != 0) {
                 FolderMetadata parentFolder = fileSystemService.getFolderMetadata(folderid);
@@ -55,7 +54,7 @@ public class FileController {
     @GetMapping("download")
     public ResponseEntity<?> DownloadFile(@RequestParam long fileid) {
         try {
-            FileMetadata metadata = fileSystemService.GetFileMetadata(fileid);
+            FileMetadata metadata = fileSystemService.getFileMetadata(fileid);
             Resource file = fileService.getFile(metadata);
             logger.info("passed controller");
             return ResponseEntity.ok().header(
@@ -68,16 +67,17 @@ public class FileController {
         }
     }
 
-    @PostMapping(value = "create", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "folder/create", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<JSONResponse> CreateFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
-            fileSystemService.CreateFolder(folderDTO.getPath());
+            fileSystemService.createFolder(folderDTO.getPath());
             return ResponseEntity.ok().body(new JSONResponse(
                     String.format("Folder at path %s was successfully created", folderDTO.getPath()),
                     true));
         } catch (Exception e) {
+            logger.error("Error creating folder at path: {}. {}", folderDTO.getPath(),e.getMessage());
             return ResponseEntity.internalServerError().body(new JSONResponse(
-                    String.format("Error creating folder at path %s. Exception: %s", folderDTO.getPath(), e.getMessage()),
+                    String.format("Error creating folder at path %s.", folderDTO.getPath()),
                     false));
         }
     }

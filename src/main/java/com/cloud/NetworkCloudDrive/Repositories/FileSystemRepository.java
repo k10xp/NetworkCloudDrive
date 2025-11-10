@@ -6,13 +6,13 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface FileSystemRepository {
-    //get file/folder metadata
-    FileMetadata GetFileMetadata(long id) throws Exception;
+    FileMetadata getFileMetadata(long id) throws Exception;
     FolderMetadata getFolderMetadata(long fileId) throws Exception;
-
-    //Actions
-    void RemoveFolder(FolderMetadata folder) throws Exception;
-    void UpdateFileName(String newName, FileMetadata file) throws Exception;
-    void MoveFile(FileMetadata file, String newPath) throws Exception;
-    void CreateFolder(String pathWithName) throws Exception;
+    void removeFile(FileMetadata file) throws Exception;
+    void removeFolder(FolderMetadata folder) throws Exception;
+    void updateFolderName(String newName, FolderMetadata folder) throws Exception;
+    void updateFileName(String newName, FileMetadata file) throws Exception;
+    void moveFolder(FolderMetadata folder, String newPath) throws Exception;
+    void moveFile(FileMetadata file, String newPath) throws Exception;
+    void createFolder(String pathWithName) throws Exception;
 }
