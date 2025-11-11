@@ -4,6 +4,8 @@ import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface FileSystemRepository {
     FileMetadata getFileMetadata(long id) throws Exception;
@@ -14,5 +16,6 @@ public interface FileSystemRepository {
     void updateFileName(String newName, FileMetadata file) throws Exception;
     void moveFolder(FolderMetadata folder, String newPath) throws Exception;
     void moveFile(FileMetadata file, String newPath) throws Exception;
-    void createFolder(String pathWithName) throws Exception;
+    List<FolderMetadata> createFolder(String pathWithName) throws Exception;
+    String resolvePathOfIdString(String encodedString);
 }

@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FileService implements FileRepository {
@@ -39,20 +40,20 @@ public class FileService implements FileRepository {
 
     @Override
     @Transactional
-    public List<FileMetadata> UploadFile(MultipartFile[] files, String folderPath) throws Exception {
-        String storagePath;
+    public Map<String ,?> uploadFile(MultipartFile[] files, String folderPath, long folderId) throws Exception {
+        String storagePath = "";
         List<FileMetadata> uploadedFiles = new ArrayList<>();
         for (MultipartFile file : files) {
             try (InputStream inputStream = file.getInputStream()) {
-                storagePath = StoreFile(inputStream, file.getOriginalFilename(), folderPath);
+                storagePath = storeFile(inputStream, file.getOriginalFilename(), folderPath);
             }
-            FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), storagePath, file.getContentType(), file.getSize());
+            FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), folderId, fileStorageProperties.getOnlyUserName(), file.getContentType(), file.getSize());
             uploadedFiles.add(metadata);
         }
-        return sqLiteFileRepository.saveAll(uploadedFiles);
+        return Map.of("files", sqLiteFileRepository.saveAll(uploadedFiles), "storagePath", storagePath);
     }
 
-    public String StoreFile(InputStream inputStream, String fileName, String parentPath) throws IOException {
+    public String storeFile(InputStream inputStream, String fileName, String parentPath) throws IOException {
         Path userDirectory = rootPath.resolve(Path.of(parentPath)); /* To be extended */
         Files.createDirectories(userDirectory);
         Path filePath = userDirectory.resolve(fileName);
@@ -64,10 +65,10 @@ public class FileService implements FileRepository {
 
     @Override
     public Resource getFile(FileMetadata file) throws Exception {
-        return RetrieveFile(file.getPath());
+        return retrieveFile(file.getOwner());
     }
 
-    public Resource RetrieveFile(String storedPath) throws Exception {
+    public Resource retrieveFile(String storedPath) throws Exception {
 //        Path filePath = rootPath.resolve(storedPath).normalize().toAbsolutePath();
         Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + storedPath);
         Path normalizedRoot = rootPath.normalize().toAbsolutePath();

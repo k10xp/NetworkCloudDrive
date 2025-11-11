@@ -4,7 +4,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.util.Set;
 
 @ConfigurationProperties(prefix = "app.file-storage")
 @Component

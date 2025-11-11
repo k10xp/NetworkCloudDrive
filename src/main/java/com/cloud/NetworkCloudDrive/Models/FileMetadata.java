@@ -16,8 +16,11 @@ public class FileMetadata {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "path")
-    private String path;
+    @Column(name = "folderId")
+    private Long folderId;
+
+    @Column(name = "owner")
+    private String owner;
 
     @Column(name = "mimiType")
     private String mimiType;
@@ -28,60 +31,55 @@ public class FileMetadata {
     @CreationTimestamp
     private Instant createdAt;
 
-    public FileMetadata(String name, String path, String mimiType, long size) {
+    public FileMetadata(String name, Long folderId,String owner, String mimiType, long size) {
         this.name = name;
-        this.path = path;
+        this.folderId = folderId;
+        this.owner = owner;
         this.mimiType = mimiType;
         this.size = size;
     }
 
-    public FileMetadata() {
-    }
+    public FileMetadata() {}
 
-    public String getPath() {
-        return path;
+    public String getOwner() {
+        return owner;
     }
-
     public void setId(long id) {
         this.id = id;
     }
-
     public Instant getCreatedAt() {
         return createdAt;
     }
-
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
-
-    public void setPath(String path) {
-        this.path = path;
+    public Long getFolderId() {
+        return folderId;
     }
-
+    public void setFolderId(Long folderId) {
+        this.folderId = folderId;
+    }
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
     public long getId() {
         return id;
     }
-
     public long getSize() {
         return size;
     }
-
     public void setSize(long size) {
         this.size = size;
     }
-
     public String getMimiType() {
         return mimiType;
     }
-
     public void setMimiType(String mimiType) {
         this.mimiType = mimiType;
     }
-
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }

@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -114,7 +113,7 @@ public class FileSystemController {
         try {
             FileMetadata fileToMove = fileSystemService.getFileMetadata(updateFilePathDTO.getFileid());
             FolderMetadata destinationFolder = fileSystemService.getFolderMetadata(updateFilePathDTO.getFolderid());
-            String oldPath = fileToMove.getPath();
+            String oldPath = fileToMove.getOwner();
             fileSystemService.moveFile(fileToMove, destinationFolder.getPath());
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
@@ -163,7 +162,7 @@ public class FileSystemController {
     public @ResponseBody ResponseEntity<JSONResponse> removeFile(@RequestParam long fileid) {
         try {
             FileMetadata fileToRemove = fileSystemService.getFileMetadata(fileid);
-            String oldPath = fileToRemove.getPath();
+            String oldPath = fileToRemove.getOwner();
             fileSystemService.removeFile(fileToRemove);
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
@@ -201,6 +200,7 @@ public class FileSystemController {
     @GetMapping(value = "get/foldermetadata", produces = MediaType.ALL_VALUE)
     public @ResponseBody ResponseEntity<?> getFolder(@RequestParam long folderid) {
         try {
+            logger.warn("test decode: {}", fileSystemService.resolvePathOfIdString("0/1/2/3/4/5"));
             FolderMetadata folderMetadata = fileSystemService.getFolderMetadata(folderid);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
@@ -231,21 +231,6 @@ public class FileSystemController {
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(fileList);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().
-                    contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(e.getMessage(), false));
-        }
-    }
-
-    @GetMapping(value = "dir", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<Object> getFileDetails(@RequestParam long pathId) {
-        try {
-            FileMetadata file = fileSystemService.getFileMetadata(pathId);
-            if (file == null) throw new FileNotFoundException("File does not exist");
-            return ResponseEntity.ok().
-                    contentType(MediaType.APPLICATION_JSON).
-                    body(file);
         } catch (Exception e) {
             return ResponseEntity.badRequest().
                     contentType(MediaType.APPLICATION_JSON).

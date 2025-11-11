@@ -33,47 +33,43 @@ public class FileController {
     }
 
     @PostMapping("upload")
-    public ResponseEntity<?> UploadFile(@RequestParam MultipartFile[] files, @RequestParam long folderid) {
+    public ResponseEntity<?> uploadFile(@RequestParam MultipartFile[] files, @RequestParam long folderid) {
         try {
             if (files.length == 0) throw new NullPointerException();
             String folderPath;
             if (folderid != 0) {
                 FolderMetadata parentFolder = fileSystemService.getFolderMetadata(folderid);
-                folderPath = parentFolder.getPath();
+                folderPath = fileSystemService.resolvePathOfIdString(parentFolder.getPath());
             } else {
                 folderPath = fileStorageProperties.getOnlyUserName();
             }
-            List<FileMetadata> fileUpload = fileService.UploadFile(files, folderPath);
-            return ResponseEntity.ok().body(fileUpload);
+            return ResponseEntity.ok().body(fileService.uploadFile(files, folderPath, folderid));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("Failed to upload file. {}", e.getMessage());
+            return ResponseEntity.badRequest().body(new JSONResponse("Failed to upload file", false));
         }
-        return ResponseEntity.badRequest().body(new JSONResponse("Failed to upload file", false));
     }
 
     @GetMapping("download")
-    public ResponseEntity<?> DownloadFile(@RequestParam long fileid) {
+    public ResponseEntity<?> downloadFile(@RequestParam long fileid) {
         try {
             FileMetadata metadata = fileSystemService.getFileMetadata(fileid);
             Resource file = fileService.getFile(metadata);
-            logger.info("passed controller");
             return ResponseEntity.ok().header(
                     HttpHeaders.CONTENT_DISPOSITION,
                     "attachment; filename=\"" + metadata.getMimiType() + "\" ")
                     .contentType(MediaType.parseMediaType(metadata.getMimiType())).contentLength(metadata.getSize()).body(file);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("Failed to download file. {}", e.getMessage());
             return ResponseEntity.internalServerError().body(new JSONResponse("Failed to download file", false));
         }
     }
 
-    @PostMapping(value = "folder/create", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JSONResponse> CreateFolder(@RequestBody CreateFolderDTO folderDTO) {
+    @PostMapping(value = "create/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
-            fileSystemService.createFolder(folderDTO.getPath());
-            return ResponseEntity.ok().body(new JSONResponse(
-                    String.format("Folder at path %s was successfully created", folderDTO.getPath()),
-                    true));
+            List<FolderMetadata> createdFolder = fileSystemService.createFolder(folderDTO.getPath());
+            return ResponseEntity.ok().body(createdFolder);
         } catch (Exception e) {
             logger.error("Error creating folder at path: {}. {}", folderDTO.getPath(),e.getMessage());
             return ResponseEntity.internalServerError().body(new JSONResponse(

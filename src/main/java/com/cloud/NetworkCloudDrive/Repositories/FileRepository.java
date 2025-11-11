@@ -8,11 +8,12 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public interface FileRepository {
-    List<FileMetadata> UploadFile(MultipartFile[] files, String folderPath) throws Exception;
-    String StoreFile(InputStream inputStream, String fileName, String parentPath) throws IOException;
+    Map<String, ?> uploadFile(MultipartFile[] files, String folderPath, long folderId) throws Exception;
+    String storeFile(InputStream inputStream, String fileName, String parentPath) throws IOException;
     Resource getFile(FileMetadata file) throws Exception;
-    Resource RetrieveFile(String storedPath) throws Exception;
+    Resource retrieveFile(String storedPath) throws Exception;
 }
