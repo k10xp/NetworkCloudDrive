@@ -19,19 +19,15 @@ public class FileStorageProperties {
     public String getFullPath() {
         return basePath + OnlyUserName;
     }
-
     public String getOnlyUserName() {
         return OnlyUserName;
     }
-
     public void setOnlyUserName(String onlyUserName) {
         OnlyUserName = onlyUserName;
     }
-
     public String getBasePath() {
         return basePath;
     }
-
     public void setBasePath(String basePath) {
         this.basePath = basePath;
     }

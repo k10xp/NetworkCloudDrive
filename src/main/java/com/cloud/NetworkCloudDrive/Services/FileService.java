@@ -40,7 +40,7 @@ public class FileService implements FileRepository {
 
     @Override
     @Transactional
-    public Map<String ,?> uploadFile(MultipartFile[] files, String folderPath, long folderId) throws Exception {
+    public Map<String ,?> uploadFiles(MultipartFile[] files, String folderPath, long folderId) throws Exception {
         String storagePath = "";
         List<FileMetadata> uploadedFiles = new ArrayList<>();
         for (MultipartFile file : files) {
@@ -65,12 +65,7 @@ public class FileService implements FileRepository {
 
     @Override
     public Resource getFile(FileMetadata file) throws Exception {
-        return retrieveFile(file.getOwner());
-    }
-
-    public Resource retrieveFile(String storedPath) throws Exception {
-//        Path filePath = rootPath.resolve(storedPath).normalize().toAbsolutePath();
-        Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + storedPath);
+        Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + file.getFolderId());
         Path normalizedRoot = rootPath.normalize().toAbsolutePath();
         if (filePath.startsWith(normalizedRoot)) throw new SecurityException("Unauthorized access");
         if (!Files.exists(filePath)) throw new IOException("File does not exist");

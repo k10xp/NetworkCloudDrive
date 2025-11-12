@@ -65,9 +65,9 @@ public class FileSystemService implements FileSystemRepository {
         Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(fileId);
         if (folderMetadata.isEmpty()) throw new FileNotFoundException();
         FolderMetadata folder = folderMetadata.get();
-        File getFolder = new File(fileStorageProperties.getBasePath() + File.separator + folder.getPath());
+        File getFolder = new File(fileStorageProperties.getBasePath() + resolvePathFromIdString(folder.getPath()));
         if (!getFolder.exists())
-            throw new FileAlreadyExistsException(String.format("Folder with same name at path %s already exists", folder.getPath()));
+            throw new FileAlreadyExistsException(String.format("Folder with same name at path %s already exists", getFolder.getPath()));
         return folder;
     }
 
@@ -75,7 +75,9 @@ public class FileSystemService implements FileSystemRepository {
     @Transactional
     public void removeFile(FileMetadata file) throws Exception {
         //find folder
-        File checkExists = new File(fileStorageProperties.getBasePath() + file.getOwner());
+        File checkExists = new File(fileStorageProperties.getBasePath() +
+                resolvePathFromIdString(getFolderMetadata(file.getFolderId()).getPath()) +
+                File.separator + file.getName());
         if (!checkExists.exists()) throw new FileNotFoundException();
         //remove Folder
         if (!checkExists.delete())
@@ -87,7 +89,7 @@ public class FileSystemService implements FileSystemRepository {
     @Transactional
     public void removeFolder(FolderMetadata folder) throws Exception {
         //find folder
-        File checkExists = new File(fileStorageProperties.getBasePath() + folder.getPath());
+        File checkExists = new File(fileStorageProperties.getBasePath() + resolvePathFromIdString(folder.getPath()));
         if (!checkExists.exists()) throw new FileNotFoundException();
         //remove Folder
         if (!checkExists.delete())
@@ -99,17 +101,16 @@ public class FileSystemService implements FileSystemRepository {
     @Transactional
     public void updateFolderName(String newName, FolderMetadata folder) throws Exception {
         //find file
-        File checkExists = new File(fileStorageProperties.getBasePath() + folder.getPath());
+        File checkExists = new File(fileStorageProperties.getBasePath() + resolvePathFromIdString(folder.getPath()));
         if (!checkExists.exists()) throw new FileNotFoundException("folder not found");
         //rename file
-        logger.info("DEBUG new name {}",Path.of(folder.getPath()).getParent() + File.separator + newName);
-        File renamedFile = new File(fileStorageProperties.getBasePath() + Path.of(folder.getPath()).getParent() + File.separator + newName);
+        File renamedFile = new File(Path.of(checkExists.getPath()).getParent() + File.separator + newName);
+        logger.error("assumption path: {}", renamedFile.getPath());
         //check duplicate
         if (renamedFile.exists()) throw new FileAlreadyExistsException(String.format("folder with name %s already exists", renamedFile.getName()));
         if (checkExists.renameTo(renamedFile)) {
             //set new name and path
             folder.setName(newName);
-            folder.setPath(removeBeginningOfPath(renamedFile.getPath()));
             //save
             sqLiteFolderRepository.save(folder);
             logger.info("Renamed folder full path: {}", renamedFile.getPath());
@@ -205,14 +206,26 @@ public class FileSystemService implements FileSystemRepository {
             }
             FolderMetadata parentFolders = new FolderMetadata();
             parentFolders.setName(file.getName());
-            parentFolders.setPath(removeBeginningOfPath(file.getPath()));
-            entityManager.persist(parentFolders);
-            logger.info("folderid set: {}", (parentFolders.getId() != null ? parentFolders.getId() : "null id"));
             foldersDiscovered.add(parentFolders);
         }
         if (foldersDiscovered.isEmpty()) throw new IOException("Invalid path");
+        // reverse list
         Collections.reverse(foldersDiscovered);
-        return foldersDiscovered;
+        return generateIdPaths(foldersDiscovered);
+    }
+
+    private List<FolderMetadata> generateIdPaths(List<FolderMetadata> folderMetadataList) {
+        StringBuilder idPath = new StringBuilder();
+        //HOPEFULLY generate Id path starting from '0/'
+        idPath.append(0).append("/");
+        for (FolderMetadata folderMetadata : folderMetadataList) {
+            //assign id from db
+            entityManager.persist(folderMetadata);
+            idPath.append(folderMetadata.getId());
+            folderMetadata.setPath(idPath.toString());
+            idPath.append("/");
+        }
+        return folderMetadataList;
     }
 
     private String removeBeginningOfPath(String path) {
@@ -242,14 +255,15 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     @Override
-    public String resolvePathOfIdString(String encodedString) {
-        String[] splitLine = encodedString.split("/");
+    public String resolvePathFromIdString(String idString) {
+        String[] splitLine = idString.split("/");
         StringBuilder fullPath = new StringBuilder();
         List<Long> idList = new ArrayList<>();
         for (String idAsString : splitLine) {
             idList.add(Long.parseLong(idAsString));
         }
         List<FolderMetadata> folderMetadataListById = sqLiteFolderRepository.findAllById(idList);
+        fullPath.append(fileStorageProperties.getOnlyUserName()).append(File.separator);
         for (FolderMetadata folderMetadata : folderMetadataListById) {
             fullPath.append(folderMetadata.getName()).append(File.separator);
         }

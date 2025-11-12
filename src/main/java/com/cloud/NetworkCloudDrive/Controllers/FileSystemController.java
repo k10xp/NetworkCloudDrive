@@ -200,7 +200,7 @@ public class FileSystemController {
     @GetMapping(value = "get/foldermetadata", produces = MediaType.ALL_VALUE)
     public @ResponseBody ResponseEntity<?> getFolder(@RequestParam long folderid) {
         try {
-            logger.warn("test decode: {}", fileSystemService.resolvePathOfIdString("0/1/2/3/4/5"));
+            logger.warn("test decode: {}", fileSystemService.resolvePathFromIdString("0/1/2/3/4/5"));
             FolderMetadata folderMetadata = fileSystemService.getFolderMetadata(folderid);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {

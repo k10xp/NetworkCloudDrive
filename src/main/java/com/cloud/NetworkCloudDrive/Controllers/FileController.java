@@ -39,11 +39,11 @@ public class FileController {
             String folderPath;
             if (folderid != 0) {
                 FolderMetadata parentFolder = fileSystemService.getFolderMetadata(folderid);
-                folderPath = fileSystemService.resolvePathOfIdString(parentFolder.getPath());
+                folderPath = fileSystemService.resolvePathFromIdString(parentFolder.getPath());
             } else {
                 folderPath = fileStorageProperties.getOnlyUserName();
             }
-            return ResponseEntity.ok().body(fileService.uploadFile(files, folderPath, folderid));
+            return ResponseEntity.ok().body(fileService.uploadFiles(files, folderPath, folderid));
         } catch (Exception e) {
             logger.error("Failed to upload file. {}", e.getMessage());
             return ResponseEntity.badRequest().body(new JSONResponse("Failed to upload file", false));

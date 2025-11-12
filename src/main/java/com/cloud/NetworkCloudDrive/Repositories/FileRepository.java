@@ -12,8 +12,7 @@ import java.util.Map;
 
 @Repository
 public interface FileRepository {
-    Map<String, ?> uploadFile(MultipartFile[] files, String folderPath, long folderId) throws Exception;
+    Map<String, ?> uploadFiles(MultipartFile[] files, String folderPath, long folderId) throws Exception;
     String storeFile(InputStream inputStream, String fileName, String parentPath) throws IOException;
     Resource getFile(FileMetadata file) throws Exception;
-    Resource retrieveFile(String storedPath) throws Exception;
 }
