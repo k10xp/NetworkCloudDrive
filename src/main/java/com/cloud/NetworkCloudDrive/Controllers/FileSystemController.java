@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -114,7 +115,7 @@ public class FileSystemController {
             FileMetadata fileToMove = fileSystemService.getFileMetadata(updateFilePathDTO.getFileid());
             FolderMetadata destinationFolder = fileSystemService.getFolderMetadata(updateFilePathDTO.getFolderid());
             String oldPath = fileToMove.getOwner();
-            fileSystemService.moveFile(fileToMove, destinationFolder.getPath());
+            fileSystemService.moveFile(fileToMove, fileSystemService.resolvePathFromIdString(destinationFolder.getPath()));
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
@@ -162,7 +163,10 @@ public class FileSystemController {
     public @ResponseBody ResponseEntity<JSONResponse> removeFile(@RequestParam long fileid) {
         try {
             FileMetadata fileToRemove = fileSystemService.getFileMetadata(fileid);
-            String oldPath = fileToRemove.getOwner();
+            String oldPath = fileSystemService.resolvePathFromIdString(
+                    fileSystemService.getFolderMetadata(fileToRemove.getFolderId()).getPath()) +
+                    File.separator +
+                    fileToRemove.getName();
             fileSystemService.removeFile(fileToRemove);
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
@@ -200,8 +204,8 @@ public class FileSystemController {
     @GetMapping(value = "get/foldermetadata", produces = MediaType.ALL_VALUE)
     public @ResponseBody ResponseEntity<?> getFolder(@RequestParam long folderid) {
         try {
-            logger.warn("test decode: {}", fileSystemService.resolvePathFromIdString("0/1/2/3/4/5"));
             FolderMetadata folderMetadata = fileSystemService.getFolderMetadata(folderid);
+            folderMetadata.setPath(fileSystemService.resolvePathFromIdString(folderMetadata.getPath()));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
             logger.error("Failed to get folder metadata for fileId: {}. {}", folderid, e.getMessage());

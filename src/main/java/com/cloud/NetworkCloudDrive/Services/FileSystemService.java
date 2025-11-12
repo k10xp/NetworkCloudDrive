@@ -105,7 +105,7 @@ public class FileSystemService implements FileSystemRepository {
         if (!checkExists.exists()) throw new FileNotFoundException("folder not found");
         //rename file
         File renamedFile = new File(Path.of(checkExists.getPath()).getParent() + File.separator + newName);
-        logger.error("assumption path: {}", renamedFile.getPath());
+        logger.info("estimated path: {}", renamedFile.getPath());
         //check duplicate
         if (renamedFile.exists()) throw new FileAlreadyExistsException(String.format("folder with name %s already exists", renamedFile.getName()));
         if (checkExists.renameTo(renamedFile)) {
