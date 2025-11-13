@@ -41,7 +41,8 @@ public class FileService implements FileRepository {
     @Override
     @Transactional
     public Map<String ,?> uploadFiles(MultipartFile[] files, String folderPath, long folderId) throws Exception {
-        String storagePath = "";
+        String storagePath;
+        List<String> storagePathList = new ArrayList<>();
         List<FileMetadata> uploadedFiles = new ArrayList<>();
         for (MultipartFile file : files) {
             try (InputStream inputStream = file.getInputStream()) {
@@ -49,8 +50,9 @@ public class FileService implements FileRepository {
             }
             FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), folderId, fileStorageProperties.getOnlyUserName(), file.getContentType(), file.getSize());
             uploadedFiles.add(metadata);
+            storagePathList.add(storagePath);
         }
-        return Map.of("files", sqLiteFileRepository.saveAll(uploadedFiles), "storagePath", storagePath);
+        return Map.of("files", sqLiteFileRepository.saveAll(uploadedFiles), "storage_path", storagePathList);
     }
 
     public String storeFile(InputStream inputStream, String fileName, String parentPath) throws IOException {
@@ -64,11 +66,12 @@ public class FileService implements FileRepository {
     }
 
     @Override
-    public Resource getFile(FileMetadata file) throws Exception {
-        Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + file.getFolderId());
+    public Resource getFile(FileMetadata file, String path) throws Exception {
+        Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + path + File.separator + file.getName());
+        logger.info("fileservice path: {}", filePath);
         Path normalizedRoot = rootPath.normalize().toAbsolutePath();
         if (filePath.startsWith(normalizedRoot)) throw new SecurityException("Unauthorized access");
         if (!Files.exists(filePath)) throw new IOException("File does not exist");
-        return new UrlResource(filePath.toUri());
+        return new UrlResource(filePath.toAbsolutePath().toUri());
     }
 }

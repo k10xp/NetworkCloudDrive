@@ -54,7 +54,14 @@ public class FileController {
     public ResponseEntity<?> downloadFile(@RequestParam long fileid) {
         try {
             FileMetadata metadata = fileSystemService.getFileMetadata(fileid);
-            Resource file = fileService.getFile(metadata);
+            String actualPath;
+            if (metadata.getFolderId() != 0) {
+                actualPath = fileSystemService.resolvePathFromIdString(fileSystemService.getFolderMetadata(metadata.getFolderId()).getPath());
+            } else {
+                actualPath = fileStorageProperties.getOnlyUserName();
+            }
+            logger.info("path requested {}", actualPath);
+            Resource file = fileService.getFile(metadata, actualPath);
             return ResponseEntity.ok().header(
                     HttpHeaders.CONTENT_DISPOSITION,
                     "attachment; filename=\"" + metadata.getMimiType() + "\" ")
@@ -68,8 +75,9 @@ public class FileController {
     @PostMapping(value = "create/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
-            List<FolderMetadata> createdFolder = fileSystemService.createFolder(folderDTO.getPath());
-            return ResponseEntity.ok().body(createdFolder);
+            FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getPath(), folderDTO.getFolderid());
+            folderMetadata.setPath(fileSystemService.resolvePathFromIdString(folderMetadata.getPath()));
+            return ResponseEntity.ok().body(folderMetadata);
         } catch (Exception e) {
             logger.error("Error creating folder at path: {}. {}", folderDTO.getPath(),e.getMessage());
             return ResponseEntity.internalServerError().body(new JSONResponse(

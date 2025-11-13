@@ -139,7 +139,7 @@ public class FileSystemController {
     public @ResponseBody ResponseEntity<JSONResponse> removeFolder(@RequestParam long folderid) {
         try {
             FolderMetadata folderToRemove = fileSystemService.getFolderMetadata(folderid);
-            String oldPath = folderToRemove.getPath();
+            String oldPath = fileSystemService.resolvePathFromIdString(folderToRemove.getPath());
             fileSystemService.removeFolder(folderToRemove);
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
@@ -154,7 +154,7 @@ public class FileSystemController {
             return ResponseEntity.badRequest().
                     contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format("Failed remove folder with Id %d: %s", folderid, e.getMessage()),
+                            String.format("Failed remove folder with Id %d", folderid),
                             false));
         }
     }
@@ -170,8 +170,7 @@ public class FileSystemController {
             fileSystemService.removeFile(fileToRemove);
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
-                            String.format(
+                    body(new JSONResponse(String.format(
                                     "file with Id %d at path %s was successfully removed",
                                     fileToRemove.getId(),
                                     oldPath
