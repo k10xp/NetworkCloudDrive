@@ -45,6 +45,55 @@ public class FileSystemService implements FileSystemRepository {
         this.entityManager = entityManager;
     }
 
+    @Transactional
+    @Override
+    public FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, String owner) throws FileSystemException {
+        FileMetadata dummyFileMetadata = new FileMetadata();
+
+        dummyFileMetadata.setName(name);dummyFileMetadata.setFolderId(folderId);dummyFileMetadata.setOwner(owner);
+        dummyFileMetadata.setMimiType(null);dummyFileMetadata.setSize(null);dummyFileMetadata.setId(null);dummyFileMetadata.setCreatedAt(null);
+
+        Example<FileMetadata> fileMetadataExample = Example.of(dummyFileMetadata);
+        Optional<FileMetadata> optionalFileMetadata = sqLiteFileRepository.findOne(fileMetadataExample);
+
+        if (optionalFileMetadata.isPresent()) {
+            return optionalFileMetadata.get();
+        } else {
+            throw new FileSystemException("File not found in database. Is database synced?");
+        }
+    }
+
+    @Transactional
+    @Override
+    public FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name) throws FileSystemException, FileNotFoundException {
+        Optional<FolderMetadata> optionalParentFolderMetadata = sqLiteFolderRepository.findById(folderId);
+
+        if (optionalParentFolderMetadata.isEmpty()) {
+            throw new FileNotFoundException("Invalid folderId or Folder is not synced with database");
+        }
+        FolderMetadata parentFolderMetadata = optionalParentFolderMetadata.get();
+
+        List<FolderMetadata> findAllByPathList = sqLiteFolderRepository.findAllByPathContainsIgnoreCase(parentFolderMetadata.getPath());
+
+        if (findAllByPathList.isEmpty()) throw new FileSystemException("Can't resolve path");
+
+        String[] splitOriginalPath = parentFolderMetadata.getPath().split("/");
+
+        int originalPathLength = splitOriginalPath.length;
+
+        FolderMetadata returnFolder = new FolderMetadata();
+
+        for (FolderMetadata folderMetadata : findAllByPathList) {
+            String[] splitBySlash = folderMetadata.getPath().split("/");
+            if ((splitBySlash.length > originalPathLength) && (splitBySlash.length < originalPathLength+2)) {
+                returnFolder = folderMetadata;
+                break;
+            }
+        }
+
+        return returnFolder;
+    }
+
     @Override
     @Transactional
     public FileMetadata getFileMetadata(long id) throws Exception {
@@ -194,8 +243,10 @@ public class FileSystemService implements FileSystemRepository {
             idPath = "0";
         }
         File folder = new File(rootPath + precedingPath + File.separator + folderName);
+        if (folder.exists())
+            throw new FileAlreadyExistsException(String.format("Folder with name %s already exists at this path %s.", folderName, folder.getPath()));
         if (!folder.mkdir())
-            throw new IOException(String.format("Cannot create directory, path: %s :: Make sure you are creating single folder", folderName));
+            throw new IOException(String.format("Cannot create directory, with name %s. Make sure you are creating a single folder.", folderName));
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
         createdFolder.setPath(idPath + File.separator + createdFolder.getId());
@@ -217,7 +268,7 @@ public class FileSystemService implements FileSystemRepository {
         }
         if (foldersDiscovered.isEmpty()) throw new IOException("Invalid path");
         // reverse list
-        Collections.reverse(foldersDiscovered);
+        Collections.reverse(foldersDiscovered); // consider LIFO either stack or deque
         return generateIdPaths(foldersDiscovered);
     }
 

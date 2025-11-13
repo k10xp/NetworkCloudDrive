@@ -80,9 +80,7 @@ public class FileController {
             return ResponseEntity.ok().body(folderMetadata);
         } catch (Exception e) {
             logger.error("Error creating folder at path: {}. {}", folderDTO.getPath(),e.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONResponse(
-                    String.format("Error creating folder at path %s.", folderDTO.getPath()),
-                    false));
+            return ResponseEntity.internalServerError().body(new JSONResponse(e.getMessage(), false));
         }
     }
 }

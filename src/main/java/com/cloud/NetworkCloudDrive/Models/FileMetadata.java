@@ -11,7 +11,7 @@ import java.time.Instant;
 public class FileMetadata {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(name = "name")
     private String name;
@@ -25,13 +25,13 @@ public class FileMetadata {
     @Column(name = "mimiType")
     private String mimiType;
 
-    private long size;
+    private Long size;
 
     @Column(name = "createdAt")
     @CreationTimestamp
     private Instant createdAt;
 
-    public FileMetadata(String name, Long folderId,String owner, String mimiType, long size) {
+    public FileMetadata(String name, Long folderId,String owner, String mimiType, Long size) {
         this.name = name;
         this.folderId = folderId;
         this.owner = owner;
@@ -44,7 +44,7 @@ public class FileMetadata {
     public String getOwner() {
         return owner;
     }
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
     public Instant getCreatedAt() {
@@ -62,13 +62,13 @@ public class FileMetadata {
     public void setOwner(String owner) {
         this.owner = owner;
     }
-    public long getId() {
+    public Long getId() {
         return id;
     }
-    public long getSize() {
+    public Long getSize() {
         return size;
     }
-    public void setSize(long size) {
+    public void setSize(Long size) {
         this.size = size;
     }
     public String getMimiType() {

@@ -16,8 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -203,8 +205,14 @@ public class FileSystemController {
     @GetMapping(value = "get/foldermetadata", produces = MediaType.ALL_VALUE)
     public @ResponseBody ResponseEntity<?> getFolder(@RequestParam long folderid) {
         try {
-            FolderMetadata folderMetadata = fileSystemService.getFolderMetadata(folderid);
-            folderMetadata.setPath(fileSystemService.resolvePathFromIdString(folderMetadata.getPath()));
+            FolderMetadata folderMetadata;
+            if (folderid != 0) {
+                folderMetadata = fileSystemService.getFolderMetadata(folderid);
+                folderMetadata.setPath(fileSystemService.resolvePathFromIdString(folderMetadata.getPath()));
+            } else {
+                File folderRootMetadata = new File(fileStorageProperties.getFullPath());
+                folderMetadata = new FolderMetadata(folderRootMetadata.getName(), folderRootMetadata.getPath());
+            }
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
             logger.error("Failed to get folder metadata for fileId: {}. {}", folderid, e.getMessage());
@@ -223,7 +231,7 @@ public class FileSystemController {
             String folderPath;
             if (folderid != 0) {
                 FolderMetadata folderMetadata = fileSystemService.getFolderMetadata(folderid);
-                folderPath = folderMetadata.getPath();
+                folderPath = fileSystemService.resolvePathFromIdString(folderMetadata.getPath());
             } else {
                 folderPath = fileStorageProperties.getOnlyUserName();
             }
@@ -231,9 +239,21 @@ public class FileSystemController {
             try(Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() +  folderPath))) {
                 fileList = stream.toList();
             }
+            List<Object> folderAndFileMetadata = new ArrayList<>();
+            for (Path path : fileList) {
+                if (path.toFile().isFile()) {
+                    folderAndFileMetadata.add(fileSystemService.getFileMetadataByFolderIdAndName(folderid, path.toFile().getName(), fileStorageProperties.getOnlyUserName()));
+                    continue;
+                }
+                folderAndFileMetadata.add(fileSystemService.getFolderMetadataByFolderIdAndName(folderid, path.toFile().getName()));
+            }
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(fileList);
+                    .body(folderAndFileMetadata);
+        } catch (FileSystemException fileSystemException) {
+            return ResponseEntity.internalServerError().
+                    contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONResponse(fileSystemException.getMessage(), false));
         } catch (Exception e) {
             return ResponseEntity.badRequest().
                     contentType(MediaType.APPLICATION_JSON).
