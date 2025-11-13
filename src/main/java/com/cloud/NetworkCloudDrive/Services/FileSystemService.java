@@ -65,7 +65,7 @@ public class FileSystemService implements FileSystemRepository {
 
     @Transactional
     @Override
-    public FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name) throws FileSystemException, FileNotFoundException {
+    public FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name, List<Long> skipList) throws FileSystemException, FileNotFoundException {
         Optional<FolderMetadata> optionalParentFolderMetadata = sqLiteFolderRepository.findById(folderId);
 
         if (optionalParentFolderMetadata.isEmpty()) {
@@ -84,6 +84,7 @@ public class FileSystemService implements FileSystemRepository {
         FolderMetadata returnFolder = new FolderMetadata();
 
         for (FolderMetadata folderMetadata : findAllByPathList) {
+            if (skipList.contains(folderMetadata.getId())) continue;
             String[] splitBySlash = folderMetadata.getPath().split("/");
             if ((splitBySlash.length > originalPathLength) && (splitBySlash.length < originalPathLength+2)) {
                 returnFolder = folderMetadata;

@@ -240,24 +240,23 @@ public class FileSystemController {
                 fileList = stream.toList();
             }
             List<Object> folderAndFileMetadata = new ArrayList<>();
+            List<Long> lastIdList = new ArrayList<>();
             for (Path path : fileList) {
                 if (path.toFile().isFile()) {
                     folderAndFileMetadata.add(fileSystemService.getFileMetadataByFolderIdAndName(folderid, path.toFile().getName(), fileStorageProperties.getOnlyUserName()));
                     continue;
                 }
-                folderAndFileMetadata.add(fileSystemService.getFolderMetadataByFolderIdAndName(folderid, path.toFile().getName()));
+                FolderMetadata foundFolderMetadata = fileSystemService.getFolderMetadataByFolderIdAndName(folderid, path.toFile().getName(), lastIdList);
+                folderAndFileMetadata.add(foundFolderMetadata);
+                lastIdList.add(foundFolderMetadata.getId());
             }
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(folderAndFileMetadata);
         } catch (FileSystemException fileSystemException) {
-            return ResponseEntity.internalServerError().
-                    contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(fileSystemException.getMessage(), false));
+            return ResponseEntity.internalServerError().contentType(MediaType.APPLICATION_JSON).body(new JSONResponse(fileSystemException.getMessage(), false));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().
-                    contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(e.getMessage(), false));
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(new JSONResponse(e.getMessage(), false));
         }
     }
 }
