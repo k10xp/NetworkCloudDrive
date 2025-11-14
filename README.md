@@ -20,7 +20,8 @@ Local network storage API that can store files and manage them. Uses SQLite for 
 ```mermaid
 flowchart TD
     A[Project Path] -->|Storage| B{root/base}
-    B -->|User 1 storage| D[User 1]
-    B -->|User 2 storage| E[User 2]
+    B -->|User 1 storage| C[User 1]
+    B -->|User 2 storage| D[User 2]
+    B -->|User 3 storage| E[User 3]
 ```
         
