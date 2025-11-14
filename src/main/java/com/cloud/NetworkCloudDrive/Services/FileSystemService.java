@@ -66,23 +66,19 @@ public class FileSystemService implements FileSystemRepository {
     @Transactional
     @Override
     public FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name, List<Long> skipList) throws FileSystemException, FileNotFoundException {
-        Optional<FolderMetadata> optionalParentFolderMetadata = sqLiteFolderRepository.findById(folderId);
-
-        if (optionalParentFolderMetadata.isEmpty()) {
-            throw new FileNotFoundException("Invalid folderId or Folder is not synced with database");
+        String idPath;
+        if (folderId != 0) {
+            Optional<FolderMetadata> optionalParentFolderMetadata = sqLiteFolderRepository.findById(folderId);
+            if (optionalParentFolderMetadata.isEmpty()) throw new FileNotFoundException("Invalid folderId or Folder is not synced with database");
+            idPath = optionalParentFolderMetadata.get().getPath();
+        } else {
+            idPath = "0";
         }
-        FolderMetadata parentFolderMetadata = optionalParentFolderMetadata.get();
-
-        List<FolderMetadata> findAllByPathList = sqLiteFolderRepository.findAllByPathContainsIgnoreCase(parentFolderMetadata.getPath());
-
+        List<FolderMetadata> findAllByPathList = sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
         if (findAllByPathList.isEmpty()) throw new FileSystemException("Can't resolve path");
-
-        String[] splitOriginalPath = parentFolderMetadata.getPath().split("/");
-
+        String[] splitOriginalPath = idPath.split("/");
         int originalPathLength = splitOriginalPath.length;
-
         FolderMetadata returnFolder = new FolderMetadata();
-
         for (FolderMetadata folderMetadata : findAllByPathList) {
             if (skipList.contains(folderMetadata.getId())) continue;
             String[] splitBySlash = folderMetadata.getPath().split("/");
@@ -91,7 +87,6 @@ public class FileSystemService implements FileSystemRepository {
                 break;
             }
         }
-
         return returnFolder;
     }
 

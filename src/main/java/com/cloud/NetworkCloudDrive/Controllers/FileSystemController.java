@@ -212,6 +212,7 @@ public class FileSystemController {
             } else {
                 File folderRootMetadata = new File(fileStorageProperties.getFullPath());
                 folderMetadata = new FolderMetadata(folderRootMetadata.getName(), folderRootMetadata.getPath());
+                folderMetadata.setId(folderid);
             }
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
