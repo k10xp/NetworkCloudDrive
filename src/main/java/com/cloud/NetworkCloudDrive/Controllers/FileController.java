@@ -7,6 +7,8 @@ import com.cloud.NetworkCloudDrive.Models.JSONResponse;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.FileService;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
+import com.cloud.NetworkCloudDrive.Services.InformationService;
+import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -16,20 +18,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @RestController
 @RequestMapping(path = "/api/file")
 public class FileController {
     private final FileSystemService fileSystemService;
     private final FileService fileService;
     private final FileStorageProperties fileStorageProperties;
+    private final InformationService informationService;
+    private final FileUtility fileUtility;
     private final Logger logger = LoggerFactory.getLogger(FileController.class);
 
-    public FileController(FileSystemService fileSystemService, FileStorageProperties fileStorageProperties, FileService fileService) {
+    public FileController(
+            FileSystemService fileSystemService,
+            FileStorageProperties fileStorageProperties,
+            FileService fileService,
+            InformationService informationService,
+            FileUtility fileUtility) {
         this.fileService = fileService;
         this.fileSystemService = fileSystemService;
         this.fileStorageProperties = fileStorageProperties;
+        this.informationService = informationService;
+        this.fileUtility = fileUtility;
     }
 
     @PostMapping("upload")
@@ -38,8 +47,8 @@ public class FileController {
             if (files.length == 0) throw new NullPointerException();
             String folderPath;
             if (folderid != 0) {
-                FolderMetadata parentFolder = fileSystemService.getFolderMetadata(folderid);
-                folderPath = fileSystemService.resolvePathFromIdString(parentFolder.getPath());
+                FolderMetadata parentFolder = informationService.getFolderMetadata(folderid);
+                folderPath = fileUtility.resolvePathFromIdString(parentFolder.getPath());
             } else {
                 folderPath = fileStorageProperties.getOnlyUserName();
             }
@@ -53,22 +62,23 @@ public class FileController {
     @GetMapping("download")
     public ResponseEntity<?> downloadFile(@RequestParam long fileid) {
         try {
-            FileMetadata metadata = fileSystemService.getFileMetadata(fileid);
+            FileMetadata metadata = informationService.getFileMetadata(fileid);
             String actualPath;
             if (metadata.getFolderId() != 0) {
-                actualPath = fileSystemService.resolvePathFromIdString(fileSystemService.getFolderMetadata(metadata.getFolderId()).getPath());
+                actualPath = fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(metadata.getFolderId()).getPath());
             } else {
                 actualPath = fileStorageProperties.getOnlyUserName();
             }
             logger.info("path requested {}", actualPath);
             Resource file = fileService.getFile(metadata, actualPath);
-            return ResponseEntity.ok().header(
-                    HttpHeaders.CONTENT_DISPOSITION,
-                    "attachment; filename=\"" + metadata.getMimiType() + "\" ")
-                    .contentType(MediaType.parseMediaType(metadata.getMimiType())).contentLength(metadata.getSize()).body(file);
+            return ResponseEntity.ok().
+                    header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + metadata.getName() + "\" "). //return filename
+                    contentType(MediaType.parseMediaType(metadata.getMimiType())).
+                    contentLength(metadata.getSize()).body(file);
         } catch (Exception e) {
             logger.error("Failed to download file. {}", e.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONResponse("Failed to download file", false));
+            return ResponseEntity.internalServerError().
+                    body(new JSONResponse("Failed to download file", false));
         }
     }
 
@@ -76,11 +86,13 @@ public class FileController {
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
             FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getPath(), folderDTO.getFolderid());
-            folderMetadata.setPath(fileSystemService.resolvePathFromIdString(folderMetadata.getPath()));
-            return ResponseEntity.ok().body(folderMetadata);
+            folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
+            return ResponseEntity.ok().
+                    body(folderMetadata);
         } catch (Exception e) {
             logger.error("Error creating folder at path: {}. {}", folderDTO.getPath(),e.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONResponse(e.getMessage(), false));
+            return ResponseEntity.internalServerError().
+                    body(new JSONResponse(e.getMessage(), false));
         }
     }
 }

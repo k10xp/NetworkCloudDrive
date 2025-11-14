@@ -10,10 +10,6 @@ import java.util.List;
 
 @Repository
 public interface FileSystemRepository {
-    FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, String owner) throws FileSystemException;
-    FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name, List<Long> skipList) throws FileSystemException, FileNotFoundException;
-    FileMetadata getFileMetadata(long id) throws Exception;
-    FolderMetadata getFolderMetadata(long fileId) throws Exception;
     void removeFile(FileMetadata file) throws Exception;
     void removeFolder(FolderMetadata folder) throws Exception;
     void updateFolderName(String newName, FolderMetadata folder) throws Exception;
@@ -21,5 +17,4 @@ public interface FileSystemRepository {
     void moveFolder(FolderMetadata folder, String newPath) throws Exception;
     void moveFile(FileMetadata file, String newPath) throws Exception;
     FolderMetadata createFolder(String folderName, long folderid) throws Exception;
-    String resolvePathFromIdString(String idString);
 }
