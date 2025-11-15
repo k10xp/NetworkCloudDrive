@@ -82,6 +82,12 @@ public class FileController {
         }
     }
 
+    /*
+    TODO Security hole when sending a folder with name "../hello" creates above directory. Plus allows you to save files there.
+    Can go further and do more later on...
+    TODO "/../hello" bypasses as well. Another way to go above is to use "../../hello" which goes to $HOME/IdeaProjects/NetworkCloudDrive
+    TODO Fix is to Path.normalize then relativize to check if path is above or below the directory
+     */
     @PostMapping(value = "create/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
