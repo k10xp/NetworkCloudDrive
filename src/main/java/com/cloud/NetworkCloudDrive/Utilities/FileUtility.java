@@ -24,28 +24,15 @@ public class FileUtility {
     private final SQLiteFileRepository sqLiteFileRepository;
     private final SQLiteFolderRepository sqLiteFolderRepository;
     private final FileStorageProperties fileStorageProperties;
-    private final InformationService informationService;
     private final Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
     public FileUtility(
             SQLiteFolderRepository sqLiteFolderRepository,
             SQLiteFileRepository sqLiteFileRepository,
-            FileStorageProperties fileStorageProperties,
-            //WHYWHY
-            InformationService informationService) {
+            FileStorageProperties fileStorageProperties) {
         this.sqLiteFileRepository = sqLiteFileRepository;
         this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.fileStorageProperties = fileStorageProperties;
-        this.informationService = informationService;
-    }
-
-    //TODO Fix dependency cycle
-    public String getFolderPath(long folderId) throws Exception {
-        return folderId != 0
-                ?
-                resolvePathFromIdString(informationService.getFolderMetadata(folderId).getPath())
-                :
-                fileStorageProperties.getOnlyUserName();
     }
 
     public boolean checkAndMakeDirectories(String path) {

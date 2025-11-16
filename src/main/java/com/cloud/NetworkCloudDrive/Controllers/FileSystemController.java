@@ -218,7 +218,11 @@ public class FileSystemController {
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
         try {
-            String folderPath = fileUtility.getFolderPath(folderid);
+            String folderPath = (folderid != 0
+                    ?
+                    fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(folderid).getPath())
+                    :
+                    fileStorageProperties.getOnlyUserName()) ;
             List<Path> fileList;
             try(Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() +  folderPath))) {
                 fileList = stream.toList();
