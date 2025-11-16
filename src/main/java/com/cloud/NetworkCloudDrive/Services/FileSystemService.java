@@ -17,10 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystemException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -107,7 +104,7 @@ public class FileSystemService implements FileSystemRepository {
     //TODO update
     @Override
     @Transactional
-    public void updateFolderName(String newName, FolderMetadata folder) throws Exception {
+    public String updateFolderName(String newName, FolderMetadata folder) throws Exception {
         //find file
         File checkExists = new File(fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(folder.getPath()));
         if (!checkExists.exists()) throw new FileNotFoundException("folder not found");
@@ -126,31 +123,33 @@ public class FileSystemService implements FileSystemRepository {
         } else {
             throw new FileSystemException(String.format("Failed to rename the folder to %s", renamedFile.getName()));
         }
+        return renamedFile.getPath();
     }
 
     //TODO update
     @Override
     @Transactional
-    public void updateFileName(String newName, FileMetadata file) throws Exception {
+    public String updateFileName(String newName, FileMetadata file) throws Exception {
+        String folderPath = fileStorageProperties.getBasePath() +
+                (file.getFolderId() != 0 ?
+                        fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(file.getFolderId()).getPath())
+                        :
+                        fileStorageProperties.getOnlyUserName());
         //find file
-        File checkExists = new File(fileStorageProperties.getBasePath() + file.getName());
-        if (!checkExists.exists())
+        File checkExists = new File(folderPath + File.separator + file.getName());
+        if (!Files.exists(checkExists.toPath(), LinkOption.NOFOLLOW_LINKS))
             throw new FileNotFoundException("File not found");
         //save extension
         String oldExtension = fileUtility.getFileExtension(file.getName());
         //rename file
-        File renamedFile = new File(
-                fileStorageProperties.getBasePath() +
-                        Path.of(
-                                file.getName()).getParent() +
-                        File.separator +
-                        newName +
-                        fileUtility.getFileExtension(file.getName()));
+        File renamedFile = new File(folderPath + File.separator + newName + fileUtility.getFileExtension(file.getName()));
         //check duplicate
         if (renamedFile.exists())
             throw new FileAlreadyExistsException(String.format("File with name %s already exists", renamedFile.getName()));
-        String newMimeType = fileUtility.getMimeTypeFromExtension(renamedFile.toPath()); /* <- get new mimetype of file */
-        if (checkExists.renameTo(renamedFile)) {
+        // Perform movement
+        Path newUpdatedPath = Files.move(checkExists.toPath(), renamedFile.toPath());
+        if (Files.exists(newUpdatedPath)) {
+            String newMimeType = fileUtility.getMimeTypeFromExtension(newUpdatedPath); /* <- get new mimetype of file */
             //set new name and path
             file.setName(newName + oldExtension);
             file.setMimiType(newMimeType.equals(file.getMimiType()) ? file.getMimiType() : newMimeType);
@@ -160,6 +159,7 @@ public class FileSystemService implements FileSystemRepository {
         } else {
             throw new FileSystemException(String.format("Failed to rename the file to %s", renamedFile.getName()));
         }
+        return renamedFile.getPath();
     }
 
     @Transactional

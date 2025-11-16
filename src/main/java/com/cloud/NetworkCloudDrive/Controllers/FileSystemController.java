@@ -51,8 +51,7 @@ public class FileSystemController {
             FileMetadata oldFile = informationService.getFileMetadata(updateFileNameDTO.getFileid());
             String oldName = oldFile.getName();
             fileSystemService.updateFileName(updateFileNameDTO.getName(), oldFile);
-            return ResponseEntity.ok().
-                    contentType(MediaType.APPLICATION_JSON).
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
                             String.format(
                                     "Updated file with Id %d from %s to %s",
@@ -72,12 +71,12 @@ public class FileSystemController {
         try {
             FolderMetadata oldFolder = informationService.getFolderMetadata(updateFolderNameDTO.getFolderid());
             String oldName = oldFolder.getName();
-            fileSystemService.updateFolderName(updateFolderNameDTO.getName(), oldFolder);
+            String updatedPath = fileSystemService.updateFolderName(updateFolderNameDTO.getName(), oldFolder);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
                             String.format(
-                                    "Updated folder with Id %d from %s to %s",
-                                    updateFolderNameDTO.getFolderid(), oldName, updateFolderNameDTO.getName()),
+                                    "Updated folder name with Id %d from %s to %s. Updated path %s",
+                                    updateFolderNameDTO.getFolderid(), oldName, updateFolderNameDTO.getName(), updatedPath),
                             true));
         } catch (Exception e) {
             logger.error("Cannot update folder name. {}", e.getMessage());

@@ -42,7 +42,9 @@ public class FileUtility {
         return filePath.exists() || filePath.mkdirs();
     }
 
+    //TODO Bug inside probeContentType() it cant detect 'yaml' format returns null instead of document of type
     public String getMimeTypeFromExtension(Path filePath) throws IOException {
+        logger.info("File at path absolute {}, {}", filePath.toAbsolutePath(), filePath);
         return Files.probeContentType(filePath);
     }
 

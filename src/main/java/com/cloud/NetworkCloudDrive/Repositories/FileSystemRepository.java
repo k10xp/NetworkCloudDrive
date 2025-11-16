@@ -14,8 +14,8 @@ import java.util.List;
 public interface FileSystemRepository {
     String removeFile(FileMetadata file) throws Exception;
     String removeFolder(FolderMetadata folder) throws IOException;
-    void updateFolderName(String newName, FolderMetadata folder) throws Exception;
-    void updateFileName(String newName, FileMetadata file) throws Exception;
+    String updateFolderName(String newName, FolderMetadata folder) throws Exception;
+    String updateFileName(String newName, FileMetadata file) throws Exception;
     void moveFolder(FolderMetadata folder, String newPath) throws Exception;
     void moveFile(FileMetadata targetFile, String destinationFolder, String currentFolder) throws Exception;
     FolderMetadata createFolder(String folderName, long folderid) throws Exception;
