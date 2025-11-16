@@ -37,6 +37,11 @@ public class InformationService implements InformationRepository {
         this.fileUtility = fileUtility;
     }
 
+    @Override
+    public String getFolderPathAsString(long folderId) throws Exception {
+        return folderId != 0 ? fileUtility.resolvePathFromIdString(getFolderMetadata(folderId).getPath()) : fileStorageProperties.getOnlyUserName();
+    }
+
     @Transactional
     @Override
     public FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, long userid) throws FileSystemException {
