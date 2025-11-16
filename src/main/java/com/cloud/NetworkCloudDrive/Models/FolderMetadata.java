@@ -19,6 +19,9 @@ public class FolderMetadata {
     @Column(name = "path")
     private String path;
 
+    @Column(name = "userid")
+    private Long userid;
+
     @Column(name = "createdAt")
     @CreationTimestamp
     private Instant createdAt;
@@ -30,6 +33,12 @@ public class FolderMetadata {
 
     public FolderMetadata() {}
 
+    public Long getUserid() {
+        return userid;
+    }
+    public void setUserid(Long userid) {
+        this.userid = userid;
+    }
     public Long getId() {
         return id;
     }

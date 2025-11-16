@@ -50,6 +50,8 @@ public class FileSystemService implements FileSystemRepository {
         this.fileUtility = fileUtility;
     }
 
+    //TODO update
+
     @Override
     @Transactional
     public void removeFile(FileMetadata file) throws Exception {
@@ -60,9 +62,11 @@ public class FileSystemService implements FileSystemRepository {
         if (!checkExists.exists()) throw new FileNotFoundException();
         //remove Folder
         if (!checkExists.delete())
-            throw new FileSystemException(String.format("Failed to remove folder at path %s\n", file.getOwner()));
+            throw new FileSystemException(String.format("Failed to remove folder at path %s\n", checkExists.getPath()));
         sqLiteFileRepository.delete(file);
     }
+
+    //TODO update
 
     @Override
     @Transactional
@@ -78,6 +82,7 @@ public class FileSystemService implements FileSystemRepository {
         sqLiteFolderRepository.delete(folder);
     }
 
+    //TODO update
     @Override
     @Transactional
     public void updateFolderName(String newName, FolderMetadata folder) throws Exception {
@@ -101,11 +106,12 @@ public class FileSystemService implements FileSystemRepository {
         }
     }
 
+    //TODO update
     @Override
     @Transactional
     public void updateFileName(String newName, FileMetadata file) throws Exception {
         //find file
-        File checkExists = new File(fileStorageProperties.getBasePath() + file.getOwner());
+        File checkExists = new File(fileStorageProperties.getBasePath() + file.getName());
         if (!checkExists.exists())
             throw new FileNotFoundException("File not found");
         //save extension
@@ -114,7 +120,7 @@ public class FileSystemService implements FileSystemRepository {
         File renamedFile = new File(
                 fileStorageProperties.getBasePath() +
                         Path.of(
-                                file.getOwner()).getParent() +
+                                file.getName()).getParent() +
                         File.separator +
                         newName +
                         fileUtility.getFileExtension(file.getName()));
@@ -136,17 +142,26 @@ public class FileSystemService implements FileSystemRepository {
 
     @Transactional
     @Override
-    public void moveFile(FileMetadata file, String newPath) throws Exception {
-        newPath = fileStorageProperties.getBasePath() + newPath + File.separator + file.getName();
+    public void moveFile(FileMetadata targetFile, FolderMetadata destinationFolder, String currentFolder) throws Exception {
+        String newPath = fileStorageProperties.getBasePath() +
+                fileUtility.resolvePathFromIdString(destinationFolder.getPath()) +
+                File.separator +
+                targetFile.getName();
         logger.info("new file path = {}", newPath);
         //find file
-        File checkExists = new File(fileStorageProperties.getBasePath() + file.getOwner());
+        String oldPath = fileStorageProperties.getBasePath()
+                + currentFolder +
+                File.separator +
+                targetFile.getName();
+        File checkExists = new File(oldPath);
         if (!checkExists.exists()) throw new FileNotFoundException();
-        if (!checkExists.renameTo(new File(newPath))) throw new FileSystemException(file.getName());
+        if (!checkExists.renameTo(new File(newPath)))
+            throw new FileSystemException(String.format(
+                    "Failed to move file with name %s from %s to %s",targetFile.getName(), oldPath, newPath ));
         //set new name and path
-        file.setFolderId(file.getFolderId());
+        targetFile.setFolderId(destinationFolder.getId());
         //save
-        sqLiteFileRepository.save(file);
+        sqLiteFileRepository.save(targetFile);
     }
 
     @Transactional

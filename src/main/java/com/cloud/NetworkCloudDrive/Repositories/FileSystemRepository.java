@@ -15,6 +15,6 @@ public interface FileSystemRepository {
     void updateFolderName(String newName, FolderMetadata folder) throws Exception;
     void updateFileName(String newName, FileMetadata file) throws Exception;
     void moveFolder(FolderMetadata folder, String newPath) throws Exception;
-    void moveFile(FileMetadata file, String newPath) throws Exception;
+    void moveFile(FileMetadata targetFile, FolderMetadata destinationFolder, String currentFolder) throws Exception;
     FolderMetadata createFolder(String folderName, long folderid) throws Exception;
 }

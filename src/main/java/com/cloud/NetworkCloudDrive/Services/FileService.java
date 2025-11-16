@@ -48,7 +48,8 @@ public class FileService implements FileRepository {
             try (InputStream inputStream = file.getInputStream()) {
                 storagePath = storeFile(inputStream, file.getOriginalFilename(), folderPath);
             }
-            FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), folderId, fileStorageProperties.getOnlyUserName(), file.getContentType(), file.getSize());
+            long place_holder_id = 0; // get userid with auth
+            FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), folderId, place_holder_id, file.getContentType(), file.getSize());
             uploadedFiles.add(metadata);
             storagePathList.add(storagePath);
         }

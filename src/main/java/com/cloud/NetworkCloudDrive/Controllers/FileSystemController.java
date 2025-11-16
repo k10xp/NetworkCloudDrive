@@ -130,9 +130,16 @@ public class FileSystemController {
     public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFilePathDTO updateFilePathDTO) {
         try {
             FileMetadata fileToMove = informationService.getFileMetadata(updateFilePathDTO.getFileid());
+            String oldPath;
+            if (updateFilePathDTO.getFolderid() != 0 || fileToMove.getFolderId() != 0) {
+                FolderMetadata currentFolder = informationService.getFolderMetadata(fileToMove.getFolderId());
+                oldPath = fileUtility.resolvePathFromIdString(currentFolder.getPath());
+            } else {
+                oldPath = fileStorageProperties.getFullPath();
+            }
             FolderMetadata destinationFolder = informationService.getFolderMetadata(updateFilePathDTO.getFolderid());
-            String oldPath = fileToMove.getOwner();
-            fileSystemService.moveFile(fileToMove, fileUtility.resolvePathFromIdString(destinationFolder.getPath()));
+            String newPath = fileUtility.resolvePathFromIdString(destinationFolder.getPath());
+            fileSystemService.moveFile(fileToMove, destinationFolder, oldPath);
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
@@ -140,7 +147,7 @@ public class FileSystemController {
                                     "Moved file with Id %d from %s to %s",
                                     updateFilePathDTO.getFileid(),
                                     oldPath,
-                                    destinationFolder.getPath()),
+                                    newPath),
                             true));
         } catch (Exception e) {
             logger.error("Cannot move name: {}", e.getMessage());
@@ -211,13 +218,7 @@ public class FileSystemController {
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
         try {
-            String folderPath;
-            if (folderid != 0) {
-                FolderMetadata folderMetadata = informationService.getFolderMetadata(folderid);
-                folderPath = fileUtility.resolvePathFromIdString(folderMetadata.getPath());
-            } else {
-                folderPath = fileStorageProperties.getOnlyUserName();
-            }
+            String folderPath = fileUtility.getFolderPath(folderid);
             List<Path> fileList;
             try(Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() +  folderPath))) {
                 fileList = stream.toList();
@@ -227,9 +228,7 @@ public class FileSystemController {
             for (Path path : fileList) {
                 File file = path.toFile();
                 if (file.isFile()) {
-                    folderAndFileMetadata.add(
-                            informationService.getFileMetadataByFolderIdAndName(folderid, file.getName(),
-                                    fileStorageProperties.getOnlyUserName()));
+                    folderAndFileMetadata.add(informationService.getFileMetadataByFolderIdAndName(folderid, file.getName(), 0));
                     continue;
                 }
                 FolderMetadata foundFolderMetadata = informationService.getFolderMetadataByFolderIdAndName(folderid, file.getName(), lastIdList);

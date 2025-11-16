@@ -4,6 +4,8 @@ import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
+import com.cloud.NetworkCloudDrive.Services.FileSystemService;
+import com.cloud.NetworkCloudDrive.Services.InformationService;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,15 +24,28 @@ public class FileUtility {
     private final SQLiteFileRepository sqLiteFileRepository;
     private final SQLiteFolderRepository sqLiteFolderRepository;
     private final FileStorageProperties fileStorageProperties;
+    private final InformationService informationService;
     private final Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
     public FileUtility(
             SQLiteFolderRepository sqLiteFolderRepository,
             SQLiteFileRepository sqLiteFileRepository,
-            FileStorageProperties fileStorageProperties) {
+            FileStorageProperties fileStorageProperties,
+            //WHYWHY
+            InformationService informationService) {
         this.sqLiteFileRepository = sqLiteFileRepository;
         this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.fileStorageProperties = fileStorageProperties;
+        this.informationService = informationService;
+    }
+
+    //TODO Fix dependency cycle
+    public String getFolderPath(long folderId) throws Exception {
+        return folderId != 0
+                ?
+                resolvePathFromIdString(informationService.getFolderMetadata(folderId).getPath())
+                :
+                fileStorageProperties.getOnlyUserName();
     }
 
     public boolean checkAndMakeDirectories(String path) {

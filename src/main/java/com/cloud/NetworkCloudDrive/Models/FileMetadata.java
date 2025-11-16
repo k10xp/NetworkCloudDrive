@@ -19,8 +19,8 @@ public class FileMetadata {
     @Column(name = "folderId")
     private Long folderId;
 
-    @Column(name = "owner")
-    private String owner;
+    @Column(name = "userid")
+    private Long userid;
 
     @Column(name = "mimiType")
     private String mimiType;
@@ -31,18 +31,21 @@ public class FileMetadata {
     @CreationTimestamp
     private Instant createdAt;
 
-    public FileMetadata(String name, Long folderId,String owner, String mimiType, Long size) {
+    public FileMetadata(String name, Long folderId,Long userid, String mimiType, Long size) {
         this.name = name;
         this.folderId = folderId;
-        this.owner = owner;
+        this.userid = userid;
         this.mimiType = mimiType;
         this.size = size;
     }
 
     public FileMetadata() {}
 
-    public String getOwner() {
-        return owner;
+    public Long getUserid() {
+        return userid;
+    }
+    public void setUserid(Long userid) {
+        this.userid = userid;
     }
     public void setId(Long id) {
         this.id = id;
@@ -58,9 +61,6 @@ public class FileMetadata {
     }
     public void setFolderId(Long folderId) {
         this.folderId = folderId;
-    }
-    public void setOwner(String owner) {
-        this.owner = owner;
     }
     public Long getId() {
         return id;

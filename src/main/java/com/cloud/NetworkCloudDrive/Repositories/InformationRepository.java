@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface InformationRepository {
-    FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, String owner) throws FileSystemException;
+    FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, long userid) throws FileSystemException;
     FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name, List<Long> skipList)
             throws FileSystemException, FileNotFoundException;
     FileMetadata getFileMetadata(long id) throws Exception;

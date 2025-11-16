@@ -39,10 +39,10 @@ public class InformationService implements InformationRepository {
 
     @Transactional
     @Override
-    public FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, String owner) throws FileSystemException {
+    public FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, long userid) throws FileSystemException {
         FileMetadata dummyFileMetadata = new FileMetadata();
 
-        dummyFileMetadata.setName(name);dummyFileMetadata.setFolderId(folderId);dummyFileMetadata.setOwner(owner);
+        dummyFileMetadata.setName(name);dummyFileMetadata.setFolderId(folderId);dummyFileMetadata.setUserid(userid);
         dummyFileMetadata.setMimiType(null);dummyFileMetadata.setSize(null);dummyFileMetadata.setId(null);dummyFileMetadata.setCreatedAt(null);
 
         Example<FileMetadata> fileMetadataExample = Example.of(dummyFileMetadata);
@@ -87,7 +87,7 @@ public class InformationService implements InformationRepository {
     @Transactional
     public FileMetadata getFileMetadata(long id) throws Exception {
         Optional<FileMetadata> checkFile = sqLiteFileRepository.findById(id);
-        if (checkFile.isEmpty()) throw new FileNotFoundException("File does not exist.");
+        if (checkFile.isEmpty()) throw new FileNotFoundException("File with Id " + id + " does not exist");
         FileMetadata retrievedFile = checkFile.get();
         File fileCheck = new File(
                 fileStorageProperties.getBasePath() +
@@ -98,7 +98,7 @@ public class InformationService implements InformationRepository {
                                 :
                                 fileStorageProperties.getOnlyUserName()) + File.separator + retrievedFile.getName());
         if (!fileCheck.exists())
-            throw new IOException(String.format("File could not be found on the computer! File path: %s", retrievedFile.getOwner()));
+            throw new IOException(String.format("File could not be found on the computer! File path: %s", fileCheck.getPath()));
         retrievedFile.setSize(fileCheck.length()); //bytes
         return retrievedFile;
     }
@@ -106,7 +106,7 @@ public class InformationService implements InformationRepository {
     @Override
     public FolderMetadata getFolderMetadata(long fileId) throws Exception {
         Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(fileId);
-        if (folderMetadata.isEmpty()) throw new FileNotFoundException();
+        if (folderMetadata.isEmpty()) throw new FileNotFoundException("Folder with Id " + fileId + " does not exist");
         FolderMetadata folder = folderMetadata.get();
         File getFolder = new File(fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(folder.getPath()));
         if (!getFolder.exists())
