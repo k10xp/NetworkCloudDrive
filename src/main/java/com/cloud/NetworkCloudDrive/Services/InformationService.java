@@ -39,7 +39,11 @@ public class InformationService implements InformationRepository {
 
     @Override
     public String getFolderPathAsString(long folderId) throws Exception {
-        return folderId != 0 ? fileUtility.resolvePathFromIdString(getFolderMetadata(folderId).getPath()) : fileStorageProperties.getOnlyUserName();
+        return folderId != 0
+                ?
+                fileUtility.resolvePathFromIdString(getFolderMetadata(folderId).getPath())
+                :
+                fileStorageProperties.getOnlyUserName();
     }
 
     @Transactional
@@ -109,7 +113,7 @@ public class InformationService implements InformationRepository {
     }
 
     @Override
-    public FolderMetadata getFolderMetadata(long fileId) throws Exception {
+    public FolderMetadata getFolderMetadata(long fileId) throws IOException {
         Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(fileId);
         if (folderMetadata.isEmpty()) throw new FileNotFoundException("Folder with Id " + fileId + " does not exist");
         FolderMetadata folder = folderMetadata.get();

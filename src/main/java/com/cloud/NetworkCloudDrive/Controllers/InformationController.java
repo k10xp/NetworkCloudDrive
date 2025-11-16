@@ -22,8 +22,7 @@ public class InformationController {
     private final InformationService informationService;
     private final Logger logger = LoggerFactory.getLogger(InformationController.class);
 
-    public InformationController(
-            FileUtility fileUtility,
+    public InformationController(FileUtility fileUtility,
             InformationService informationService,
             FileStorageProperties fileStorageProperties) {
         this.fileUtility = fileUtility;
@@ -35,17 +34,12 @@ public class InformationController {
     public @ResponseBody ResponseEntity<?> getFile(@RequestParam long fileid) {
         try {
             FileMetadata fileMetadata = informationService.getFileMetadata(fileid);
-            return ResponseEntity.ok().
-                    contentType(MediaType.APPLICATION_JSON).
-                    body(fileMetadata);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(fileMetadata);
         } catch (Exception e) {
             logger.error("Failed to get file metadata for fileId: {}. {}", fileid, e.getMessage());
             return ResponseEntity.internalServerError().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format(
-                            "Failed to get file metadata for fileId: %d. %s",
-                                    fileid,
-                                    e.getMessage()),
+                            String.format("Failed to get file metadata for fileId: %d. %s", fileid, e.getMessage()),
                             false));
         }
     }
@@ -63,13 +57,10 @@ public class InformationController {
                 folderMetadata.setId(folderid);
                 folderMetadata.setUserid(0L); //placeholder
             }
-            return ResponseEntity.ok().
-                    contentType(MediaType.APPLICATION_JSON).
-                    body(folderMetadata);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
             logger.error("Failed to get folder metadata for fileId: {}. {}", folderid, e.getMessage());
-            return ResponseEntity.internalServerError().
-                    contentType(MediaType.APPLICATION_JSON).
+            return ResponseEntity.internalServerError().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
                             String.format("Failed to get folder metadata for fileId: %d. %s", folderid, e.getMessage()),
                             false));

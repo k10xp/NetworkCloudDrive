@@ -77,8 +77,7 @@ public class FileController {
                     contentLength(metadata.getSize()).body(file);
         } catch (Exception e) {
             logger.error("Failed to download file. {}", e.getMessage());
-            return ResponseEntity.internalServerError().
-                    body(new JSONResponse("Failed to download file", false));
+            return ResponseEntity.internalServerError().body(new JSONResponse("Failed to download file", false));
         }
     }
 
@@ -93,12 +92,10 @@ public class FileController {
         try {
             FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getPath(), folderDTO.getFolderid());
             folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
-            return ResponseEntity.ok().
-                    body(folderMetadata);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
             logger.error("Error creating folder at path: {}. {}", folderDTO.getPath(),e.getMessage());
-            return ResponseEntity.internalServerError().
-                    body(new JSONResponse(e.getMessage(), false));
+            return ResponseEntity.internalServerError().body(new JSONResponse(e.getMessage(), false));
         }
     }
 }

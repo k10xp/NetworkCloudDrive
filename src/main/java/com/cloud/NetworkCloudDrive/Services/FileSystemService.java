@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+//TODO Migrate from io to nio for thread safety
 @Service
 public class FileSystemService implements FileSystemRepository {
     private final SQLiteFileRepository sqLiteFileRepository;
@@ -70,34 +71,37 @@ public class FileSystemService implements FileSystemRepository {
         return folderAndFileMetadata;
     }
 
-    //TODO update
     @Override
     @Transactional
-    public void removeFile(FileMetadata file) throws Exception {
+    public String removeFile(FileMetadata file) throws Exception {
         //find folder
         File checkExists = new File(fileStorageProperties.getBasePath() +
-                fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(file.getFolderId()).getPath()) +
+                (file.getFolderId() != 0 ?
+                        fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(file.getFolderId()).getPath())
+                        :
+                        fileStorageProperties.getOnlyUserName()) +
                 File.separator + file.getName());
-        if (!checkExists.exists()) throw new FileNotFoundException();
+        if (!checkExists.exists()) throw new FileNotFoundException(String.format("File does not exist at path %s", checkExists.getPath()));
         //remove Folder
         if (!checkExists.delete())
             throw new FileSystemException(String.format("Failed to remove folder at path %s\n", checkExists.getPath()));
         sqLiteFileRepository.delete(file);
+        return checkExists.getPath();
     }
 
-    //TODO update
+    //TODO implement walk fs tree to recursively remove contents of a folder from system and database
     @Override
     @Transactional
-    public void removeFolder(FolderMetadata folder) throws Exception {
+    public String removeFolder(FolderMetadata folder) throws IOException {
         String pathToRemove = fileUtility.resolvePathFromIdString(folder.getPath());
         //find folder
         File checkExists = new File(fileStorageProperties.getBasePath() + pathToRemove);
-        if (!checkExists.exists()) throw new FileNotFoundException(String.format("Folder does not exist at path %s", pathToRemove));
+        if (!Files.deleteIfExists(checkExists.toPath()))
+            throw new FileSystemException(String.format("Failed to delete folder. Does folder exist at path %s?", pathToRemove));
         //remove Folder
         Files.delete(checkExists.toPath());
-//        if (!checkExists.delete())
-//            throw new FileSystemException(String.format("Failed to remove folder at path %s", pathToRemove));
         sqLiteFolderRepository.delete(folder);
+        return checkExists.getPath();
     }
 
     //TODO update
@@ -164,19 +168,14 @@ public class FileSystemService implements FileSystemRepository {
         String newPath = fileStorageProperties.getBasePath() + destinationFolder + File.separator + targetFile.getName();
         logger.info("new file path = {}", newPath);
         //find file
-        String oldPath = fileStorageProperties.getBasePath()
-                + currentFolder +
-                File.separator +
-                targetFile.getName();
+        String oldPath = fileStorageProperties.getBasePath() + currentFolder + File.separator + targetFile.getName();
         logger.info("old path service {}", oldPath);
         File checkExists = new File(oldPath);
-        if (!checkExists.exists()) throw new FileNotFoundException(String.format(
-                "File does not exist with name %s at path %s",
-                targetFile.getName(),
-                oldPath));
+        if (!checkExists.exists())
+            throw new FileNotFoundException(String.format("File does not exist with name %s at path %s", targetFile.getName(), oldPath));
         if (!checkExists.renameTo(new File(newPath)))
-            throw new FileSystemException(String.format(
-                    "Failed to move file with name %s from %s to %s",targetFile.getName(), oldPath, newPath ));
+            throw new FileSystemException(
+                    String.format("Failed to move file with name %s from %s to %s",targetFile.getName(), oldPath, newPath ));
         //set new name and path
         targetFile.setFolderId(targetFile.getFolderId());
         //save
