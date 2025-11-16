@@ -61,6 +61,7 @@ public class InformationController {
                 File folderRootMetadata = new File(fileStorageProperties.getFullPath());
                 folderMetadata = new FolderMetadata(folderRootMetadata.getName(), folderRootMetadata.getPath());
                 folderMetadata.setId(folderid);
+                folderMetadata.setUserid(0L); //placeholder
             }
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
@@ -70,10 +71,7 @@ public class InformationController {
             return ResponseEntity.internalServerError().
                     contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format(
-                                    "Failed to get folder metadata for fileId: %d. %s",
-                                    folderid,
-                                    e.getMessage()),
+                            String.format("Failed to get folder metadata for fileId: %d. %s", folderid, e.getMessage()),
                             false));
         }
     }

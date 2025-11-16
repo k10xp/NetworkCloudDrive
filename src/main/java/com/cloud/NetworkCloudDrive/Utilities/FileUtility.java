@@ -2,13 +2,11 @@ package com.cloud.NetworkCloudDrive.Utilities;
 
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
-import com.cloud.NetworkCloudDrive.Services.FileSystemService;
-import com.cloud.NetworkCloudDrive.Services.InformationService;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -18,21 +16,25 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class FileUtility {
-    private final SQLiteFileRepository sqLiteFileRepository;
     private final SQLiteFolderRepository sqLiteFolderRepository;
     private final FileStorageProperties fileStorageProperties;
     private final Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
-    public FileUtility(
-            SQLiteFolderRepository sqLiteFolderRepository,
-            SQLiteFileRepository sqLiteFileRepository,
-            FileStorageProperties fileStorageProperties) {
-        this.sqLiteFileRepository = sqLiteFileRepository;
+    public FileUtility(SQLiteFolderRepository sqLiteFolderRepository, FileStorageProperties fileStorageProperties) {
         this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.fileStorageProperties = fileStorageProperties;
+    }
+
+    public List<Path> getFileAndFolderPathsFromFolder(String folderPath) throws IOException {
+        List<Path> fileList;
+        try(Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() +  folderPath))) {
+            fileList = stream.toList();
+        }
+        return fileList;
     }
 
     public boolean checkAndMakeDirectories(String path) {
@@ -71,6 +73,8 @@ public class FileUtility {
         return fullPath.toString();
     }
 
+    // Currently unused functions
+
     public List<FolderMetadata> findAllFoldersInPath(File folder, EntityManager entityManager) throws IOException {
         //Find folders in path
         List<FolderMetadata> foldersDiscovered = new ArrayList<>();
@@ -104,5 +108,17 @@ public class FileUtility {
 
         }
         return folderMetadataList;
+    }
+
+    //check if one of the nested folders are already in db and remove them from the list
+    private List<FolderMetadata> checkIfFolderExistsInDb(FolderMetadata folder) {
+        FolderMetadata dummyMetadata = new FolderMetadata();
+        dummyMetadata.setName(folder.getName());
+        dummyMetadata.setId(null);
+        dummyMetadata.setCreatedAt(null);
+        dummyMetadata.setPath(folder.getPath());
+        logger.info("dummy path {}", dummyMetadata.getPath());
+        Example<FolderMetadata> exampleFolderMetadata = Example.of(dummyMetadata);
+        return sqLiteFolderRepository.findAll(exampleFolderMetadata); //empty = false || not empty = true
     }
 }

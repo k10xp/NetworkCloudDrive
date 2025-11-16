@@ -213,30 +213,13 @@ public class FileSystemController {
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
         try {
-            String folderPath = (folderid != 0
-                    ?
+            List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder((folderid != 0 ?
                     fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(folderid).getPath())
                     :
-                    fileStorageProperties.getOnlyUserName()) ;
-            List<Path> fileList;
-            try(Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() +  folderPath))) {
-                fileList = stream.toList();
-            }
-            List<Object> folderAndFileMetadata = new ArrayList<>();
-            List<Long> lastIdList = new ArrayList<>();
-            for (Path path : fileList) {
-                File file = path.toFile();
-                if (file.isFile()) {
-                    folderAndFileMetadata.add(informationService.getFileMetadataByFolderIdAndName(folderid, file.getName(), 0));
-                    continue;
-                }
-                FolderMetadata foundFolderMetadata = informationService.getFolderMetadataByFolderIdAndName(folderid, file.getName(), lastIdList);
-                folderAndFileMetadata.add(foundFolderMetadata);
-                lastIdList.add(foundFolderMetadata.getId());
-            }
+                    fileStorageProperties.getOnlyUserName()));
             return ResponseEntity.ok().
                     contentType(MediaType.APPLICATION_JSON).
-                    body(folderAndFileMetadata);
+                    body(fileSystemService.getListOfMetadataFromPath(fileList, folderid));
         } catch (FileSystemException fileSystemException) {
             return ResponseEntity.internalServerError().
                     contentType(MediaType.APPLICATION_JSON).

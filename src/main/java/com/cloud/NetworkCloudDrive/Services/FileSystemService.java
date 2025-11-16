@@ -50,8 +50,27 @@ public class FileSystemService implements FileSystemRepository {
         this.fileUtility = fileUtility;
     }
 
-    //TODO update
+    @Override
+    @Transactional
+    public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
+            throws FileSystemException, FileNotFoundException {
+        List<Object> folderAndFileMetadata = new ArrayList<>();
+        List<Long> lastIdList = new ArrayList<>();
+        for (Path path : filePaths) {
+            File file = path.toFile();
+            if (file.isFile()) {
+                folderAndFileMetadata.add(informationService.getFileMetadataByFolderIdAndName(currentFolderId, file.getName(), 0));
+                continue;
+            }
+            FolderMetadata foundFolderMetadata =
+                    informationService.getFolderMetadataByFolderIdAndName(currentFolderId, file.getName(), lastIdList);
+            folderAndFileMetadata.add(foundFolderMetadata);
+            lastIdList.add(foundFolderMetadata.getId());
+        }
+        return folderAndFileMetadata;
+    }
 
+    //TODO update
     @Override
     @Transactional
     public void removeFile(FileMetadata file) throws Exception {
@@ -67,7 +86,6 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     //TODO update
-
     @Override
     @Transactional
     public void removeFolder(FolderMetadata folder) throws Exception {
@@ -165,6 +183,7 @@ public class FileSystemService implements FileSystemRepository {
         sqLiteFileRepository.save(targetFile);
     }
 
+    //TODO Update
     @Transactional
     @Override
     public void moveFolder(FolderMetadata folder, String newPath) throws Exception {
@@ -206,19 +225,8 @@ public class FileSystemService implements FileSystemRepository {
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
         createdFolder.setPath(idPath + File.separator + createdFolder.getId());
+        createdFolder.setUserid(0L);
         createdFolder.setName(folderName);
         return sqLiteFolderRepository.save(createdFolder); // reverse order
-    }
-
-    //check if one of the nested folders are already in db and remove them from the list
-    private List<FolderMetadata> checkIfFolderExistsInDb(FolderMetadata folder) {
-        FolderMetadata dummyMetadata = new FolderMetadata();
-        dummyMetadata.setName(folder.getName());
-        dummyMetadata.setId(null);
-        dummyMetadata.setCreatedAt(null);
-        dummyMetadata.setPath(folder.getPath());
-        logger.info("dummy path {}", dummyMetadata.getPath());
-        Example<FolderMetadata> exampleFolderMetadata = Example.of(dummyMetadata);
-        return sqLiteFolderRepository.findAll(exampleFolderMetadata); //empty = false || not empty = true
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.io.FileNotFoundException;
 import java.nio.file.FileSystemException;
+import java.nio.file.Path;
 import java.util.List;
 
 @Repository
@@ -17,4 +18,5 @@ public interface FileSystemRepository {
     void moveFolder(FolderMetadata folder, String newPath) throws Exception;
     void moveFile(FileMetadata targetFile, String destinationFolder, String currentFolder) throws Exception;
     FolderMetadata createFolder(String folderName, long folderid) throws Exception;
+    List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId) throws FileSystemException, FileNotFoundException;
 }
