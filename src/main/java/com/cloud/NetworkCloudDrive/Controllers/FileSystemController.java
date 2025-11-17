@@ -17,13 +17,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
 import java.nio.file.FileSystemException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(path = "/api/filesystem")
@@ -50,12 +46,12 @@ public class FileSystemController {
         try {
             FileMetadata oldFile = informationService.getFileMetadata(updateFileNameDTO.getFileid());
             String oldName = oldFile.getName();
-            fileSystemService.updateFileName(updateFileNameDTO.getName(), oldFile);
+            String updatedPath = fileSystemService.updateFileName(updateFileNameDTO.getName(), oldFile);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
                             String.format(
-                                    "Updated file with Id %d from %s to %s",
-                                    updateFileNameDTO.getFileid(), oldName, updateFileNameDTO.getName()),
+                                    "Updated file with Id %d from %s to %s. Updated path %s",
+                                    updateFileNameDTO.getFileid(), oldName, updateFileNameDTO.getName(), updatedPath),
                             true));
         } catch (Exception e) {
             logger.error("Cannot update name: {}", e.getMessage());

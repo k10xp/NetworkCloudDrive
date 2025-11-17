@@ -49,9 +49,15 @@ public class InformationService implements InformationRepository {
     @Transactional
     @Override
     public FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, long userid) throws FileSystemException {
+        // dummy metadata for search
         FileMetadata dummyFileMetadata = new FileMetadata();
-        dummyFileMetadata.setName(name);dummyFileMetadata.setFolderId(folderId);dummyFileMetadata.setUserid(userid);
-        dummyFileMetadata.setMimiType(null);dummyFileMetadata.setSize(null);dummyFileMetadata.setId(null);dummyFileMetadata.setCreatedAt(null);
+        dummyFileMetadata.setName(name);
+        dummyFileMetadata.setFolderId(folderId);
+        dummyFileMetadata.setUserid(userid);
+        dummyFileMetadata.setMimiType(null);
+        dummyFileMetadata.setSize(null);
+        dummyFileMetadata.setId(null);
+        dummyFileMetadata.setCreatedAt(null);
         Example<FileMetadata> fileMetadataExample = Example.of(dummyFileMetadata);
         Optional<FileMetadata> optionalFileMetadata = sqLiteFileRepository.findOne(fileMetadataExample);
         if (optionalFileMetadata.isEmpty())
@@ -66,18 +72,21 @@ public class InformationService implements InformationRepository {
         String idPath;
         if (folderId != 0) {
             Optional<FolderMetadata> optionalParentFolderMetadata = sqLiteFolderRepository.findById(folderId);
-            if (optionalParentFolderMetadata.isEmpty()) throw new FileNotFoundException("Invalid folderId or Folder is not synced with database");
+            if (optionalParentFolderMetadata.isEmpty())
+                throw new FileNotFoundException("Invalid folderId or Folder is not synced with database");
             idPath = optionalParentFolderMetadata.get().getPath();
         } else {
             idPath = "0";
         }
         List<FolderMetadata> findAllByPathList = sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
-        if (findAllByPathList.isEmpty()) throw new FileSystemException("Can't resolve path");
+        if (findAllByPathList.isEmpty())
+            throw new FileSystemException("Can't resolve path");
         String[] splitOriginalPath = idPath.split("/");
         int originalPathLength = splitOriginalPath.length;
         FolderMetadata returnFolder = new FolderMetadata();
         for (FolderMetadata folderMetadata : findAllByPathList) {
-            if (skipList.contains(folderMetadata.getId())) continue;
+            if (skipList.contains(folderMetadata.getId()))
+                continue;
             String[] splitBySlash = folderMetadata.getPath().split("/");
             if ((splitBySlash.length > originalPathLength) && (splitBySlash.length < originalPathLength+2)) {
                 returnFolder = folderMetadata;
@@ -95,12 +104,9 @@ public class InformationService implements InformationRepository {
         FileMetadata retrievedFile = checkFile.get();
         File fileCheck = new File(
                 fileStorageProperties.getBasePath() +
+                        getFolderPathAsString(retrievedFile.getFolderId()) +
                         File.separator +
-                        (retrievedFile.getFolderId() != 0
-                                ?
-                                fileUtility.resolvePathFromIdString(getFolderMetadata(retrievedFile.getFolderId()).getPath())
-                                :
-                                fileStorageProperties.getOnlyUserName()) + File.separator + retrievedFile.getName());
+                        retrievedFile.getName());
         if (!fileCheck.exists())
             throw new IOException(String.format("File could not be found on the computer! File path: %s", fileCheck.getPath()));
         retrievedFile.setSize(fileCheck.length()); //bytes
@@ -110,7 +116,8 @@ public class InformationService implements InformationRepository {
     @Override
     public FolderMetadata getFolderMetadata(long fileId) throws IOException {
         Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(fileId);
-        if (folderMetadata.isEmpty()) throw new FileNotFoundException("Folder with Id " + fileId + " does not exist");
+        if (folderMetadata.isEmpty())
+            throw new FileNotFoundException("Folder with Id " + fileId + " does not exist");
         FolderMetadata folder = folderMetadata.get();
         File getFolder = new File(fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(folder.getPath()));
         if (!getFolder.exists())

@@ -48,12 +48,12 @@ public class FileSystemService implements FileSystemRepository {
 
     @Override
     @Transactional
-    public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
-            throws FileSystemException, FileNotFoundException {
+    public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId) throws FileSystemException, FileNotFoundException {
         List<Object> folderAndFileMetadata = new ArrayList<>();
         List<Long> lastIdList = new ArrayList<>();
         for (Path path : filePaths) {
             File file = path.toFile();
+            logger.info("file/folder in queue {}", file);
             if (file.isFile()) {
                 folderAndFileMetadata.add(informationService.getFileMetadataByFolderIdAndName(currentFolderId, file.getName(), 0));
                 continue;
