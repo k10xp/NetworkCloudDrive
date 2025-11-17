@@ -179,8 +179,7 @@ public class FileSystemService implements FileSystemRepository {
         File updatedPath = new File(newPath);
         Path movedFile = Files.move(checkExists.toPath(), updatedPath.toPath());
         if (!Files.exists(movedFile))
-            throw new FileSystemException(
-                    String.format("Failed to move file with name %s from %s to %s",targetFile.getName(), oldPath, newPath));
+            throw new FileSystemException(String.format("Failed to move file with name %s from %s to %s",targetFile.getName(), oldPath, newPath));
         //set new name and path
         targetFile.setFolderId(folderId);
         //save
@@ -191,17 +190,36 @@ public class FileSystemService implements FileSystemRepository {
     //TODO Update
     @Transactional
     @Override
-    public void moveFolder(FolderMetadata folder, String newPath) throws Exception {
-        newPath = fileStorageProperties.getBasePath() + newPath + File.separator + folder.getName();
-        logger.info("new folder path = {}", newPath);
-        //find file
-        File checkExists = new File(fileStorageProperties.getBasePath() + folder.getPath());
-        if (!checkExists.exists()) throw new FileNotFoundException();
-        if (!checkExists.renameTo(new File(newPath))) throw new FileSystemException(folder.getName());
-        //set new name and path
-//        folder.setPath(removeBeginningOfPath(newPath));
+    public String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception {
+        String sourceFolderPath = fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(folder.getPath());
+        FolderMetadata destinationFolderMetadata = informationService.getFolderMetadata(destinationFolderId);
+        String destinationFolderPath =
+                fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(destinationFolderMetadata.getPath());
+        logger.info("destination folder path = {}", destinationFolderPath);
+        File sourceFolderObj = new File(sourceFolderPath);
+        File destinationFolderObj = new File(destinationFolderPath);
+        // validate
+        if (!Files.exists(destinationFolderObj.toPath()))
+            throw new FileNotFoundException("Destination folder not found at path " + destinationFolderObj.getPath() + "!");
+        if (!Files.exists(sourceFolderObj.toPath()))
+            throw new FileNotFoundException("Source folder not found at path " + sourceFolderObj.getPath() + "!");
+        // generate folder id path
+        // if the target is 0 and the source is at 0/1/4/2
+        // then it will be 0/2 original source will be 0/1/4
+        String formerIdPath = destinationFolderMetadata.getPath();
+        String concatIdPath = fileUtility.concatIdPaths(formerIdPath, folder.getId());
+        folder.setPath(concatIdPath);
+        logger.info("concat id path {}", concatIdPath);
+        // get children folders to update
+        //List<FolderMetadata> foldersToMove = fileUtility.getChildrenFoldersInDirectory(fileUtility.resolvePathFromIdString(folder.getPath()));
+        // perform filesystem move
+        String updatedPath = destinationFolderPath + File.separator + sourceFolderObj.getName();
+        Path moveFolderAction = Files.move(sourceFolderObj.toPath(), Path.of(updatedPath));
+        if (!Files.exists(moveFolderAction))
+            throw new FileSystemException(String.format("Failed to move the folder from %s to %s", sourceFolderPath, updatedPath));
         //save
         sqLiteFolderRepository.save(folder);
+        return updatedPath;
     }
 
     @Override
@@ -230,7 +248,7 @@ public class FileSystemService implements FileSystemRepository {
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
         createdFolder.setPath(idPath + File.separator + createdFolder.getId());
-        createdFolder.setUserid(0L);
+        createdFolder.setUserid(0L); //placeholder
         createdFolder.setName(folderName);
         return sqLiteFolderRepository.save(createdFolder); // reverse order
     }

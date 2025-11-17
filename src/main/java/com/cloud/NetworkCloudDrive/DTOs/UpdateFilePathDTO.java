@@ -1,21 +1,21 @@
 package com.cloud.NetworkCloudDrive.DTOs;
 
 public class UpdateFilePathDTO {
-    private long fileid;
-    private long folderid;
+    private long file_id;
+    private long folder_id;
 
     public UpdateFilePathDTO() {}
 
-    public long getFileid() {
-        return this.fileid;
+    public long getFile_id() {
+        return this.file_id;
     }
-    public void setFileid(long fileid) {
-        this.fileid = fileid;
+    public void setFile_id(long file_id) {
+        this.file_id = file_id;
     }
-    public long getFolderid() {
-        return this.folderid;
+    public long getFolder_id() {
+        return this.folder_id;
     }
-    public void setFolderid(long folderid) {
-        this.folderid = folderid;
+    public void setFolder_id(long folder_id) {
+        this.folder_id = folder_id;
     }
 }

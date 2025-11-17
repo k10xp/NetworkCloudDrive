@@ -44,41 +44,41 @@ public class FileSystemController {
     @PostMapping(value = "file/rename", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<JSONResponse> updateFileName(@RequestBody UpdateFileNameDTO updateFileNameDTO) {
         try {
-            FileMetadata oldFile = informationService.getFileMetadata(updateFileNameDTO.getFileid());
+            FileMetadata oldFile = informationService.getFileMetadata(updateFileNameDTO.getFile_id());
             String oldName = oldFile.getName();
             String updatedPath = fileSystemService.updateFileName(updateFileNameDTO.getName(), oldFile);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
                             String.format(
                                     "Updated file with Id %d from %s to %s. Updated path %s",
-                                    updateFileNameDTO.getFileid(), oldName, updateFileNameDTO.getName(), updatedPath),
+                                    updateFileNameDTO.getFile_id(), oldName, updateFileNameDTO.getName(), updatedPath),
                             true));
         } catch (Exception e) {
             logger.error("Cannot update name: {}", e.getMessage());
             return ResponseEntity.badRequest().
                     contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format("Failed to update file with Id %d: %s", updateFileNameDTO.getFileid(), e.getMessage()), false));
+                            String.format("Failed to update file with Id %d: %s", updateFileNameDTO.getFile_id(), e.getMessage()), false));
         }
     }
 
     @PostMapping(value = "folder/rename", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<JSONResponse> updateFolderName(@RequestBody UpdateFolderNameDTO updateFolderNameDTO) {
         try {
-            FolderMetadata oldFolder = informationService.getFolderMetadata(updateFolderNameDTO.getFolderid());
+            FolderMetadata oldFolder = informationService.getFolderMetadata(updateFolderNameDTO.getFolder_id());
             String oldName = oldFolder.getName();
             String updatedPath = fileSystemService.updateFolderName(updateFolderNameDTO.getName(), oldFolder);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
                             String.format(
                                     "Updated folder name with Id %d from %s to %s. Updated path %s",
-                                    updateFolderNameDTO.getFolderid(), oldName, updateFolderNameDTO.getName(), updatedPath),
+                                    updateFolderNameDTO.getFolder_id(), oldName, updateFolderNameDTO.getName(), updatedPath),
                             true));
         } catch (Exception e) {
             logger.error("Cannot update folder name. {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format("Failed to update folder with Id %d: %s", updateFolderNameDTO.getFolderid(), e.getMessage()),
+                            String.format("Failed to update folder with Id %d: %s", updateFolderNameDTO.getFolder_id(), e.getMessage()),
                             false));
         }
     }
@@ -86,21 +86,18 @@ public class FileSystemController {
     @PostMapping(value = "folder/move", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFolderPathDTO updateFolderPathDTO) {
         try {
-            FolderMetadata folderToMove = informationService.getFolderMetadata(updateFolderPathDTO.getFormerFolderid());
-            FolderMetadata destinationFolder = informationService.getFolderMetadata(updateFolderPathDTO.getDestinationFolderid());
-            String oldPath = folderToMove.getPath();
-            fileSystemService.moveFolder(folderToMove, destinationFolder.getPath());
+            FolderMetadata folderToMove = informationService.getFolderMetadata(updateFolderPathDTO.getFormer_folder_id());
+            String oldPath = fileUtility.resolvePathFromIdString(folderToMove.getPath());
+            String newPath = fileSystemService.moveFolder(folderToMove, updateFolderPathDTO.getDestination_folder_id());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format(
-                                    "Moved folder with Id %d from %s to %s",
-                                    updateFolderPathDTO.getFormerFolderid(), oldPath, destinationFolder.getPath()),
+                            String.format("Moved folder with Id %d from %s to %s", updateFolderPathDTO.getFormer_folder_id(), oldPath, newPath),
                             true));
         } catch (Exception e) {
             logger.error("Cannot move folder. {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format("Failed to move folder with Id %d: %s", updateFolderPathDTO.getFormerFolderid(), e.getMessage()),
+                            String.format("Failed to move folder with Id %d: %s", updateFolderPathDTO.getFormer_folder_id(), e.getMessage()),
                             false));
         }
     }
@@ -108,22 +105,22 @@ public class FileSystemController {
     @PostMapping(value = "file/move", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFilePathDTO updateFilePathDTO) {
         try {
-            FileMetadata fileToMove = informationService.getFileMetadata(updateFilePathDTO.getFileid());
-            String oldPath = (updateFilePathDTO.getFolderid() != 0 ?
-                    fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(updateFilePathDTO.getFolderid()).getPath())
+            FileMetadata fileToMove = informationService.getFileMetadata(updateFilePathDTO.getFile_id());
+            String oldPath = (updateFilePathDTO.getFolder_id() != 0 ?
+                    fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(updateFilePathDTO.getFolder_id()).getPath())
                     :
                     fileStorageProperties.getOnlyUserName());
             logger.info("old path controller {}", oldPath);
-            String newPath = fileSystemService.moveFile(fileToMove, updateFilePathDTO.getFolderid());
+            String newPath = fileSystemService.moveFile(fileToMove, updateFilePathDTO.getFolder_id());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format("Moved file with Id %d from %s to %s", updateFilePathDTO.getFileid(), oldPath, newPath),
+                            String.format("Moved file with Id %d from %s to %s", updateFilePathDTO.getFile_id(), oldPath, newPath),
                             true));
         } catch (Exception e) {
             logger.error("Cannot move name: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
-                            String.format("Failed to move file with Id %d: %s", updateFilePathDTO.getFileid(), e.getMessage()),
+                            String.format("Failed to move file with Id %d: %s", updateFilePathDTO.getFile_id(), e.getMessage()),
                             false));
         }
     }

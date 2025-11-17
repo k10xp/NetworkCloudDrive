@@ -1,16 +1,16 @@
 package com.cloud.NetworkCloudDrive.DTOs;
 
 public class UpdateFolderNameDTO {
-    private long folderid;
+    private long folder_id;
     private String name;
 
     public UpdateFolderNameDTO() {}
 
-    public long getFolderid() {
-        return folderid;
+    public long getFolder_id() {
+        return folder_id;
     }
-    public void setFolderid(long folderid) {
-        this.folderid = folderid;
+    public void setFolder_id(long folder_id) {
+        this.folder_id = folder_id;
     }
     public String getName() {
         return this.name;

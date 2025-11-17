@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -27,6 +28,19 @@ public class FileUtility {
     public FileUtility(SQLiteFolderRepository sqLiteFolderRepository, FileStorageProperties fileStorageProperties) {
         this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.fileStorageProperties = fileStorageProperties;
+    }
+
+    public String concatIdPaths(String former, long latterId) {
+        int maxLength = former.length() + 1;
+        StringBuilder product = new StringBuilder();
+        for (int i = 0; i < maxLength; i++) {
+            if ((former.length() - 1) < i) {
+                product.append("/").append(latterId);
+                continue;
+            }
+            product.append(former.charAt(i));
+        }
+        return product.toString();
     }
 
     public List<Path> getFileAndFolderPathsFromFolder(String folderPath) throws IOException {
@@ -75,8 +89,22 @@ public class FileUtility {
         return fullPath.toString();
     }
 
-    // Currently unused functions
+    public List<FolderMetadata> getChildrenFoldersInDirectory(String idPath) throws FileSystemException {
+        List<FolderMetadata> findAllByPathList = sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
+        if (findAllByPathList.isEmpty())
+            throw new FileSystemException("Can't find path in database");
+        String[] splitOriginalPath = idPath.split("/");
+        int originalPathLength = splitOriginalPath.length;
+        for (FolderMetadata folderMetadata : findAllByPathList) {
+            String[] splitBySlash = folderMetadata.getPath().split("/");
+            if ((splitBySlash.length > originalPathLength) && (splitBySlash.length < originalPathLength+2))
+                continue;
+            findAllByPathList.remove(folderMetadata);
+        }
+        return findAllByPathList;
+    }
 
+    // Currently unused functions
     public List<FolderMetadata> findAllFoldersInPath(File folder, EntityManager entityManager) throws IOException {
         //Find folders in path
         List<FolderMetadata> foldersDiscovered = new ArrayList<>();
