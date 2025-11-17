@@ -10,7 +10,6 @@ import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 //TODO Migrate from io to nio for thread safety
@@ -101,32 +99,32 @@ public class FileSystemService implements FileSystemRepository {
         return checkExists.getPath();
     }
 
-    //TODO update
     @Override
     @Transactional
     public String updateFolderName(String newName, FolderMetadata folder) throws Exception {
         //find file
         File checkExists = new File(fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(folder.getPath()));
-        if (!checkExists.exists()) throw new FileNotFoundException("folder not found");
+        if (!Files.exists(checkExists.toPath()))
+            throw new FileNotFoundException("folder not found at path " + checkExists.getPath());
         //rename file
-        File renamedFile = new File(Path.of(checkExists.getPath()).getParent() + File.separator + newName);
-        logger.info("estimated path: {}", renamedFile.getPath());
+        File renamedFolder = new File(Path.of(checkExists.getPath()).getParent() + File.separator + newName);
+        logger.info("estimated path: {}", renamedFolder.getPath());
         //check duplicate
-        if (renamedFile.exists())
-            throw new FileAlreadyExistsException(String.format("folder with name %s already exists", renamedFile.getName()));
-        if (checkExists.renameTo(renamedFile)) {
+        if (Files.exists(renamedFolder.toPath()))
+            throw new FileAlreadyExistsException(String.format("folder with name %s already exists", renamedFolder.getName()));
+        Path newUpdatedPath = Files.move(checkExists.toPath(), renamedFolder.toPath());
+        if (Files.exists(newUpdatedPath)) {
             //set new name and path
             folder.setName(newName);
             //save
             sqLiteFolderRepository.save(folder);
-            logger.info("Renamed folder full path: {}", renamedFile.getPath());
+            logger.info("Renamed folder full path: {}", renamedFolder.getPath());
         } else {
-            throw new FileSystemException(String.format("Failed to rename the folder to %s", renamedFile.getName()));
+            throw new FileSystemException(String.format("Failed to rename the folder to %s", renamedFolder.getName()));
         }
-        return renamedFile.getPath();
+        return renamedFolder.getPath();
     }
 
-    //TODO update
     @Override
     @Transactional
     public String updateFileName(String newName, FileMetadata file) throws Exception {
@@ -144,42 +142,50 @@ public class FileSystemService implements FileSystemRepository {
         //rename file
         File renamedFile = new File(folderPath + File.separator + newName + fileUtility.getFileExtension(file.getName()));
         //check duplicate
-        if (renamedFile.exists())
+        if (Files.exists(renamedFile.toPath()))
             throw new FileAlreadyExistsException(String.format("File with name %s already exists", renamedFile.getName()));
         // Perform movement
         Path newUpdatedPath = Files.move(checkExists.toPath(), renamedFile.toPath());
-        if (Files.exists(newUpdatedPath)) {
-            String newMimeType = fileUtility.getMimeTypeFromExtension(newUpdatedPath); /* <- get new mimetype of file */
-            //set new name and path
-            file.setName(newName + oldExtension);
-            file.setMimiType(newMimeType.equals(file.getMimiType()) ? file.getMimiType() : newMimeType);
-            //save
-            sqLiteFileRepository.save(file);
-            logger.info("Renamed file full path: {}", renamedFile.getPath());
-        } else {
+        if (!Files.exists(newUpdatedPath))
             throw new FileSystemException(String.format("Failed to rename the file to %s", renamedFile.getName()));
-        }
+        // get ready for transaction
+        // mimetype has bug in the library (cant detect types such as yaml)
+        String newMimeType = fileUtility.getMimeTypeFromExtension(newUpdatedPath); /* <- get new mimetype of file */
+        //set new name and path
+        file.setName(newName + oldExtension);
+        file.setMimiType(newMimeType.equals(file.getMimiType()) ? file.getMimiType() : newMimeType);
+        //save
+        sqLiteFileRepository.save(file);
+        logger.info("Renamed file full path: {}", renamedFile.getPath());
         return renamedFile.getPath();
     }
 
     @Transactional
     @Override
-    public void moveFile(FileMetadata targetFile, String destinationFolder, String currentFolder) throws Exception {
-        String newPath = fileStorageProperties.getBasePath() + destinationFolder + File.separator + targetFile.getName();
+    public String moveFile(FileMetadata targetFile, long folderId) throws Exception {
+        String destinationFolder = fileStorageProperties.getBasePath() + informationService.getFolderPathAsString(folderId);
+        String currentFolder = informationService.getFolderPathAsString(targetFile.getFolderId());
+        String newPath = destinationFolder + File.separator + targetFile.getName();
         logger.info("new file path = {}", newPath);
         //find file
         String oldPath = fileStorageProperties.getBasePath() + currentFolder + File.separator + targetFile.getName();
         logger.info("old path service {}", oldPath);
         File checkExists = new File(oldPath);
-        if (!checkExists.exists())
+        File checkDestinationExists = new File(destinationFolder);
+        if (!Files.exists(checkExists.toPath()))
             throw new FileNotFoundException(String.format("File does not exist with name %s at path %s", targetFile.getName(), oldPath));
-        if (!checkExists.renameTo(new File(newPath)))
+        if (!Files.exists(checkDestinationExists.toPath()))
+            throw new FileNotFoundException(String.format("Destination folder does not exist at path %s", checkDestinationExists.getPath()));
+        File updatedPath = new File(newPath);
+        Path movedFile = Files.move(checkExists.toPath(), updatedPath.toPath());
+        if (!Files.exists(movedFile))
             throw new FileSystemException(
-                    String.format("Failed to move file with name %s from %s to %s",targetFile.getName(), oldPath, newPath ));
+                    String.format("Failed to move file with name %s from %s to %s",targetFile.getName(), oldPath, newPath));
         //set new name and path
-        targetFile.setFolderId(targetFile.getFolderId());
+        targetFile.setFolderId(folderId);
         //save
         sqLiteFileRepository.save(targetFile);
+        return checkDestinationExists.getPath();
     }
 
     //TODO Update

@@ -50,18 +50,13 @@ public class InformationService implements InformationRepository {
     @Override
     public FileMetadata getFileMetadataByFolderIdAndName(long folderId, String name, long userid) throws FileSystemException {
         FileMetadata dummyFileMetadata = new FileMetadata();
-
         dummyFileMetadata.setName(name);dummyFileMetadata.setFolderId(folderId);dummyFileMetadata.setUserid(userid);
         dummyFileMetadata.setMimiType(null);dummyFileMetadata.setSize(null);dummyFileMetadata.setId(null);dummyFileMetadata.setCreatedAt(null);
-
         Example<FileMetadata> fileMetadataExample = Example.of(dummyFileMetadata);
         Optional<FileMetadata> optionalFileMetadata = sqLiteFileRepository.findOne(fileMetadataExample);
-
-        if (optionalFileMetadata.isPresent()) {
-            return optionalFileMetadata.get();
-        } else {
+        if (optionalFileMetadata.isEmpty())
             throw new FileSystemException("File not found in database. Is database synced?");
-        }
+        return optionalFileMetadata.get();
     }
 
     @Transactional

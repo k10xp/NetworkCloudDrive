@@ -113,11 +113,12 @@ public class FileSystemController {
     public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFilePathDTO updateFilePathDTO) {
         try {
             FileMetadata fileToMove = informationService.getFileMetadata(updateFilePathDTO.getFileid());
-            String oldPath = informationService.getFolderPathAsString(fileToMove.getFolderId());
+            String oldPath = (updateFilePathDTO.getFolderid() != 0 ?
+                    fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(updateFilePathDTO.getFolderid()).getPath())
+                    :
+                    fileStorageProperties.getOnlyUserName());
             logger.info("old path controller {}", oldPath);
-            String newPath = informationService.getFolderPathAsString(updateFilePathDTO.getFolderid());
-            fileToMove.setFolderId(updateFilePathDTO.getFolderid());
-            fileSystemService.moveFile(fileToMove, newPath, oldPath);
+            String newPath = fileSystemService.moveFile(fileToMove, updateFilePathDTO.getFolderid());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
                             String.format("Moved file with Id %d from %s to %s", updateFilePathDTO.getFileid(), oldPath, newPath),
