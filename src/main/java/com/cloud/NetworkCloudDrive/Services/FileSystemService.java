@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -212,18 +211,17 @@ public class FileSystemService implements FileSystemRepository {
         // then it will be 0/2 original source will be 0/1/4
         String formerIdPath = destinationFolderMetadata.getPath();
         String backupPath = "";
-        int index = 0;
-        for (FolderMetadata folderMetadata : foldersToMove) {
-            if (index != 0) {
-                folderMetadata.setPath(backupPath + "/" + folderMetadata.getId());
-                logger.info("id {} name {} path {}", folderMetadata.getId(), folderMetadata.getName(), folderMetadata.getPath());
-                index++;
+        for (int i = 0; i < foldersToMove.size(); i++) {
+            if (i != 0) {
+                foldersToMove.get(i).setPath(backupPath + "/" + foldersToMove.get(i).getId());
+                logger.info(
+                        "beginning id {} name {} path {}",
+                        foldersToMove.get(i).getId(), foldersToMove.get(i).getName(), foldersToMove.get(i).getPath());
                 continue;
             }
-            folderMetadata.setPath(formerIdPath + "/" + folderMetadata.getId());
-            backupPath = folderMetadata.getPath();
-            logger.info("id {} name {} path {}", folderMetadata.getId(), folderMetadata.getName(), folderMetadata.getPath());
-            index++;
+            foldersToMove.get(i).setPath(formerIdPath + "/" + foldersToMove.get(i).getId());
+            backupPath = foldersToMove.get(i).getPath();
+            logger.info("id {} name {} path {}", foldersToMove.get(i).getId(), foldersToMove.get(i).getName(), foldersToMove.get(i).getPath());
         }
 
         // perform filesystem move
