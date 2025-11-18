@@ -10,5 +10,6 @@ class NetworkCloudDriveApplicationTests {
     // or list
     @Test
     void contextLoads() {
+        System.out.println("Operating System: " + System.getProperty("os.name"));
     }
 }

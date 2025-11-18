@@ -121,7 +121,7 @@ public class InformationService implements InformationRepository {
         FolderMetadata folder = folderMetadata.get();
         File getFolder = new File(fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(folder.getPath()));
         if (!getFolder.exists())
-            throw new FileAlreadyExistsException(String.format("Folder with same name at path %s already exists", getFolder.getPath()));
+            throw new FileAlreadyExistsException(String.format("Folder with name at path %s does not exist", getFolder.getPath()));
         return folder;
     }
 }

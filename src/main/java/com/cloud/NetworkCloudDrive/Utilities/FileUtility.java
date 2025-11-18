@@ -8,12 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,16 +33,7 @@ public class FileUtility {
     }
 
     public String concatIdPaths(String former, long latterId) {
-        int maxLength = former.length() + 1;
-        StringBuilder product = new StringBuilder();
-        for (int i = 0; i < maxLength; i++) {
-            if ((former.length() - 1) < i) {
-                product.append("/").append(latterId);
-                continue;
-            }
-            product.append(former.charAt(i));
-        }
-        return product.toString();
+        return former.concat("/" + latterId);
     }
 
     public List<Path> getFileAndFolderPathsFromFolder(String folderPath) throws IOException {
@@ -72,6 +65,14 @@ public class FileUtility {
         return ext.toString();
     }
 
+    public FolderMetadata getFolderMetadataByIdFromList(List<FolderMetadata> list, long targetId) {
+        FolderMetadata result = new FolderMetadata();
+        for (FolderMetadata folderMetadata : list) {
+            if (targetId == folderMetadata.getId()) result = folderMetadata;
+        }
+        return result;
+    }
+
     public String resolvePathFromIdString(String idString) {
         String[] splitLine = idString.split("/");
         StringBuilder fullPath = new StringBuilder();
@@ -80,27 +81,23 @@ public class FileUtility {
             idList.add(Long.parseLong(idAsString));
         }
         List<FolderMetadata> folderMetadataListById = sqLiteFolderRepository.findAllById(idList);
-        fullPath.append(fileStorageProperties.getOnlyUserName()).append(File.separator);
-        for (FolderMetadata folderMetadata : folderMetadataListById) {
-            fullPath.append(folderMetadata.getName()).append(File.separator);
+        for (int i = 0; i < idList.size(); i++) {
+            if (i == 0) {
+                fullPath.append(fileStorageProperties.getOnlyUserName()).append(File.separator);
+                continue;
+            }
+            fullPath.append(getFolderMetadataByIdFromList(folderMetadataListById, idList.get(i)).getName()).append(File.separator);
         }
         fullPath.setLength(fullPath.length()-1); //remove last '/'
         logger.info("resolved path {}", fullPath);
         return fullPath.toString();
     }
 
-    public List<FolderMetadata> getChildrenFoldersInDirectory(String idPath) throws FileSystemException {
+    @Transactional
+    public List<FolderMetadata> getChildrenFoldersInDirectory(String idPath) throws SQLException {
         List<FolderMetadata> findAllByPathList = sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
         if (findAllByPathList.isEmpty())
-            throw new FileSystemException("Can't find path in database");
-        String[] splitOriginalPath = idPath.split("/");
-        int originalPathLength = splitOriginalPath.length;
-        for (FolderMetadata folderMetadata : findAllByPathList) {
-            String[] splitBySlash = folderMetadata.getPath().split("/");
-            if ((splitBySlash.length > originalPathLength) && (splitBySlash.length < originalPathLength+2))
-                continue;
-            findAllByPathList.remove(folderMetadata);
-        }
+            throw new SQLException("Can't find folders at idPath " + idPath + " in database");
         return findAllByPathList;
     }
 

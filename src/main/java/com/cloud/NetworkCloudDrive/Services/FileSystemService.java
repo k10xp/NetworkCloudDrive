@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -172,7 +173,7 @@ public class FileSystemService implements FileSystemRepository {
         logger.info("old path service {}", oldPath);
         File checkExists = new File(oldPath);
         File checkDestinationExists = new File(destinationFolder);
-        if (!Files.exists(checkExists.toPath()))
+        if (!Files.exists(checkExists.toPath(), LinkOption.NOFOLLOW_LINKS))
             throw new FileNotFoundException(String.format("File does not exist with name %s at path %s", targetFile.getName(), oldPath));
         if (!Files.exists(checkDestinationExists.toPath()))
             throw new FileNotFoundException(String.format("Destination folder does not exist at path %s", checkDestinationExists.getPath()));
@@ -187,7 +188,7 @@ public class FileSystemService implements FileSystemRepository {
         return checkDestinationExists.getPath();
     }
 
-    //TODO Update
+    //TODO OPTIMIZE
     @Transactional
     @Override
     public String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception {
@@ -203,22 +204,35 @@ public class FileSystemService implements FileSystemRepository {
             throw new FileNotFoundException("Destination folder not found at path " + destinationFolderObj.getPath() + "!");
         if (!Files.exists(sourceFolderObj.toPath()))
             throw new FileNotFoundException("Source folder not found at path " + sourceFolderObj.getPath() + "!");
+        logger.info("concat id path {}", folder.getPath());
+        // get children folders to update
+        List<FolderMetadata> foldersToMove = fileUtility.getChildrenFoldersInDirectory(folder.getPath());
         // generate folder id path
         // if the target is 0 and the source is at 0/1/4/2
         // then it will be 0/2 original source will be 0/1/4
         String formerIdPath = destinationFolderMetadata.getPath();
-        String concatIdPath = fileUtility.concatIdPaths(formerIdPath, folder.getId());
-        folder.setPath(concatIdPath);
-        logger.info("concat id path {}", concatIdPath);
-        // get children folders to update
-        //List<FolderMetadata> foldersToMove = fileUtility.getChildrenFoldersInDirectory(fileUtility.resolvePathFromIdString(folder.getPath()));
+        String backupPath = "";
+        int index = 0;
+        for (FolderMetadata folderMetadata : foldersToMove) {
+            if (index != 0) {
+                folderMetadata.setPath(backupPath + "/" + folderMetadata.getId());
+                logger.info("id {} name {} path {}", folderMetadata.getId(), folderMetadata.getName(), folderMetadata.getPath());
+                index++;
+                continue;
+            }
+            folderMetadata.setPath(formerIdPath + "/" + folderMetadata.getId());
+            backupPath = folderMetadata.getPath();
+            logger.info("id {} name {} path {}", folderMetadata.getId(), folderMetadata.getName(), folderMetadata.getPath());
+            index++;
+        }
+
         // perform filesystem move
         String updatedPath = destinationFolderPath + File.separator + sourceFolderObj.getName();
         Path moveFolderAction = Files.move(sourceFolderObj.toPath(), Path.of(updatedPath));
         if (!Files.exists(moveFolderAction))
             throw new FileSystemException(String.format("Failed to move the folder from %s to %s", sourceFolderPath, updatedPath));
         //save
-        sqLiteFolderRepository.save(folder);
+        sqLiteFolderRepository.saveAll(foldersToMove);
         return updatedPath;
     }
 
