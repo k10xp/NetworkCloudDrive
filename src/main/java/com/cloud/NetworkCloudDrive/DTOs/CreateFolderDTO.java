@@ -2,7 +2,7 @@ package com.cloud.NetworkCloudDrive.DTOs;
 
 public class CreateFolderDTO {
     private long folder_id;
-    private String path;
+    private String name;
 
     public CreateFolderDTO() {}
 
@@ -12,10 +12,10 @@ public class CreateFolderDTO {
     public void setFolder_id(long folder_id) {
         this.folder_id = folder_id;
     }
-    public String getPath() {
-        return path;
+    public String getName() {
+        return name;
     }
-    public void setPath(String path) {
-        this.path = path;
+    public void getPath(String name) {
+        this.name = name;
     }
 }
