@@ -76,7 +76,8 @@ public class FileSystemService implements FileSystemRepository {
                         :
                         fileStorageProperties.getOnlyUserName()) +
                 File.separator + file.getName());
-        if (!checkExists.exists()) throw new FileNotFoundException(String.format("File does not exist at path %s", checkExists.getPath()));
+        if (!checkExists.exists())
+            throw new FileNotFoundException(String.format("File does not exist at path %s", checkExists.getPath()));
         //remove Folder
         if (!checkExists.delete())
             throw new FileSystemException(String.format("Failed to remove folder at path %s\n", checkExists.getPath()));
@@ -179,7 +180,8 @@ public class FileSystemService implements FileSystemRepository {
         File updatedPath = new File(newPath);
         Path movedFile = Files.move(checkExists.toPath(), updatedPath.toPath());
         if (!Files.exists(movedFile))
-            throw new FileSystemException(String.format("Failed to move file with name %s from %s to %s",targetFile.getName(), oldPath, newPath));
+            throw new FileSystemException(
+                    String.format("Failed to move file with name %s from %s to %s", targetFile.getName(), oldPath, newPath));
         //set new name and path
         targetFile.setFolderId(folderId);
         //save

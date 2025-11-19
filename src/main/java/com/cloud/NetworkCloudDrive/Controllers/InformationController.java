@@ -22,7 +22,8 @@ public class InformationController {
     private final InformationService informationService;
     private final Logger logger = LoggerFactory.getLogger(InformationController.class);
 
-    public InformationController(FileUtility fileUtility,
+    public InformationController(
+            FileUtility fileUtility,
             InformationService informationService,
             FileStorageProperties fileStorageProperties) {
         this.fileUtility = fileUtility;

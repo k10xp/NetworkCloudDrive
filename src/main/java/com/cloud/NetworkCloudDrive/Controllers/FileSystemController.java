@@ -135,7 +135,7 @@ public class FileSystemController {
                             String.format("Folder with Id %d at path %s was successfully removed", folderToRemove.getId(), oldPath),
                             true));
         } catch (Exception e) {
-            logger.error("Cannot remove folder #{}: {}",folderid, e.getMessage());
+            logger.error("Cannot remove folder #{}: {}", folderid, e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(String.format("Failed remove folder with Id %d", folderid), false));
         }
@@ -151,7 +151,7 @@ public class FileSystemController {
                             String.format("file with Id %d at path %s was successfully removed", fileToRemove.getId(), oldPath),
                             true));
         } catch (Exception e) {
-            logger.error("Cannot remove file #{}: {}",fileid, e.getMessage());
+            logger.error("Cannot remove file #{}: {}", fileid, e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(String.format("Failed remove file with Id %d: %s", fileid, e.getMessage()), false));
         }

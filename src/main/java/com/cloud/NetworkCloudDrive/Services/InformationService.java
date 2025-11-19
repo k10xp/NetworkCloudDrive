@@ -88,7 +88,7 @@ public class InformationService implements InformationRepository {
             if (skipList.contains(folderMetadata.getId()))
                 continue;
             String[] splitBySlash = folderMetadata.getPath().split("/");
-            if ((splitBySlash.length > originalPathLength) && (splitBySlash.length < originalPathLength+2)) {
+            if ((splitBySlash.length > originalPathLength) && (splitBySlash.length < originalPathLength + 2)) {
                 returnFolder = folderMetadata;
                 break;
             }

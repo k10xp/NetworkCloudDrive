@@ -38,7 +38,7 @@ public class FileUtility {
 
     public List<Path> getFileAndFolderPathsFromFolder(String folderPath) throws IOException {
         List<Path> fileList;
-        try(Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() +  folderPath))) {
+        try (Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() + folderPath))) {
             fileList = stream.toList();
         }
         return fileList;
@@ -88,7 +88,7 @@ public class FileUtility {
             }
             fullPath.append(getFolderMetadataByIdFromList(folderMetadataListById, idList.get(i)).getName()).append(File.separator);
         }
-        fullPath.setLength(fullPath.length()-1); //remove last '/'
+        fullPath.setLength(fullPath.length() - 1); //remove last '/'
         logger.info("resolved path {}", fullPath);
         return fullPath.toString();
     }
@@ -105,7 +105,7 @@ public class FileUtility {
     public List<FolderMetadata> findAllFoldersInPath(File folder, EntityManager entityManager) throws IOException {
         //Find folders in path
         List<FolderMetadata> foldersDiscovered = new ArrayList<>();
-        for(File file = new File(folder.getPath()); file != null; file = file.getParentFile()) {
+        for (File file = new File(folder.getPath()); file != null; file = file.getParentFile()) {
             logger.info("preceding folder name: {}", file.getName());
             if (file.getName().equals(fileStorageProperties.getOnlyUserName())) break;
             FolderMetadata parentFolders = new FolderMetadata();

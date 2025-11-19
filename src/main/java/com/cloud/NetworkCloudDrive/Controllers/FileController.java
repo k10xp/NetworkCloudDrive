@@ -73,7 +73,7 @@ public class FileController {
             Resource file = fileService.getFile(metadata, actualPath);
             return ResponseEntity.ok().
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + metadata.getName() + "\" "). //return filename
-                    contentType(MediaType.parseMediaType(metadata.getMimiType())).
+                            contentType(MediaType.parseMediaType(metadata.getMimiType())).
                     contentLength(metadata.getSize()).body(file);
         } catch (Exception e) {
             logger.error("Failed to download file. {}", e.getMessage());
