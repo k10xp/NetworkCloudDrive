@@ -90,11 +90,11 @@ public class FileController {
     @PostMapping(value = "create/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
-            FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getPath(), folderDTO.getFolder_id());
+            FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getName(), folderDTO.getFolder_id());
             folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
-            logger.error("Error creating folder with name: {}. {}", folderDTO.getPath(), e.getMessage());
+            logger.error("Error creating folder with name: {}. {}", folderDTO.getName(), e.getMessage());
             return ResponseEntity.internalServerError().body(new JSONResponse(e.getMessage(), false));
         }
     }

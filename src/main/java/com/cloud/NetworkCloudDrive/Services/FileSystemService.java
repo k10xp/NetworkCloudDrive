@@ -259,7 +259,7 @@ public class FileSystemService implements FileSystemRepository {
                     String.format("Cannot create directory, with name %s. Make sure you are creating a single folder.", folderName));
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
-        createdFolder.setPath(idPath + File.separator + createdFolder.getId());
+        createdFolder.setPath(idPath + "/" + createdFolder.getId());
         createdFolder.setUserid(0L); //placeholder
         createdFolder.setName(folderName);
         return sqLiteFolderRepository.save(createdFolder); // reverse order
