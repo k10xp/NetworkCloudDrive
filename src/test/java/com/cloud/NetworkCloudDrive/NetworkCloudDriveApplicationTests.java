@@ -7,33 +7,37 @@ import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
-@ContextConfiguration(classes = NetworkCloudDriveApplication.class)
+@TestPropertySource(locations = "classpath:/application-test.properties")
 class NetworkCloudDriveApplicationTests {
+
+    private final Logger logger = LoggerFactory.getLogger(NetworkCloudDriveApplicationTests.class);
 
     @Autowired
     EntityManager entityManager;
+
     @Autowired
     SQLiteFolderRepository sqLiteFolderRepository;
+
     @Autowired
     SQLiteFileRepository sqLiteFileRepository;
 
-    //TODO Implement CreateFolder Test then check its status code (for github workflows)
-    // or list
+
     @Test
     void contextLoads() {
-        System.out.println("Operating System: " + System.getProperty("os.name"));
+        logger.info("Operating System: {}", System.getProperty("os.name"));
     }
-
 
     // JPA TESTS
     @Test
@@ -45,12 +49,17 @@ class NetworkCloudDriveApplicationTests {
         folderMetadata.setUserid(0L);
         folderMetadata.setName("folderMetadata_test");
         folderMetadata.setPath("0/" + folderMetadata.getId());
-
+        logger.info("Arranged Folder Metadata name: {} path: {}", folderMetadata.getName(), folderMetadata.getPath());
         // Act
         FolderMetadata savedFolderMetadata = sqLiteFolderRepository.save(folderMetadata);
 
+        if (savedFolderMetadata != null) logger.info(
+                "Saved Folder Metadata Id: {} name: {} path: {}",
+                savedFolderMetadata.getId(),savedFolderMetadata.getName(), savedFolderMetadata.getPath());
+
         // Assert
         Assertions.assertNotNull(savedFolderMetadata);
+
     }
 
     @Test
@@ -62,9 +71,14 @@ class NetworkCloudDriveApplicationTests {
         fileMetadata.setName("fileMetadata_test.txt");
         fileMetadata.setMimiType("text/plain");
         fileMetadata.setFolderId(0L);
+        logger.info("Arranged File Metadata name: {} path: {}", fileMetadata.getName(), fileMetadata.getFolderId());
 
         // Act
         FileMetadata savedFileMetadata = sqLiteFileRepository.save(fileMetadata);
+
+        if (savedFileMetadata != null) logger.info(
+                "Saved File Metadata Id: {} name: {} MimeType: {}",
+                savedFileMetadata.getId(),savedFileMetadata.getName(), savedFileMetadata.getMimiType());
 
         // Assert
         Assertions.assertNotNull(savedFileMetadata);
