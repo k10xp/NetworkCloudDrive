@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+// Basically DAO
 @Component
 public class QueryUtility {
     private final Logger logger = LoggerFactory.getLogger(QueryUtility.class);
@@ -25,6 +26,24 @@ public class QueryUtility {
     public QueryUtility(SQLiteFolderRepository sqLiteFolderRepository, SQLiteFileRepository sqLiteFileRepository) {
         this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.sqLiteFileRepository = sqLiteFileRepository;
+    }
+
+    @Transactional
+    public void  deleteItem(Object item) {
+        if (item instanceof FileMetadata) {
+            sqLiteFileRepository.delete((FileMetadata) item);
+        } else {
+        sqLiteFolderRepository.delete((FolderMetadata) item);
+        }
+    }
+
+    @Transactional
+    public void  updateItem(Object item) {
+        if (item instanceof FileMetadata) {
+            sqLiteFileRepository.save((FileMetadata) item);
+        } else {
+            sqLiteFolderRepository.save((FolderMetadata) item);
+        }
     }
 
     @Transactional

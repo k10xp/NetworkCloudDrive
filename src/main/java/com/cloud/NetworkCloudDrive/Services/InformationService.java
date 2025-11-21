@@ -23,13 +23,10 @@ import java.util.Optional;
 
 @Service
 public class InformationService implements InformationRepository {
-    private final FileStorageProperties fileStorageProperties;
     private final FileUtility fileUtility;
     private final QueryUtility queryUtility;
 
-    public InformationService(
-            FileStorageProperties fileStorageProperties, FileUtility fileUtility, QueryUtility queryUtility) {
-        this.fileStorageProperties = fileStorageProperties;
+    public InformationService(FileUtility fileUtility, QueryUtility queryUtility) {
         this.fileUtility = fileUtility;
         this.queryUtility = queryUtility;
     }
@@ -58,15 +55,10 @@ public class InformationService implements InformationRepository {
     }
 
     @Override
-    public FileMetadata getFileMetadata(long id) throws Exception {
+    public FileMetadata getFileMetadata(long id) throws FileNotFoundException, SQLException {
         FileMetadata retrievedFile = queryUtility.queryFileMetadata(id);
-        File fileCheck = new File(
-                fileStorageProperties.getBasePath() +
-                        fileUtility.getFolderPath(retrievedFile.getFolderId()) +
-                        File.separator +
-                        retrievedFile.getName());
-        if (!fileCheck.exists())
-            throw new IOException(String.format("File could not be found on the computer! File path: %s", fileCheck.getPath()));
+        File fileCheck = fileUtility.returnFileIfItExists(
+                fileUtility.getFolderPath(retrievedFile.getFolderId()) + File.separator + retrievedFile.getName());
         retrievedFile.setSize(fileCheck.length()); //bytes
         return retrievedFile;
     }
@@ -74,9 +66,7 @@ public class InformationService implements InformationRepository {
     @Override
     public FolderMetadata getFolderMetadata(long folderId) throws IOException, SQLException {
         FolderMetadata folder = queryUtility.queryFolderMetadata(folderId);
-        File getFolder = new File(fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(folder.getPath()));
-        if (!getFolder.exists())
-            throw new FileAlreadyExistsException(String.format("Folder with name at path %s does not exist", getFolder.getPath()));
+        File getFolder = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(folder.getPath()));
         return folder;
     }
 }

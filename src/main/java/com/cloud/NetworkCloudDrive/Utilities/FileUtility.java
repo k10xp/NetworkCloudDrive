@@ -35,6 +35,22 @@ public class FileUtility {
         return folderId != 0 ? queryUtility.findFolderById(folderId).getPath() : "0";
     }
 
+    public File returnIfItsNotADuplicate(String path) throws FileNotFoundException {
+        File checkDuplicate = new File(path);
+        if (!Files.exists(checkDuplicate.toPath()))
+            throw new FileNotFoundException(String.format("%s with name %s already exists at %s",
+                    (checkDuplicate.isFile() ? "File" : "Folder"), checkDuplicate.getName(), checkDuplicate.getPath()));
+        return checkDuplicate;
+    }
+
+    public File returnFileIfItExists(String path) throws FileNotFoundException {
+        File checkExists = new File(fileStorageProperties.getBasePath() + path);
+        if (!Files.exists(checkExists.toPath()))
+            throw new FileNotFoundException(String.format("%s does not exist at path %s",
+                    (checkExists.isFile() ? "File" : "Folder"),checkExists.getPath()));
+        return checkExists;
+    }
+
     public String getFolderPath(long folderId) throws FileNotFoundException {
         return folderId != 0
                 ?
@@ -89,14 +105,17 @@ public class FileUtility {
         String[] splitLine = idString.split("/");
         List<Long> idList = new ArrayList<>();
         for (String idAsString : splitLine) {
+            logger.info("added {}", idAsString);
             idList.add(Long.parseLong(idAsString));
         }
+        logger.info("id size {}", idList.size());
         return appendFolderNames(idList);
     }
 
     private String appendFolderNames(List<Long> folderIdList) {
         StringBuilder fullPath = new StringBuilder();
         List<FolderMetadata> folderMetadataListById = queryUtility.findAllByIdInSQLFolderMetadata(folderIdList);
+        logger.info("size {}", folderMetadataListById.size());
         for (int i = 0; i < folderIdList.size(); i++) {
             if (i == 0) {
                 fullPath.append(fileStorageProperties.getOnlyUserName()).append(File.separator);
@@ -105,6 +124,7 @@ public class FileUtility {
             fullPath.append(getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName()).append(File.separator);
         }
         fullPath.setLength(fullPath.length() - 1);
+        logger.info("output {}", fullPath.toString());
         return fullPath.toString();
     }
 }
