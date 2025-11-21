@@ -7,6 +7,7 @@ import com.cloud.NetworkCloudDrive.Repositories.FileSystemRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
+import com.cloud.NetworkCloudDrive.Utilities.QueryUtility;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,7 @@ public class FileSystemService implements FileSystemRepository {
     private final EntityManager entityManager;
     private final InformationService informationService;
     private final FileUtility fileUtility;
+    private final QueryUtility queryUtility;
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
 
     public FileSystemService(
@@ -37,13 +39,15 @@ public class FileSystemService implements FileSystemRepository {
             InformationService informationService,
             FileStorageProperties fileStorageProperties,
             EntityManager entityManager,
-            FileUtility fileUtility) {
+            FileUtility fileUtility,
+            QueryUtility queryUtility) {
         this.sqLiteFileRepository = sqLiteFileRepository;
         this.fileStorageProperties = fileStorageProperties;
         this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.informationService = informationService;
         this.entityManager = entityManager;
         this.fileUtility = fileUtility;
+        this.queryUtility = queryUtility;
     }
 
     @Override
@@ -55,7 +59,7 @@ public class FileSystemService implements FileSystemRepository {
             File file = path.toFile();
             logger.info("file/folder in queue {}", file);
             if (file.isFile()) {
-                folderAndFileMetadata.add(informationService.getFileMetadataByFolderIdAndName(currentFolderId, file.getName(), 0));
+                folderAndFileMetadata.add(queryUtility.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), 0));
                 continue;
             }
             FolderMetadata foundFolderMetadata =
@@ -164,8 +168,8 @@ public class FileSystemService implements FileSystemRepository {
     @Transactional
     @Override
     public String moveFile(FileMetadata targetFile, long folderId) throws Exception {
-        String destinationFolder = fileStorageProperties.getBasePath() + informationService.getFolderPathAsString(folderId);
-        String currentFolder = informationService.getFolderPathAsString(targetFile.getFolderId());
+        String destinationFolder = fileStorageProperties.getBasePath() + fileUtility.getFolderPath(folderId);
+        String currentFolder = fileUtility.getFolderPath(targetFile.getFolderId());
         String newPath = destinationFolder + File.separator + targetFile.getName();
         logger.info("new file path = {}", newPath);
         //find file
@@ -207,7 +211,7 @@ public class FileSystemService implements FileSystemRepository {
             throw new FileNotFoundException("Source folder not found at path " + sourceFolderObj.getPath() + "!");
         logger.info("concat id path {}", folder.getPath());
         // get children folders to update
-        List<FolderMetadata> foldersToMove = fileUtility.getChildrenFoldersInDirectory(folder.getPath());
+        List<FolderMetadata> foldersToMove = queryUtility.getChildrenFoldersInDirectory(folder.getPath());
         // generate folder id path
         // if the target is 0 and the source is at 0/1/4/2
         // then it will be 0/2 original source will be 0/1/4

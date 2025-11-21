@@ -11,25 +11,36 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Component
 public class FileUtility {
-    private final SQLiteFolderRepository sqLiteFolderRepository;
     private final FileStorageProperties fileStorageProperties;
+    private final QueryUtility queryUtility;
     private final Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
-    public FileUtility(SQLiteFolderRepository sqLiteFolderRepository, FileStorageProperties fileStorageProperties) {
-        this.sqLiteFolderRepository = sqLiteFolderRepository;
+    public FileUtility(QueryUtility queryUtility, FileStorageProperties fileStorageProperties) {
         this.fileStorageProperties = fileStorageProperties;
+        this.queryUtility = queryUtility;
+    }
+
+    public String getIdPath(long folderId) throws FileNotFoundException {
+        return folderId != 0 ? queryUtility.findFolderById(folderId).getPath() : "0";
+    }
+
+    public String getFolderPath(long folderId) throws FileNotFoundException {
+        return folderId != 0
+                ?
+                resolvePathFromIdString(queryUtility.findFolderById(folderId).getPath())
+                :
+                fileStorageProperties.getOnlyUserName();
     }
 
     public String concatIdPaths(String former, long latterId) {
@@ -75,77 +86,24 @@ public class FileUtility {
 
     public String resolvePathFromIdString(String idString) {
         String[] splitLine = idString.split("/");
-        StringBuilder fullPath = new StringBuilder();
         List<Long> idList = new ArrayList<>();
         for (String idAsString : splitLine) {
             idList.add(Long.parseLong(idAsString));
         }
-        List<FolderMetadata> folderMetadataListById = sqLiteFolderRepository.findAllById(idList);
-        for (int i = 0; i < idList.size(); i++) {
+        return appendFolderNames(idList);
+    }
+
+    private String appendFolderNames(List<Long> folderIdList) {
+        StringBuilder fullPath = new StringBuilder();
+        List<FolderMetadata> folderMetadataListById = queryUtility.findAllByIdInSQLFolderMetadata(folderIdList);
+        for (int i = 0; i < folderIdList.size(); i++) {
             if (i == 0) {
                 fullPath.append(fileStorageProperties.getOnlyUserName()).append(File.separator);
                 continue;
             }
-            fullPath.append(getFolderMetadataByIdFromList(folderMetadataListById, idList.get(i)).getName()).append(File.separator);
+            fullPath.append(getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName()).append(File.separator);
         }
-        fullPath.setLength(fullPath.length() - 1); //remove last '/'
-        logger.info("resolved path {}", fullPath);
+        fullPath.setLength(fullPath.length() - 1);
         return fullPath.toString();
-    }
-
-    @Transactional
-    public List<FolderMetadata> getChildrenFoldersInDirectory(String idPath) throws SQLException {
-        List<FolderMetadata> findAllByPathList = sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
-        if (findAllByPathList.isEmpty())
-            throw new SQLException("Can't find folders at idPath " + idPath + " in database");
-        return findAllByPathList;
-    }
-
-    // Currently unused functions
-    public List<FolderMetadata> findAllFoldersInPath(File folder, EntityManager entityManager) throws IOException {
-        //Find folders in path
-        List<FolderMetadata> foldersDiscovered = new ArrayList<>();
-        for (File file = new File(folder.getPath()); file != null; file = file.getParentFile()) {
-            logger.info("preceding folder name: {}", file.getName());
-            if (file.getName().equals(fileStorageProperties.getOnlyUserName())) break;
-            FolderMetadata parentFolders = new FolderMetadata();
-            parentFolders.setName(file.getName());
-            foldersDiscovered.add(parentFolders);
-        }
-        if (foldersDiscovered.isEmpty()) throw new IOException("Invalid path");
-        // reverse list
-        Collections.reverse(foldersDiscovered); // consider LIFO either stack or deque
-        return generateIdPaths(foldersDiscovered, entityManager);
-    }
-
-    private List<FolderMetadata> generateIdPaths(List<FolderMetadata> folderMetadataList, EntityManager entityManager) {
-        StringBuilder idPath = new StringBuilder();
-        //HOPEFULLY generate Id path starting from '0/'
-        idPath.append(0).append("/");
-        for (FolderMetadata folderMetadata : folderMetadataList) {
-            //assign id from db
-            entityManager.persist(folderMetadata);
-            idPath.append(folderMetadata.getId());
-            folderMetadata.setPath(idPath.toString());
-            idPath.append("/");
-//            if (!checkIfFolderExistsInDb(folderMetadata).isEmpty()) {
-//                entityManager.remove(folderMetadata);
-//                folderMetadataList.remove(folderMetadata);
-//            }
-
-        }
-        return folderMetadataList;
-    }
-
-    //check if one of the nested folders are already in db and remove them from the list
-    private List<FolderMetadata> checkIfFolderExistsInDb(FolderMetadata folder) {
-        FolderMetadata dummyMetadata = new FolderMetadata();
-        dummyMetadata.setName(folder.getName());
-        dummyMetadata.setId(null);
-        dummyMetadata.setCreatedAt(null);
-        dummyMetadata.setPath(folder.getPath());
-        logger.info("dummy path {}", dummyMetadata.getPath());
-        Example<FolderMetadata> exampleFolderMetadata = Example.of(dummyMetadata);
-        return sqLiteFolderRepository.findAll(exampleFolderMetadata); //empty = false || not empty = true
     }
 }
