@@ -1,6 +1,8 @@
 package com.cloud.NetworkCloudDrive;
 
+import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
+import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
@@ -22,6 +24,8 @@ class NetworkCloudDriveApplicationTests {
     EntityManager entityManager;
     @Autowired
     SQLiteFolderRepository sqLiteFolderRepository;
+    @Autowired
+    SQLiteFileRepository sqLiteFileRepository;
 
     //TODO Implement CreateFolder Test then check its status code (for github workflows)
     // or list
@@ -30,6 +34,8 @@ class NetworkCloudDriveApplicationTests {
         System.out.println("Operating System: " + System.getProperty("os.name"));
     }
 
+
+    // JPA TESTS
     @Test
     @Transactional
     public void FolderMetadata_Save_ReturnSavedFolderMetadata() {
@@ -45,5 +51,22 @@ class NetworkCloudDriveApplicationTests {
 
         // Assert
         Assertions.assertNotNull(savedFolderMetadata);
+    }
+
+    @Test
+    @Transactional
+    public void FileMetadata_Save_ReturnSavedFileMetadata() {
+        // Arrange
+        FileMetadata fileMetadata = new FileMetadata();
+        fileMetadata.setUserid(0L);
+        fileMetadata.setName("fileMetadata_test.txt");
+        fileMetadata.setMimiType("text/plain");
+        fileMetadata.setFolderId(0L);
+
+        // Act
+        FileMetadata savedFileMetadata = sqLiteFileRepository.save(fileMetadata);
+
+        // Assert
+        Assertions.assertNotNull(savedFileMetadata);
     }
 }
