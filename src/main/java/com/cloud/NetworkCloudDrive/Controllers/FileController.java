@@ -23,20 +23,14 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
     private final FileSystemService fileSystemService;
     private final FileService fileService;
-    private final FileStorageProperties fileStorageProperties;
     private final InformationService informationService;
     private final FileUtility fileUtility;
     private final Logger logger = LoggerFactory.getLogger(FileController.class);
 
     public FileController(
-            FileSystemService fileSystemService,
-            FileStorageProperties fileStorageProperties,
-            FileService fileService,
-            InformationService informationService,
-            FileUtility fileUtility) {
+            FileSystemService fileSystemService, FileService fileService, InformationService informationService, FileUtility fileUtility) {
         this.fileService = fileService;
         this.fileSystemService = fileSystemService;
-        this.fileStorageProperties = fileStorageProperties;
         this.informationService = informationService;
         this.fileUtility = fileUtility;
     }
@@ -45,13 +39,7 @@ public class FileController {
     public ResponseEntity<?> uploadFile(@RequestParam MultipartFile[] files, @RequestParam long folderid) {
         try {
             if (files.length == 0) throw new NullPointerException();
-            String folderPath;
-            if (folderid != 0) {
-                FolderMetadata parentFolder = informationService.getFolderMetadata(folderid);
-                folderPath = fileUtility.resolvePathFromIdString(parentFolder.getPath());
-            } else {
-                folderPath = fileStorageProperties.getOnlyUserName();
-            }
+            String folderPath = fileUtility.getFolderPath(folderid);
             return ResponseEntity.ok().body(fileService.uploadFiles(files, folderPath, folderid));
         } catch (Exception e) {
             logger.error("Failed to upload file. {}", e.getMessage());
@@ -63,12 +51,7 @@ public class FileController {
     public ResponseEntity<?> downloadFile(@RequestParam long fileid) {
         try {
             FileMetadata metadata = informationService.getFileMetadata(fileid);
-            String actualPath;
-            if (metadata.getFolderId() != 0) {
-                actualPath = fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(metadata.getFolderId()).getPath());
-            } else {
-                actualPath = fileStorageProperties.getOnlyUserName();
-            }
+            String actualPath = fileUtility.getFolderPath(metadata.getFolderId());
             logger.info("path requested {}", actualPath);
             Resource file = fileService.getFile(metadata, actualPath);
             return ResponseEntity.ok().

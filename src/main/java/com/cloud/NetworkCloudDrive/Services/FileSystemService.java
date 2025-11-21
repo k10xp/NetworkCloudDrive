@@ -158,7 +158,7 @@ public class FileSystemService implements FileSystemRepository {
         String newMimeType = fileUtility.getMimeTypeFromExtension(newUpdatedPath); /* <- get new mimetype of file */
         //set new name and path
         file.setName(newName + oldExtension);
-        file.setMimiType(newMimeType.equals(file.getMimiType()) ? file.getMimiType() : newMimeType);
+        file.setMimiType(newMimeType != null ? (newMimeType.equals(file.getMimiType()) ? file.getMimiType() : newMimeType) : file.getMimiType());
         //save
         sqLiteFileRepository.save(file);
         logger.info("Renamed file full path: {}", renamedFile.getPath());

@@ -55,8 +55,7 @@ public class FileSystemController {
                             true));
         } catch (Exception e) {
             logger.error("Cannot update name: {}", e.getMessage());
-            return ResponseEntity.badRequest().
-                    contentType(MediaType.APPLICATION_JSON).
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse(
                             String.format("Failed to update file with Id %d: %s", updateFileNameDTO.getFile_id(), e.getMessage()), false));
         }
