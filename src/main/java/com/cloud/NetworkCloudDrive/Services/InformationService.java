@@ -34,7 +34,7 @@ public class InformationService implements InformationRepository {
     @Transactional
     @Override
     public FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name, List<Long> skipList)
-            throws FileSystemException, FileNotFoundException {
+            throws FileSystemException, SQLException {
         String idPath = fileUtility.getIdPath(folderId);
         List<FolderMetadata> findAllByPathList = queryUtility.findAllContainingSectionOfIdPathIgnoreCase(idPath);
         if (findAllByPathList.isEmpty())

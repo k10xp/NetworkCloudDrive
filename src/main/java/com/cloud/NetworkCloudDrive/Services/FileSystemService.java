@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class FileSystemService implements FileSystemRepository {
 
     @Override
     @Transactional
-    public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId) throws FileSystemException, FileNotFoundException {
+    public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId) throws FileSystemException, SQLException {
         List<Object> folderAndFileMetadata = new ArrayList<>();
         List<Long> lastIdList = new ArrayList<>();
         for (Path path : filePaths) {
@@ -75,7 +76,7 @@ public class FileSystemService implements FileSystemRepository {
         //remove Folder
         if (!checkExists.delete())
             throw new FileSystemException(String.format("Failed to remove folder at path %s\n", checkExists.getPath()));
-        queryUtility.deleteItem(file);
+        queryUtility.deleteFile(file);
         return checkExists.getPath();
     }
 
@@ -90,7 +91,7 @@ public class FileSystemService implements FileSystemRepository {
             throw new FileSystemException(String.format("Failed to delete folder. Does folder exist at path %s?", pathToRemove));
         //remove Folder
         Files.delete(checkExists.toPath());
-        queryUtility.deleteItem(folder);
+        queryUtility.deleteFolder(folder);
         return checkExists.getPath();
     }
 
@@ -108,7 +109,7 @@ public class FileSystemService implements FileSystemRepository {
             //set new name and path
             folder.setName(newName);
             //save
-            queryUtility.updateItem(folder);
+            queryUtility.saveFolder(folder);
             logger.info("Renamed folder full path: {}", renamedFolder.getPath());
         } else {
             throw new FileSystemException(String.format("Failed to rename the folder to %s", renamedFolder.getName()));
@@ -146,7 +147,7 @@ public class FileSystemService implements FileSystemRepository {
         file.setName(newName + oldExtension);
         file.setMimiType(newMimeType != null ? (newMimeType.equals(file.getMimiType()) ? file.getMimiType() : newMimeType) : file.getMimiType());
         //save
-        queryUtility.updateItem(file);
+        queryUtility.saveFile(file);
         logger.info("Renamed file full path: {}", renamedFile.getPath());
         return renamedFile.getPath();
     }
@@ -175,7 +176,7 @@ public class FileSystemService implements FileSystemRepository {
         //set new name and path
         targetFile.setFolderId(folderId);
         //save
-        queryUtility.updateItem(targetFile);
+        queryUtility.saveFile(targetFile);
         return checkDestinationExists.getPath();
     }
 

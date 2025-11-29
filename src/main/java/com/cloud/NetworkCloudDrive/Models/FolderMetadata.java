@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 //TODO add folder permissions and fix createdAt to be more readable
+//TODO Last updated
 
 @Entity
 public class FolderMetadata {

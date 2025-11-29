@@ -159,6 +159,9 @@ public class FileSystemController {
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
         try {
+            // DEBUG
+//            logger.info("output id path {}",
+//                    fileUtility.generateIdPaths("/home/aksell/IdeaProjects/NetworkCloudDrive/root/test_user1/test2/test1/test1/test1/"));
             List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder((folderid != 0 ?
                     fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(folderid).getPath())
                     :

@@ -1,19 +1,15 @@
 package com.cloud.NetworkCloudDrive.Utilities;
 
+import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
-import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -31,8 +27,21 @@ public class FileUtility {
         this.queryUtility = queryUtility;
     }
 
-    public String getIdPath(long folderId) throws FileNotFoundException {
-        return folderId != 0 ? queryUtility.findFolderById(folderId).getPath() : "0";
+//    public void walkFsTree(Path dir) throws IOException {
+//        List<FileMetadata> files = new ArrayList<>();
+//        try(Stream<Path> fileTree = Files.walk(dir)) {
+//            fileTree.sorted(Comparator.reverseOrder()).forEach(path -> {
+//                File file = path.toFile();
+//                if (file.isFile()) {
+//                    queryUtility.;
+//                    queryUtility.getFileMetadataByFolderIdNameAndUserId();
+//                }
+//            });
+//        }
+//    }
+
+    public String getIdPath(long folderId) throws SQLException {
+        return folderId != 0 ? queryUtility.queryFolderMetadata(folderId).getPath() : "0";
     }
 
     public File returnIfItsNotADuplicate(String path) throws FileNotFoundException {
@@ -51,10 +60,10 @@ public class FileUtility {
         return checkExists;
     }
 
-    public String getFolderPath(long folderId) throws FileNotFoundException {
+    public String getFolderPath(long folderId) throws SQLException {
         return folderId != 0
                 ?
-                resolvePathFromIdString(queryUtility.findFolderById(folderId).getPath())
+                resolvePathFromIdString(queryUtility.queryFolderMetadata(folderId).getPath())
                 :
                 fileStorageProperties.getOnlyUserName();
     }
@@ -124,7 +133,35 @@ public class FileUtility {
             fullPath.append(getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName()).append(File.separator);
         }
         fullPath.setLength(fullPath.length() - 1);
-        logger.info("output {}", fullPath.toString());
+        logger.info("output {}", fullPath);
         return fullPath.toString();
+    }
+
+    // Generate Id path from Path
+    public String generateIdPaths(String filePath) {
+        String[] folders = filePath.split("/");
+        StringBuilder idPath = new StringBuilder();
+        //HOPEFULLY generate Id path starting from '0/'
+        boolean startAdding = false;
+        int depth = 0;
+        idPath.append(0).append("/");
+        for (String folderName : folders) {
+            if (folderName.equals(fileStorageProperties.getOnlyUserName())) {
+                startAdding = !startAdding;
+            }
+            if (startAdding) {
+                depth++;
+                List<FolderMetadata> folderResults = queryUtility.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString());
+                for (FolderMetadata folderMetadata : folderResults) {
+                    String[] splitId = folderMetadata.getPath().split("/");
+                    if (splitId.length == depth) {
+                        idPath.append(folderMetadata.getId()).append("/");
+                        logger.info("before break: {}", idPath.toString());
+                        break;
+                    }
+                }
+            }
+        }
+        return idPath.toString();
     }
 }

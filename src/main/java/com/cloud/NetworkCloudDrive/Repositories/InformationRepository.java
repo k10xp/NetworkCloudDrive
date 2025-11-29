@@ -6,12 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.io.FileNotFoundException;
 import java.nio.file.FileSystemException;
+import java.sql.SQLException;
 import java.util.List;
 
 @Repository
 public interface InformationRepository {
     FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name, List<Long> skipList)
-            throws FileSystemException, FileNotFoundException;
+            throws FileSystemException, SQLException;
     FileMetadata getFileMetadata(long id) throws Exception;
     FolderMetadata getFolderMetadata(long fileId) throws Exception;
 }

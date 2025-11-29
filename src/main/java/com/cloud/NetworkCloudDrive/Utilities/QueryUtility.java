@@ -28,24 +28,28 @@ public class QueryUtility {
         this.sqLiteFileRepository = sqLiteFileRepository;
     }
 
+    // DAO stuff
     @Transactional
-    public void  deleteItem(Object item) {
-        if (item instanceof FileMetadata) {
-            sqLiteFileRepository.delete((FileMetadata) item);
-        } else {
-        sqLiteFolderRepository.delete((FolderMetadata) item);
-        }
+    public void deleteFolder(FolderMetadata folder) {
+        sqLiteFolderRepository.delete(folder);
     }
 
     @Transactional
-    public void  updateItem(Object item) {
-        if (item instanceof FileMetadata) {
-            sqLiteFileRepository.save((FileMetadata) item);
-        } else {
-            sqLiteFolderRepository.save((FolderMetadata) item);
-        }
+    public void deleteFile(FileMetadata file) {
+        sqLiteFileRepository.delete(file);
     }
 
+    @Transactional
+    public void saveFolder(FolderMetadata folder) {
+        sqLiteFolderRepository.delete(folder);
+    }
+
+    @Transactional
+    public void saveFile(FileMetadata file) {
+        sqLiteFileRepository.save(file);
+    }
+
+    // Database service layer
     @Transactional
     public List<FolderMetadata> findAllContainingSectionOfIdPathIgnoreCase(String idPath) {
         return sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
@@ -54,23 +58,17 @@ public class QueryUtility {
     @Transactional
     public FileMetadata queryFileMetadata(long fileId) throws SQLException {
         Optional<FileMetadata> fileMetadata = sqLiteFileRepository.findById(fileId);
-        if (fileMetadata.isEmpty()) throw new SQLException("File with Id " + fileId + " does not exist");
+        if (fileMetadata.isEmpty())
+            throw new SQLException("File with Id " + fileId + " does not exist");
         return fileMetadata.get();
     }
 
     @Transactional
     public FolderMetadata queryFolderMetadata(long folderId) throws SQLException {
         Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(folderId);
-        if (folderMetadata.isEmpty()) throw new SQLException("Folder with Id " + folderId + " does not exist");
+        if (folderMetadata.isEmpty())
+            throw new SQLException("Folder with Id " + folderId + " does not exist");
         return folderMetadata.get();
-    }
-
-    @Transactional
-    public FolderMetadata findFolderById(long folderId) throws FileNotFoundException {
-        Optional<FolderMetadata> optionalParentFolderMetadata = sqLiteFolderRepository.findById(folderId);
-        if (optionalParentFolderMetadata.isEmpty())
-            throw new FileNotFoundException("Invalid folderId or Folder is not synced with database");
-        return optionalParentFolderMetadata.get();
     }
 
     @Transactional

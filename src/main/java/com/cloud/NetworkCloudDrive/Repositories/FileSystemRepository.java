@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.List;
 
 @Repository
@@ -20,5 +21,5 @@ public interface FileSystemRepository {
     String moveFile(FileMetadata targetFile, long folderId) throws Exception;
     FolderMetadata createFolder(String folderName, long folderid) throws Exception;
     List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
-            throws FileSystemException, FileNotFoundException;
+            throws FileSystemException, SQLException;
 }

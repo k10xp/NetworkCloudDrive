@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 //TODO fix createdAt to be more readable and add ownership (later after auth)
+//TODO Last updated
 
 @Entity
 public class FileMetadata {
