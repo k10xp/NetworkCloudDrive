@@ -55,7 +55,7 @@ public class InformationService implements InformationRepository {
     }
 
     @Override
-    public FileMetadata getFileMetadata(long id) throws FileNotFoundException, SQLException {
+    public FileMetadata getFileMetadata(long id) throws FileNotFoundException, SQLException, FileSystemException {
         FileMetadata retrievedFile = queryUtility.queryFileMetadata(id);
         File fileCheck = fileUtility.returnFileIfItExists(
                 fileUtility.getFolderPath(retrievedFile.getFolderId()) + File.separator + retrievedFile.getName());

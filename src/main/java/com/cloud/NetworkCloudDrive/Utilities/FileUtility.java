@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -60,7 +61,7 @@ public class FileUtility {
         return checkExists;
     }
 
-    public String getFolderPath(long folderId) throws SQLException {
+    public String getFolderPath(long folderId) throws SQLException, FileSystemException {
         return folderId != 0
                 ?
                 resolvePathFromIdString(queryUtility.queryFolderMetadata(folderId).getPath())
@@ -103,14 +104,14 @@ public class FileUtility {
     }
 
     public FolderMetadata getFolderMetadataByIdFromList(List<FolderMetadata> list, long targetId) {
-        FolderMetadata result = new FolderMetadata();
         for (FolderMetadata folderMetadata : list) {
-            if (targetId == folderMetadata.getId()) result = folderMetadata;
+            if (targetId == folderMetadata.getId())
+                return folderMetadata;
         }
-        return result;
+        return null;
     }
 
-    public String resolvePathFromIdString(String idString) {
+    public String resolvePathFromIdString(String idString) throws FileSystemException {
         String[] splitLine = idString.split("/");
         List<Long> idList = new ArrayList<>();
         for (String idAsString : splitLine) {
@@ -121,7 +122,7 @@ public class FileUtility {
         return appendFolderNames(idList);
     }
 
-    private String appendFolderNames(List<Long> folderIdList) {
+    private String appendFolderNames(List<Long> folderIdList) throws FileSystemException {
         StringBuilder fullPath = new StringBuilder();
         List<FolderMetadata> folderMetadataListById = queryUtility.findAllByIdInSQLFolderMetadata(folderIdList);
         logger.info("size {}", folderMetadataListById.size());
@@ -130,18 +131,21 @@ public class FileUtility {
                 fullPath.append(fileStorageProperties.getOnlyUserName()).append(File.separator);
                 continue;
             }
-            fullPath.append(getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName()).append(File.separator);
+            String fileNameFromId = getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName();
+            if (fileNameFromId == null) throw new FileSystemException("No match found for ID " + folderIdList.get(i));
+            fullPath.append(fileNameFromId).append(File.separator);
         }
         fullPath.setLength(fullPath.length() - 1);
         logger.info("output {}", fullPath);
         return fullPath.toString();
     }
 
-    // Generate Id path from Path
+    // Generate ID path from System path
     public String generateIdPaths(String filePath) {
         String[] folders = filePath.split("/");
         StringBuilder idPath = new StringBuilder();
-        //HOPEFULLY generate Id path starting from '0/'
+        //HOPEFULLY generate ID path starting from '0/'
+        // cut beginning of path before to avoid having boolean conditional
         boolean startAdding = false;
         int depth = 0;
         idPath.append(0).append("/");
@@ -156,7 +160,6 @@ public class FileUtility {
                     String[] splitId = folderMetadata.getPath().split("/");
                     if (splitId.length == depth) {
                         idPath.append(folderMetadata.getId()).append("/");
-                        logger.info("before break: {}", idPath.toString());
                         break;
                     }
                 }

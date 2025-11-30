@@ -16,7 +16,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-// Basically DAO
+// Basically DAO but for multiple types*
 @Component
 public class QueryUtility {
     private final Logger logger = LoggerFactory.getLogger(QueryUtility.class);
