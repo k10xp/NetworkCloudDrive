@@ -1,9 +1,12 @@
 package com.cloud.NetworkCloudDrive;
 
+import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
+import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
+import com.cloud.NetworkCloudDrive.Repositories.SQLiteUserRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -33,6 +36,9 @@ class NetworkCloudDriveApplicationTests {
     @Autowired
     SQLiteFileRepository sqLiteFileRepository;
 
+    @Autowired
+    SQLiteUserRepository sqLiteUserRepository;
+
 
     @Test
     void contextLoads() {
@@ -59,7 +65,6 @@ class NetworkCloudDriveApplicationTests {
 
         // Assert
         Assertions.assertNotNull(savedFolderMetadata);
-
     }
 
     @Test
@@ -82,5 +87,33 @@ class NetworkCloudDriveApplicationTests {
 
         // Assert
         Assertions.assertNotNull(savedFileMetadata);
+    }
+
+    @Test
+    @Transactional
+    public void User_Save_ReturnSavedUser() {
+        // Arrange
+        User user = new User();
+        user.setName("unit_test_username");
+        user.setMail("unit_test_username@test.com");
+        user.setPassword("unhashed_password_for_unit_test");
+        user.setRole(UserRole.NORMAL_USER);
+        logger.info("Arranged User details: name {} mail {} and password {}", user.getName(), user.getMail(), user.getPassword());
+
+        // Act
+        User savedUser = sqLiteUserRepository.save(user);
+
+        if (savedUser != null) logger.info(
+                "Saved User details: Id {} name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+                savedUser.getId(),
+                savedUser.getName(),
+                savedUser.getMail(),
+                savedUser.getPassword(),
+                savedUser.getRegisteredAt(),
+                savedUser.getLastLogin(),
+                savedUser.getRole());
+
+        // Assert
+        Assertions.assertNotNull(savedUser);
     }
 }
