@@ -2,8 +2,10 @@ package com.cloud.NetworkCloudDrive.Utilities;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
+import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
+import com.cloud.NetworkCloudDrive.Repositories.SQLiteUserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
@@ -22,13 +24,20 @@ public class QueryUtility {
     private final Logger logger = LoggerFactory.getLogger(QueryUtility.class);
     private final SQLiteFolderRepository sqLiteFolderRepository;
     private final SQLiteFileRepository sqLiteFileRepository;
+    private final SQLiteUserRepository sqLiteUserRepository;
 
-    public QueryUtility(SQLiteFolderRepository sqLiteFolderRepository, SQLiteFileRepository sqLiteFileRepository) {
+    public QueryUtility(
+            SQLiteFolderRepository sqLiteFolderRepository,
+            SQLiteFileRepository sqLiteFileRepository,
+            SQLiteUserRepository sqLiteUserRepository) {
         this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.sqLiteFileRepository = sqLiteFileRepository;
+        this.sqLiteUserRepository = sqLiteUserRepository;
     }
 
     // DAO stuff
+
+    // Delete
     @Transactional
     public void deleteFolder(FolderMetadata folder) {
         sqLiteFolderRepository.delete(folder);
@@ -40,13 +49,24 @@ public class QueryUtility {
     }
 
     @Transactional
+    public void deleteUser(User user) {
+        sqLiteUserRepository.delete(user);
+    }
+
+    // Add/Update
+    @Transactional
     public void saveFolder(FolderMetadata folder) {
-        sqLiteFolderRepository.delete(folder);
+        sqLiteFolderRepository.save(folder);
     }
 
     @Transactional
     public void saveFile(FileMetadata file) {
         sqLiteFileRepository.save(file);
+    }
+
+    @Transactional
+    public void saveUser(User user) {
+        sqLiteUserRepository.save(user);
     }
 
     // Database service layer
@@ -85,12 +105,12 @@ public class QueryUtility {
     }
 
     @Transactional
-    public FileMetadata getFileMetadataByFolderIdNameAndUserId(long folderId, String name, long userid) throws FileSystemException {
+    public FileMetadata getFileMetadataByFolderIdNameAndUserId(long folderId, String name, long userId) throws FileSystemException {
         // dummy metadata for search
         FileMetadata dummyFileMetadata = new FileMetadata();
         dummyFileMetadata.setName(name);
         dummyFileMetadata.setFolderId(folderId);
-        dummyFileMetadata.setUserid(userid);
+        dummyFileMetadata.setUserid(userId);
         dummyFileMetadata.setMimiType(null);
         dummyFileMetadata.setSize(null);
         dummyFileMetadata.setId(null);
@@ -100,5 +120,21 @@ public class QueryUtility {
         if (optionalFileMetadata.isEmpty())
             throw new FileSystemException("File not found in database. Is database synced?");
         return optionalFileMetadata.get();
+    }
+
+    @Transactional
+    public FolderMetadata getFolderMetadataFromIdPathAndName(String idPath, String name, long userId) throws FileSystemException {
+        // dummy metadata for search
+        FolderMetadata dummyFolderMetadata = new FolderMetadata();
+        dummyFolderMetadata.setName(name);
+        dummyFolderMetadata.setPath(idPath);
+        dummyFolderMetadata.setId(null);
+        dummyFolderMetadata.setCreatedAt(null);
+        dummyFolderMetadata.setUserid(userId); //current logged in user id
+        Example<FolderMetadata> folderMetadataExample = Example.of(dummyFolderMetadata);
+        Optional<FolderMetadata> optionalFolderMetadata = sqLiteFolderRepository.findOne(folderMetadataExample);
+        if (optionalFolderMetadata.isEmpty())
+            throw new FileSystemException("Folder not found in database. Is database synced?");
+        return optionalFolderMetadata.get();
     }
 }

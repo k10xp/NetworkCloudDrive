@@ -28,18 +28,27 @@ public class FileUtility {
         this.queryUtility = queryUtility;
     }
 
-//    public void walkFsTree(Path dir) throws IOException {
-//        List<FileMetadata> files = new ArrayList<>();
-//        try(Stream<Path> fileTree = Files.walk(dir)) {
-//            fileTree.sorted(Comparator.reverseOrder()).forEach(path -> {
-//                File file = path.toFile();
-//                if (file.isFile()) {
-//                    queryUtility.;
-//                    queryUtility.getFileMetadataByFolderIdNameAndUserId();
-//                }
-//            });
-//        }
-//    }
+    //TODO implement folder type handling
+    public void walkFsTree(Path dir) throws IOException {
+        List<FileMetadata> files = new ArrayList<>();
+        try(Stream<Path> fileTree = Files.walk(dir)) {
+            List<Path> fileTreeStream = fileTree.sorted(Comparator.reverseOrder()).toList();
+            for (Path path : fileTreeStream) {
+                File file = path.toFile();
+                if (file.isFile()) {
+                    String parentFolderIdPath = generateIdPaths(file.getParent());
+                    FolderMetadata folderMetadata =
+                            queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
+                    queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L);
+                    continue;
+                }
+                // manage folders here
+
+            }
+        } catch (Exception e) {
+            logger.error("Failed to traverse file system tree {}", e.getMessage());
+        }
+    }
 
     public String getIdPath(long folderId) throws SQLException {
         return folderId != 0 ? queryUtility.queryFolderMetadata(folderId).getPath() : "0";
