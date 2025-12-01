@@ -37,14 +37,12 @@
 |--------|------------------------------------|---------------------------------------|--------------------|
 | GET    | 	api/filesystem/list?folderid={id} | Returns files/folders inside a folder | :heavy_check_mark: |
 
-
 ## User Endpoints
 
 | Method | 	Route              | 	Description   | Working |
 |--------|---------------------|----------------|---------|
 | POST   | 	api/user/login     | User login     | :x:     |
-| POST   | 	/api/user/register | registers user | :x:     |
-
+| POST   | 	/api/user/register | Registers user | :x:     |
 
 ## Maintenance Endpoints
 
