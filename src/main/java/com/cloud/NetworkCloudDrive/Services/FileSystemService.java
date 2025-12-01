@@ -71,8 +71,7 @@ public class FileSystemService implements FileSystemRepository {
     @Transactional
     public String removeFile(FileMetadata file) throws Exception {
         //find folder
-        File checkExists = fileUtility.returnFileIfItExists(fileStorageProperties.getBasePath() +
-                fileUtility.getFolderPath(file.getFolderId()) + File.separator + file.getName());
+        File checkExists = fileUtility.returnFileIfItExists(fileUtility.getFolderPath(file.getFolderId()) + File.separator + file.getName());
         //remove Folder
         if (!checkExists.delete())
             throw new FileSystemException(String.format("Failed to remove folder at path %s\n", checkExists.getPath()));

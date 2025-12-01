@@ -58,7 +58,7 @@ public class FileUtility {
 
     public File returnIfItsNotADuplicate(String path) throws FileNotFoundException {
         File checkDuplicate = new File(path);
-        if (!Files.exists(checkDuplicate.toPath()))
+        if (Files.exists(checkDuplicate.toPath()))
             throw new FileNotFoundException(String.format("%s with name %s already exists at %s",
                     (checkDuplicate.isFile() ? "File" : "Folder"), checkDuplicate.getName(), checkDuplicate.getPath()));
         return checkDuplicate;
@@ -126,7 +126,7 @@ public class FileUtility {
         String[] splitLine = idString.split("/");
         List<Long> idList = new ArrayList<>();
         for (String idAsString : splitLine) {
-            logger.info("added {}", idAsString);
+            logger.debug("added {}", idAsString);
             idList.add(Long.parseLong(idAsString));
         }
         logger.info("id size {}", idList.size());
