@@ -31,22 +31,24 @@ public class FileUtility {
     //TODO implement folder type handling
     public void walkFsTree(Path dir) throws IOException {
         List<FileMetadata> files = new ArrayList<>();
+        List<FolderMetadata> folders = new ArrayList<>();
         try(Stream<Path> fileTree = Files.walk(dir)) {
             List<Path> fileTreeStream = fileTree.sorted(Comparator.reverseOrder()).toList();
             for (Path path : fileTreeStream) {
                 File file = path.toFile();
+                String parentFolderIdPath = generateIdPaths(file.getParent());
+                FolderMetadata folderMetadata =
+                        queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
                 if (file.isFile()) {
-                    String parentFolderIdPath = generateIdPaths(file.getParent());
-                    FolderMetadata folderMetadata =
-                            queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
-                    queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L);
+                    files.add(queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
                     continue;
                 }
                 // manage folders here
-
+                folders.add(folderMetadata);
             }
         } catch (Exception e) {
             logger.error("Failed to traverse file system tree {}", e.getMessage());
+            throw new IOException("Failed to traverse file system tree " + e.getMessage());
         }
     }
 

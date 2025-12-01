@@ -45,6 +45,8 @@ class NetworkCloudDriveApplicationTests {
         logger.info("Operating System: {}", System.getProperty("os.name"));
     }
 
+    //TODO test to check if "findbyId" is working after save tests succeed
+
     // JPA TESTS
     @Test
     @Transactional
@@ -55,16 +57,23 @@ class NetworkCloudDriveApplicationTests {
         folderMetadata.setUserid(0L);
         folderMetadata.setName("folderMetadata_test");
         folderMetadata.setPath("0/" + folderMetadata.getId());
-        logger.info("Arranged Folder Metadata name: {} path: {}", folderMetadata.getName(), folderMetadata.getPath());
+        logger.info("Arranged Folder Metadata: name {} ID path {} and belongs to user {}. Extra details: created at {}",
+                folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getUserid(), folderMetadata.getCreatedAt());
         // Act
         FolderMetadata savedFolderMetadata = sqLiteFolderRepository.save(folderMetadata);
 
-        if (savedFolderMetadata != null) logger.info(
-                "Saved Folder Metadata Id: {} name: {} path: {}",
-                savedFolderMetadata.getId(),savedFolderMetadata.getName(), savedFolderMetadata.getPath());
+        if (savedFolderMetadata != null)
+            logger.info(
+                "Saved Folder Metadata ID {}: name {} ID path {} and belongs to user {}. Extra details: created at {}",
+                savedFolderMetadata.getId(),
+                savedFolderMetadata.getName(),
+                savedFolderMetadata.getPath(),
+                savedFolderMetadata.getUserid(),
+                savedFolderMetadata.getCreatedAt()
+            );
 
         // Assert
-        Assertions.assertNotNull(savedFolderMetadata);
+        Assertions.assertEquals(folderMetadata, savedFolderMetadata);
     }
 
     @Test
@@ -76,17 +85,29 @@ class NetworkCloudDriveApplicationTests {
         fileMetadata.setName("fileMetadata_test.txt");
         fileMetadata.setMimiType("text/plain");
         fileMetadata.setFolderId(0L);
-        logger.info("Arranged File Metadata name: {} path: {}", fileMetadata.getName(), fileMetadata.getFolderId());
+        logger.info("Arranged File Metadata: name {} inside folder ID {} and belongs to user {}. Extra details: mimetype {} and created at {}",
+                fileMetadata.getName(),
+                fileMetadata.getFolderId(),
+                fileMetadata.getUserid(),
+                fileMetadata.getMimiType(),
+                fileMetadata.getCreatedAt());
 
         // Act
         FileMetadata savedFileMetadata = sqLiteFileRepository.save(fileMetadata);
 
-        if (savedFileMetadata != null) logger.info(
-                "Saved File Metadata Id: {} name: {} MimeType: {}",
-                savedFileMetadata.getId(),savedFileMetadata.getName(), savedFileMetadata.getMimiType());
+        if (savedFileMetadata != null)
+            logger.info(
+                "Saved File Metadata ID {}: name {} inside folder ID {} and belongs to user {}. Extra details: mimetype {} and created at {}",
+                savedFileMetadata.getId(),
+                savedFileMetadata.getName(),
+                savedFileMetadata.getFolderId(),
+                savedFileMetadata.getUserid(),
+                savedFileMetadata.getMimiType(),
+                savedFileMetadata.getCreatedAt()
+            );
 
         // Assert
-        Assertions.assertNotNull(savedFileMetadata);
+        Assertions.assertEquals(fileMetadata, savedFileMetadata);
     }
 
     @Test
@@ -98,22 +119,31 @@ class NetworkCloudDriveApplicationTests {
         user.setMail("unit_test_username@test.com");
         user.setPassword("unhashed_password_for_unit_test");
         user.setRole(UserRole.NORMAL_USER);
-        logger.info("Arranged User details: name {} mail {} and password {}", user.getName(), user.getMail(), user.getPassword());
+        logger.info("Arranged User details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+                user.getName(),
+                user.getMail(),
+                user.getPassword(),
+                user.getRegisteredAt(),
+                user.getLastLogin(),
+                user.getRole()
+        );
 
         // Act
         User savedUser = sqLiteUserRepository.save(user);
 
-        if (savedUser != null) logger.info(
-                "Saved User details: Id {} name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+        if (savedUser != null)
+            logger.info(
+                "Saved User ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
                 savedUser.getId(),
                 savedUser.getName(),
                 savedUser.getMail(),
                 savedUser.getPassword(),
                 savedUser.getRegisteredAt(),
                 savedUser.getLastLogin(),
-                savedUser.getRole());
+                savedUser.getRole()
+            );
 
         // Assert
-        Assertions.assertNotNull(savedUser);
+        Assertions.assertEquals(user, savedUser);
     }
 }
