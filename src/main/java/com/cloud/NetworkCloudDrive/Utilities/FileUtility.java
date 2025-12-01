@@ -28,28 +28,41 @@ public class FileUtility {
         this.queryUtility = queryUtility;
     }
 
-    //TODO implement folder type handling
-    public void walkFsTree(Path dir) throws IOException {
-        List<FileMetadata> files = new ArrayList<>();
-        List<FolderMetadata> folders = new ArrayList<>();
+    public List<Path> walkFsTree(Path dir) throws IOException {
+        List<Path> fileTreeStream;
         try(Stream<Path> fileTree = Files.walk(dir)) {
-            List<Path> fileTreeStream = fileTree.sorted(Comparator.reverseOrder()).toList();
-            for (Path path : fileTreeStream) {
-                File file = path.toFile();
-                String parentFolderIdPath = generateIdPaths(file.getParent());
-                FolderMetadata folderMetadata =
-                        queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
-                if (file.isFile()) {
-                    files.add(queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
+            fileTreeStream = fileTree.sorted(Comparator.reverseOrder()).toList();
+        }
+        return fileTreeStream;
+    }
+
+    //TODO implement folder type handling
+    public void deleteFsTree(Path dir) throws IOException {
+        logger.info("Start File Tree deletion operation");
+        long errorCount = 0;
+        List<Path> fileTreeStream = walkFsTree(dir);
+        for (Path path : fileTreeStream) {
+            File file = path.toFile();
+            String parentFolderIdPath = generateIdPaths(file.getParent());
+            logger.info("generated path: {}", parentFolderIdPath);
+            FolderMetadata folderMetadata =
+                    queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
+            if (file.isFile()) {
+                if (!Files.deleteIfExists(file.toPath())) {
+                    errorCount++;
                     continue;
                 }
-                // manage folders here
-                folders.add(folderMetadata);
+                queryUtility.deleteFile(queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
+                continue;
             }
-        } catch (Exception e) {
-            logger.error("Failed to traverse file system tree {}", e.getMessage());
-            throw new IOException("Failed to traverse file system tree " + e.getMessage());
+            // manage folders here
+            if (!Files.deleteIfExists(file.toPath())) {
+                errorCount++;
+                continue;
+            }
+            queryUtility.deleteFolder(folderMetadata);
         }
+        logger.info("File Tree deletion operation: Error count {}", errorCount);
     }
 
     public String getIdPath(long folderId) throws SQLException {
@@ -153,6 +166,7 @@ public class FileUtility {
 
     // Generate ID path from System path
     public String generateIdPaths(String filePath) {
+        logger.info("String path {}", filePath);
         String[] folders = filePath.split("/");
         StringBuilder idPath = new StringBuilder();
         //HOPEFULLY generate ID path starting from '0/'
@@ -176,6 +190,7 @@ public class FileUtility {
                 }
             }
         }
+        idPath.setLength(idPath.length() - 1);
         return idPath.toString();
     }
 }
