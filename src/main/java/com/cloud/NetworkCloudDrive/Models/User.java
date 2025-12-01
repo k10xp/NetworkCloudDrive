@@ -25,7 +25,7 @@ public class User {
     private String salt;
 
     @Column(name = "role")
-    private UserRole role;
+    private UserRole role = UserRole.GUEST;
 
     @Column(name = "lastLogin")
     @CreationTimestamp
