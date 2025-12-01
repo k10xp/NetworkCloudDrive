@@ -4,9 +4,7 @@ import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.User;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteUserRepository;
+import com.cloud.NetworkCloudDrive.Utilities.QueryUtility;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -14,10 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,14 +25,7 @@ class NetworkCloudDriveApplicationTests {
     EntityManager entityManager;
 
     @Autowired
-    SQLiteFolderRepository sqLiteFolderRepository;
-
-    @Autowired
-    SQLiteFileRepository sqLiteFileRepository;
-
-    @Autowired
-    SQLiteUserRepository sqLiteUserRepository;
-
+    QueryUtility queryUtility;
 
     @Test
     void contextLoads() {
@@ -60,16 +47,16 @@ class NetworkCloudDriveApplicationTests {
         logger.info("Arranged Folder Metadata: name {} ID path {} and belongs to user {}. Extra details: created at {}",
                 folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getUserid(), folderMetadata.getCreatedAt());
         // Act
-        FolderMetadata savedFolderMetadata = sqLiteFolderRepository.save(folderMetadata);
+        FolderMetadata savedFolderMetadata = queryUtility.saveFolder(folderMetadata);
 
         if (savedFolderMetadata != null)
             logger.info(
-                "Saved Folder Metadata ID {}: name {} ID path {} and belongs to user {}. Extra details: created at {}",
-                savedFolderMetadata.getId(),
-                savedFolderMetadata.getName(),
-                savedFolderMetadata.getPath(),
-                savedFolderMetadata.getUserid(),
-                savedFolderMetadata.getCreatedAt()
+                    "Saved Folder Metadata ID {}: name {} ID path {} and belongs to user {}. Extra details: created at {}",
+                    savedFolderMetadata.getId(),
+                    savedFolderMetadata.getName(),
+                    savedFolderMetadata.getPath(),
+                    savedFolderMetadata.getUserid(),
+                    savedFolderMetadata.getCreatedAt()
             );
 
         // Assert
@@ -93,17 +80,17 @@ class NetworkCloudDriveApplicationTests {
                 fileMetadata.getCreatedAt());
 
         // Act
-        FileMetadata savedFileMetadata = sqLiteFileRepository.save(fileMetadata);
+        FileMetadata savedFileMetadata = queryUtility.saveFile(fileMetadata);
 
         if (savedFileMetadata != null)
             logger.info(
-                "Saved File Metadata ID {}: name {} inside folder ID {} and belongs to user {}. Extra details: mimetype {} and created at {}",
-                savedFileMetadata.getId(),
-                savedFileMetadata.getName(),
-                savedFileMetadata.getFolderId(),
-                savedFileMetadata.getUserid(),
-                savedFileMetadata.getMimiType(),
-                savedFileMetadata.getCreatedAt()
+                    "Saved File Metadata ID {}: name {} inside folder ID {} and belongs to user {}. Extra details: mimetype {} and created at {}",
+                    savedFileMetadata.getId(),
+                    savedFileMetadata.getName(),
+                    savedFileMetadata.getFolderId(),
+                    savedFileMetadata.getUserid(),
+                    savedFileMetadata.getMimiType(),
+                    savedFileMetadata.getCreatedAt()
             );
 
         // Assert
@@ -129,18 +116,18 @@ class NetworkCloudDriveApplicationTests {
         );
 
         // Act
-        User savedUser = sqLiteUserRepository.save(user);
+        User savedUser = queryUtility.saveUser(user);
 
         if (savedUser != null)
             logger.info(
-                "Saved User ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
-                savedUser.getId(),
-                savedUser.getName(),
-                savedUser.getMail(),
-                savedUser.getPassword(),
-                savedUser.getRegisteredAt(),
-                savedUser.getLastLogin(),
-                savedUser.getRole()
+                    "Saved User ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+                    savedUser.getId(),
+                    savedUser.getName(),
+                    savedUser.getMail(),
+                    savedUser.getPassword(),
+                    savedUser.getRegisteredAt(),
+                    savedUser.getLastLogin(),
+                    savedUser.getRole()
             );
 
         // Assert
