@@ -43,9 +43,12 @@ public class FileUtility {
         List<Path> fileTreeStream = walkFsTree(dir);
         for (Path path : fileTreeStream) {
             File file = path.toFile();
+            if (file.getParentFile().equals(new File(fileStorageProperties.getFullPath()))) {
+                logger.info("Skipped base path");
+                continue;
+            }
             String parentFolderIdPath = generateIdPaths(file.getParent());
             logger.info("generated path: {}", parentFolderIdPath);
-            if (parentFolderIdPath.equals("0")) continue;
             FolderMetadata folderMetadata =
                     queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
             if (file.isFile()) {

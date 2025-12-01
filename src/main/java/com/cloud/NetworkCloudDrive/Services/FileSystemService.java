@@ -4,7 +4,6 @@ import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileSystemRepository;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import com.cloud.NetworkCloudDrive.Utilities.QueryUtility;
 import jakarta.persistence.EntityManager;
@@ -24,7 +23,6 @@ import java.util.List;
 //TODO Migrate from io to nio for thread safety
 @Service
 public class FileSystemService implements FileSystemRepository {
-    private final SQLiteFolderRepository sqLiteFolderRepository;
     private final FileStorageProperties fileStorageProperties;
     private final EntityManager entityManager;
     private final InformationService informationService;
@@ -33,14 +31,12 @@ public class FileSystemService implements FileSystemRepository {
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
 
     public FileSystemService(
-            SQLiteFolderRepository sqLiteFolderRepository,
             InformationService informationService,
             FileStorageProperties fileStorageProperties,
             EntityManager entityManager,
             FileUtility fileUtility,
             QueryUtility queryUtility) {
         this.fileStorageProperties = fileStorageProperties;
-        this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.informationService = informationService;
         this.entityManager = entityManager;
         this.fileUtility = fileUtility;
@@ -199,10 +195,12 @@ public class FileSystemService implements FileSystemRepository {
         logger.debug("concat id path {}", folder.getPath());
         // get children folders to update
         List<FolderMetadata> foldersToMove = queryUtility.getChildrenFoldersInDirectory(folder.getPath());
-        // generate folder id path
-        // if the target is 0 and the source is at 0/1/4/2
-        // then it will be 0/2 original source will be 0/1/4
-        // if target is 0/5/9 then it will be 0/5/9/2 and contents will be 0/5/9/2/x
+        /*
+        generate folder id path
+        if the target is 0 and the source is at 0/1/4/2
+        then it will be 0/2 original source will be 0/1/4
+        if target is 0/5/9 then it will be 0/5/9/2 and contents will be 0/5/9/2/x
+         */
         String formerIdPath = destinationFolderMetadata.getPath();
         String backupPath = "";
         logger.debug("former path {}", formerIdPath);
@@ -226,13 +224,13 @@ public class FileSystemService implements FileSystemRepository {
         if (!Files.exists(moveFolderAction))
             throw new FileSystemException(String.format("Failed to move the folder from %s to %s", sourceFolderPath, updatedPath));
         //save
-        sqLiteFolderRepository.saveAll(foldersToMove);
+        queryUtility.saveAllFolders(foldersToMove);
         return updatedPath;
     }
 
     @Override
     @Transactional
-    public FolderMetadata createFolder(String folderName, long folderId) throws Exception {
+    public FolderMetadata createFolder(String folderName, long folderId, long userId) throws Exception {
         if (!fileUtility.checkAndMakeDirectories(fileStorageProperties.getFullPath()))
             throw new FileSystemException("Failed to create root directory");
         String rootPath = fileStorageProperties.getBasePath();
@@ -256,8 +254,8 @@ public class FileSystemService implements FileSystemRepository {
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
         createdFolder.setPath(idPath + "/" + createdFolder.getId());
-        createdFolder.setUserid(0L); //placeholder
+        createdFolder.setUserid(userId); //placeholder
         createdFolder.setName(folderName);
-        return sqLiteFolderRepository.save(createdFolder); // reverse order
+        return queryUtility.saveFolder(createdFolder);
     }
 }

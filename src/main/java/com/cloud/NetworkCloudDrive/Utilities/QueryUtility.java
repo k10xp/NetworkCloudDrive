@@ -55,18 +55,28 @@ public class QueryUtility {
 
     // Add/Update
     @Transactional
-    public void saveFolder(FolderMetadata folder) {
-        sqLiteFolderRepository.save(folder);
+    public FolderMetadata saveFolder(FolderMetadata folder) {
+        return sqLiteFolderRepository.save(folder);
     }
 
     @Transactional
-    public void saveFile(FileMetadata file) {
-        sqLiteFileRepository.save(file);
+    public FileMetadata saveFile(FileMetadata file) {
+        return sqLiteFileRepository.save(file);
     }
 
     @Transactional
-    public void saveUser(User user) {
-        sqLiteUserRepository.save(user);
+    public User saveUser(User user) {
+        return sqLiteUserRepository.save(user);
+    }
+
+    @Transactional
+    public void saveAllFolders(List<FolderMetadata> folderMetadata) {
+        sqLiteFolderRepository.saveAll(folderMetadata);
+    }
+
+    @Transactional
+    public void saveAllFiles(List<FileMetadata> fileMetadata) {
+        sqLiteFileRepository.saveAll(fileMetadata);
     }
 
     // Database service layer

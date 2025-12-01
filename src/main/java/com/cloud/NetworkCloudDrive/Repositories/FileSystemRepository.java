@@ -19,7 +19,7 @@ public interface FileSystemRepository {
     String updateFileName(String newName, FileMetadata file) throws Exception;
     String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception;
     String moveFile(FileMetadata targetFile, long folderId) throws Exception;
-    FolderMetadata createFolder(String folderName, long folderid) throws Exception;
+    FolderMetadata createFolder(String folderName, long folderId, long userId) throws Exception;
     List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
             throws FileSystemException, SQLException;
 }
