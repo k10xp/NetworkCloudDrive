@@ -31,13 +31,13 @@ public class FileUtility {
     public List<Path> walkFsTree(Path dir) throws IOException {
         List<Path> fileTreeStream;
         try(Stream<Path> fileTree = Files.walk(dir)) {
-            fileTreeStream = fileTree.sorted(Comparator.reverseOrder()).toList();
+            fileTreeStream = fileTree.toList();
         }
         return fileTreeStream;
     }
 
     //TODO implement folder type handling
-    public void deleteFsTree(Path dir) throws IOException {
+    public void deleteFsTree(Path dir, String startingIdPath) throws IOException {
         logger.info("Start File Tree deletion operation");
         long errorCount = 0;
         List<Path> fileTreeStream = walkFsTree(dir);
@@ -45,6 +45,7 @@ public class FileUtility {
             File file = path.toFile();
             String parentFolderIdPath = generateIdPaths(file.getParent());
             logger.info("generated path: {}", parentFolderIdPath);
+            if (parentFolderIdPath.equals("0")) continue;
             FolderMetadata folderMetadata =
                     queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
             if (file.isFile()) {
@@ -162,6 +163,10 @@ public class FileUtility {
         fullPath.setLength(fullPath.length() - 1);
         logger.info("output {}", fullPath);
         return fullPath.toString();
+    }
+
+    public String generateIdPathStartingFrom(String filePath, String startingIdPath) {
+        return "";
     }
 
     // Generate ID path from System path
