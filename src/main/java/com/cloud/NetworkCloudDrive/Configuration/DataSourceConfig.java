@@ -7,6 +7,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
+import java.sql.SQLException;
 
 @Configuration
 @PropertySource("classpath:persistence.properties")
@@ -18,9 +19,11 @@ public class DataSourceConfig {
     }
 
     @Bean
-    public DataSource dataSource() {
+    public DataSource dataSource() throws SQLException {
+        String driverClassName = env.getProperty("driverClassName");
+        if (driverClassName == null) throw new SQLException("Driver Class name is required");
         final DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(env.getProperty("driverClassName"));
+        dataSource.setDriverClassName(driverClassName);
         dataSource.setUrl(env.getProperty("url"));
         dataSource.setUsername(env.getProperty("username"));
         dataSource.setPassword(env.getProperty("password"));
