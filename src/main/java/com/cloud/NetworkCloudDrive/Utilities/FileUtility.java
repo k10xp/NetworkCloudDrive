@@ -76,8 +76,12 @@ public class FileUtility {
                 FolderMetadata folderMetadata =
                         sqLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
                 FileMetadata output = sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L);
-                logger.info("File metadata: name {} path {} Id {}", output.getName(), output.getFolderId(), output.getId());
+                if (!Files.deleteIfExists(file.toPath())) {
+                    errorCount++;
+                    continue;
+                }
                 sqLiteDAO.deleteFile(sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
+                logger.info("File metadata: name {} path {} Id {}", output.getName(), output.getFolderId(), output.getId());
                 continue;
             }
             // some progress
@@ -92,7 +96,7 @@ public class FileUtility {
                 continue;
             }
             sqLiteDAO.deleteFolder(folderMetadata);
-            //check if its correct
+            //check if it's correct
             logger.info("Folder metadata: name {} path {} Id {}", folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getId());
         }
         logger.info("File Tree deletion operation: Error count {}", errorCount);

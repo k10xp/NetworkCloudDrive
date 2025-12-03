@@ -82,12 +82,12 @@ public class FileSystemService implements FileSystemRepository {
         String pathToRemove = fileUtility.resolvePathFromIdString(folder.getPath());
         logger.info("pathToRemove = {}", pathToRemove);
         //find folder
-        File checkExists = new File(fileStorageProperties.getBasePath() + pathToRemove);
-        logger.info("checkExists.getPath() = {}", checkExists.getPath());
-        if (!Files.exists(checkExists.toPath()))
-            throw new FileSystemException(String.format("Failed to delete folder. Does folder exist at path %s?", pathToRemove));
+        File checkExists = fileUtility.returnFileIfItExists(pathToRemove);
         //remove Folder
         fileUtility.deleteFsTree(checkExists.toPath(), folder.getPath());
+        if (!Files.deleteIfExists(checkExists.toPath()))
+            throw new IOException("Failed to remove parent folder");
+        sqLiteDAO.deleteFolder(folder);
         return checkExists.getPath();
     }
 
