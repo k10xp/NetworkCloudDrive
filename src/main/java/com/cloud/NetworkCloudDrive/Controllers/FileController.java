@@ -3,6 +3,7 @@ package com.cloud.NetworkCloudDrive.Controllers;
 import com.cloud.NetworkCloudDrive.DTOs.CreateFolderDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
+import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
 import com.cloud.NetworkCloudDrive.Models.JSONResponse;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.FileService;
@@ -17,6 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.FileSystemException;
 
 @RestController
 @RequestMapping(path = "/api/file")
@@ -43,7 +46,8 @@ public class FileController {
             return ResponseEntity.ok().body(fileService.uploadFiles(files, folderPath, folderid));
         } catch (Exception e) {
             logger.error("Failed to upload file. {}", e.getMessage());
-            return ResponseEntity.badRequest().body(new JSONResponse("Failed to upload file", false));
+            return ResponseEntity.badRequest().body(
+                    new JSONErrorResponse("Failed to upload file",e.getClass().getName(), false));
         }
     }
 
@@ -58,9 +62,15 @@ public class FileController {
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + metadata.getName() + "\" "). //return filename
                             contentType(MediaType.parseMediaType(metadata.getMimiType())).
                     contentLength(metadata.getSize()).body(file);
-        } catch (Exception e) {
+        }
+        catch (FileSystemException fse) {
+            logger.error("Internal error occurred. {}", fse.getMessage());
+            return ResponseEntity.internalServerError().body(new JSONResponse("Internal error occurred", false));
+        }
+        catch (Exception e) {
             logger.error("Failed to download file. {}", e.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONResponse("Failed to download file", false));
+            return ResponseEntity.internalServerError().body(
+                    new JSONErrorResponse("Failed to download file",e.getClass().getName(), false));
         }
     }
 
@@ -73,12 +83,12 @@ public class FileController {
     @PostMapping(value = "create/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
-            FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getName(), folderDTO.getFolder_id());
+            FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getName(), folderDTO.getFolder_id(), 0L);
             folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
             logger.error("Error creating folder with name: {}. {}", folderDTO.getName(), e.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONResponse(e.getMessage(), false));
+            return ResponseEntity.internalServerError().body(new JSONErrorResponse(e.getMessage(),e.getClass().getName(), false));
         }
     }
 }

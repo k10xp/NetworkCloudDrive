@@ -6,18 +6,26 @@ target/
 .mvn/
 .mvn/*
 
-# Storage/User Space
+### Storage/User Space ###
 root/
 root/*
 
+### JavaDocs ###
+JavaDocs/
+JavaDocs/*
+
+### Others ###
 config/
 config/*
 logs/
 logs/*
 logs_test/
 logs_test/*
+
+### DB ###
 filedatabase.db
 
+### Maven ###
 mvnw
 mvnw.cmd
 

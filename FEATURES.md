@@ -1,0 +1,49 @@
+# Current Features
+
+## Query Metadata
+
+| Method | 	Route                                     | 	Description                   | Working            |
+|--------|--------------------------------------------|--------------------------------|--------------------|
+| GET    | 	api/info/get/filemetadata?fileid={id}     | 	Returns File Metadata by ID   | :heavy_check_mark: |
+| GET    | 	api/info/get/foldermetadata?folderid={id} | 	Returns Folder Metadata by ID | :heavy_check_mark: |
+
+## FileSystem File Endpoints
+
+| Method | 	Route                                  | 	Description                                  | Working            |
+|--------|-----------------------------------------|-----------------------------------------------|--------------------|
+| POST   | 	api/filesystem/file/move               | Moves file given Id to another folder by ID   | :heavy_check_mark: |
+| POST   | 	api/filesystem/file/remove?fileid={id} | Removes file by ID                            | :heavy_check_mark: |
+| POST   | 	api/filesystem/file/rename             | Renames file with ID parameter with JSON body | :heavy_check_mark: |
+
+## FileSystem Folder Endpoints
+
+| Method | 	Route                                      | 	Description                                    | Working            |
+|--------|---------------------------------------------|-------------------------------------------------|--------------------|
+| POST   | 	api/filesystem/folder/move                 | Moves folder given Id to another folder by ID   | :heavy_check_mark: |
+| POST   | 	api/filesystem/folder/remove?folderid={id} | Removes folder by ID along with child folders   | :heavy_check_mark: |
+| POST   | 	api/filesystem/folder/rename               | Renames folder with ID parameter with JSON body | :heavy_check_mark: |
+
+## File Endpoints
+
+| Method | 	Route                         | 	Description                                | Working            |
+|--------|--------------------------------|---------------------------------------------|--------------------|
+| GET    | 	api/file/download?fileid={id} | Finds and downloads file by ID              | :heavy_check_mark: |
+| POST   | 	api/file/create/folder        | Creates folder with name at given folder ID | :heavy_check_mark: |
+| POST   | 	api/file/upload               | Uploads file(s) at folder ID path           | :heavy_check_mark: |
+
+## List Structure Endpoint
+
+| Method | 	Route                             | 	Description                          | Working            |
+|--------|------------------------------------|---------------------------------------|--------------------|
+| GET    | 	api/filesystem/list?folderid={id} | Returns files/folders inside a folder | :heavy_check_mark: |
+
+## User Endpoints
+
+| Method | 	Route             | 	Description   | Working |
+|--------|--------------------|----------------|---------|
+| POST   | 	api/user/login    | User login     | :x:     |
+| POST   | 	api/user/register | Registers user | :x:     |
+
+## Maintenance Endpoints
+
+coming soon...

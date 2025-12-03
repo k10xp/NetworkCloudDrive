@@ -1,5 +1,6 @@
 package com.cloud.NetworkCloudDrive.Utilities;
 
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -19,34 +21,94 @@ import java.util.stream.Stream;
 @Component
 public class FileUtility {
     private final FileStorageProperties fileStorageProperties;
-    private final QueryUtility queryUtility;
+    private final SQLiteDAO sqLiteDAO;
     private final Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
-    public FileUtility(QueryUtility queryUtility, FileStorageProperties fileStorageProperties) {
+    public FileUtility(SQLiteDAO sqLiteDAO, FileStorageProperties fileStorageProperties) {
         this.fileStorageProperties = fileStorageProperties;
-        this.queryUtility = queryUtility;
+        this.sqLiteDAO = sqLiteDAO;
     }
 
-//    public void walkFsTree(Path dir) throws IOException {
-//        List<FileMetadata> files = new ArrayList<>();
-//        try(Stream<Path> fileTree = Files.walk(dir)) {
-//            fileTree.sorted(Comparator.reverseOrder()).forEach(path -> {
-//                File file = path.toFile();
-//                if (file.isFile()) {
-//                    queryUtility.;
-//                    queryUtility.getFileMetadataByFolderIdNameAndUserId();
-//                }
-//            });
-//        }
-//    }
+    public List<Path> walkFsTree(Path dir, boolean reverse) throws IOException {
+        try (Stream<Path> fileTree = Files.walk(dir)) {
+            return (reverse ? fileTree.sorted(Comparator.reverseOrder()) : fileTree).toList();
+        } catch (IOException e) {
+            throw new IOException("Failed to walk file tree. " + e.getMessage());
+        }
+    }
+
+    public void deleteFSTree_PlaceHolder(Path dir) throws IOException {
+        logger.info("Start File Tree deletion operation (PLACEHOLDER");
+        long errorCount = 0, skippedFileCount = 0, skippedFolderCountInside = 0, skippedDuplicateCount = 0, discoveredFolderCount = 0;;
+        List<Path> fileTreeStream = walkFsTree(dir, true);
+        for (Path path : fileTreeStream) {
+            List<Path> folderContentsList = getFilesAndFolderPathsfromFolderImprovised(path);
+            for (Path paths : folderContentsList) {
+                if (!paths.toFile().isFile()) {
+                    skippedFolderCountInside++;
+                    continue;
+                }
+                System.out.println("-> FILE "+paths);
+            }
+        }
+    }
+
+    //TODO implement folder type handling
+    //WHAT A MESS
+    public void deleteFsTree(Path dir, String startingIdPath) throws IOException {
+        logger.info("Start File Tree deletion operation");
+        long errorCount = 0;
+        List<Path> fileTreeStream = walkFsTree(dir, true);
+        for (Path path : fileTreeStream) {
+            File file = path.toFile();
+            if (file.getParentFile().equals(new File(fileStorageProperties.getFullPath()))) {
+                logger.info("Skipped base path");
+                continue;
+            }
+            if (!Files.exists(file.toPath())) {
+                errorCount++;
+                continue;
+            }
+            if (file.isFile()) {
+                // use deleteIfExists at prod
+                String parentFolderIdPath = generateIdPaths(file.getParentFile().getPath(), startingIdPath);
+                logger.info("generated file path: {}", parentFolderIdPath);
+                FolderMetadata folderMetadata =
+                        sqLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
+                FileMetadata output = sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L);
+                if (!Files.deleteIfExists(file.toPath())) {
+                    errorCount++;
+                    continue;
+                }
+                sqLiteDAO.deleteFile(sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
+                logger.info("File metadata: name {} path {} Id {}", output.getName(), output.getFolderId(), output.getId());
+                continue;
+            }
+            // some progress
+            String parentFolderIdPath = generateIdPaths(file.getPath(), startingIdPath);
+            logger.info("generated folder path: {}", parentFolderIdPath);
+            FolderMetadata folderMetadata =
+                    sqLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getName(), 0L);
+            // manage folders here
+            //temporary comment out to test
+            if (!Files.deleteIfExists(file.toPath())) {
+                errorCount++;
+                continue;
+            }
+            sqLiteDAO.deleteFolder(folderMetadata);
+            //check if it's correct
+            logger.info("Folder metadata: name {} path {} Id {}", folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getId());
+        }
+        logger.info("File Tree deletion operation: Error count {}", errorCount);
+    }
 
     public String getIdPath(long folderId) throws SQLException {
-        return folderId != 0 ? queryUtility.queryFolderMetadata(folderId).getPath() : "0";
+        return folderId != 0 ? sqLiteDAO.queryFolderMetadata(folderId).getPath() : "0";
     }
 
     public File returnIfItsNotADuplicate(String path) throws FileNotFoundException {
         File checkDuplicate = new File(path);
-        if (!Files.exists(checkDuplicate.toPath()))
+        if (Files.exists(checkDuplicate.toPath()))
             throw new FileNotFoundException(String.format("%s with name %s already exists at %s",
                     (checkDuplicate.isFile() ? "File" : "Folder"), checkDuplicate.getName(), checkDuplicate.getPath()));
         return checkDuplicate;
@@ -60,12 +122,20 @@ public class FileUtility {
         return checkExists;
     }
 
-    public String getFolderPath(long folderId) throws SQLException {
+    public String getFolderPath(long folderId) throws SQLException, FileSystemException {
         return folderId != 0
                 ?
-                resolvePathFromIdString(queryUtility.queryFolderMetadata(folderId).getPath())
+                resolvePathFromIdString(sqLiteDAO.queryFolderMetadata(folderId).getPath())
                 :
                 fileStorageProperties.getOnlyUserName();
+    }
+
+    public List<Path> getFilesAndFolderPathsfromFolderImprovised(Path folderPath) throws IOException {
+        List<Path> fileList;
+        try (Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() + folderPath))) {
+            fileList = stream.toList();
+        }
+        return fileList;
     }
 
     public String concatIdPaths(String former, long latterId) {
@@ -103,65 +173,69 @@ public class FileUtility {
     }
 
     public FolderMetadata getFolderMetadataByIdFromList(List<FolderMetadata> list, long targetId) {
-        FolderMetadata result = new FolderMetadata();
         for (FolderMetadata folderMetadata : list) {
-            if (targetId == folderMetadata.getId()) result = folderMetadata;
+            if (targetId == folderMetadata.getId())
+                return folderMetadata;
         }
-        return result;
+        return null;
     }
 
-    public String resolvePathFromIdString(String idString) {
+    public String resolvePathFromIdString(String idString) throws FileSystemException {
         String[] splitLine = idString.split("/");
         List<Long> idList = new ArrayList<>();
         for (String idAsString : splitLine) {
-            logger.info("added {}", idAsString);
+            logger.debug("added {}", idAsString);
             idList.add(Long.parseLong(idAsString));
         }
         logger.info("id size {}", idList.size());
         return appendFolderNames(idList);
     }
 
-    private String appendFolderNames(List<Long> folderIdList) {
+    private String appendFolderNames(List<Long> folderIdList) throws FileSystemException {
         StringBuilder fullPath = new StringBuilder();
-        List<FolderMetadata> folderMetadataListById = queryUtility.findAllByIdInSQLFolderMetadata(folderIdList);
+        List<FolderMetadata> folderMetadataListById = sqLiteDAO.findAllByIdInSQLFolderMetadata(folderIdList);
         logger.info("size {}", folderMetadataListById.size());
         for (int i = 0; i < folderIdList.size(); i++) {
             if (i == 0) {
                 fullPath.append(fileStorageProperties.getOnlyUserName()).append(File.separator);
                 continue;
             }
-            fullPath.append(getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName()).append(File.separator);
+            String fileNameFromId = getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName();
+            if (fileNameFromId == null) throw new FileSystemException("No match found for ID " + folderIdList.get(i));
+            fullPath.append(fileNameFromId).append(File.separator);
         }
         fullPath.setLength(fullPath.length() - 1);
         logger.info("output {}", fullPath);
         return fullPath.toString();
     }
 
-    // Generate Id path from Path
-    public String generateIdPaths(String filePath) {
+    // Generate ID path from System path
+    public String generateIdPaths(String filePath, String startingIdPath) {
+        logger.info("String path {}", filePath);
         String[] folders = filePath.split("/");
         StringBuilder idPath = new StringBuilder();
-        //HOPEFULLY generate Id path starting from '0/'
+        //HOPEFULLY generate ID path starting from '0/'
+        // cut beginning of path before to avoid having boolean conditional
         boolean startAdding = false;
         int depth = 0;
-        idPath.append(0).append("/");
+        idPath.append(startingIdPath).append("/");
         for (String folderName : folders) {
             if (folderName.equals(fileStorageProperties.getOnlyUserName())) {
                 startAdding = !startAdding;
             }
             if (startAdding) {
                 depth++;
-                List<FolderMetadata> folderResults = queryUtility.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString());
+                List<FolderMetadata> folderResults = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString());
                 for (FolderMetadata folderMetadata : folderResults) {
                     String[] splitId = folderMetadata.getPath().split("/");
                     if (splitId.length == depth) {
                         idPath.append(folderMetadata.getId()).append("/");
-                        logger.info("before break: {}", idPath.toString());
                         break;
                     }
                 }
             }
         }
+        idPath.setLength(idPath.length() - 1);
         return idPath.toString();
     }
 }

@@ -6,6 +6,7 @@ import com.cloud.NetworkCloudDrive.DTOs.UpdateFolderNameDTO;
 import com.cloud.NetworkCloudDrive.DTOs.UpdateFolderPathDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
+import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
 import com.cloud.NetworkCloudDrive.Models.JSONResponse;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
@@ -56,8 +57,9 @@ public class FileSystemController {
         } catch (Exception e) {
             logger.error("Cannot update name: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
-                            String.format("Failed to update file with Id %d: %s", updateFileNameDTO.getFile_id(), e.getMessage()), false));
+                    body(new JSONErrorResponse(
+                            String.format("Failed to update file with Id %d: %s", updateFileNameDTO.getFile_id(), e.getMessage()),
+                            e.getClass().getName(),false));
         }
     }
 
@@ -76,9 +78,9 @@ public class FileSystemController {
         } catch (Exception e) {
             logger.error("Cannot update folder name. {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
+                    body(new JSONErrorResponse(
                             String.format("Failed to update folder with Id %d: %s", updateFolderNameDTO.getFolder_id(), e.getMessage()),
-                            false));
+                            e.getClass().getName(),false));
         }
     }
 
@@ -95,9 +97,9 @@ public class FileSystemController {
         } catch (Exception e) {
             logger.error("Cannot move folder. {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
+                    body(new JSONErrorResponse(
                             String.format("Failed to move folder with Id %d: %s", updateFolderPathDTO.getFormer_folder_id(), e.getMessage()),
-                            false));
+                            e.getClass().getName(),false));
         }
     }
 
@@ -118,9 +120,9 @@ public class FileSystemController {
         } catch (Exception e) {
             logger.error("Cannot move name: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
+                    body(new JSONErrorResponse(
                             String.format("Failed to move file with Id %d: %s", updateFilePathDTO.getFile_id(), e.getMessage()),
-                            false));
+                            e.getClass().getName(),false));
         }
     }
 
@@ -136,7 +138,7 @@ public class FileSystemController {
         } catch (Exception e) {
             logger.error("Cannot remove folder #{}: {}", folderid, e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(String.format("Failed remove folder with Id %d", folderid), false));
+                    body(new JSONErrorResponse(String.format("Failed remove folder with Id %d", folderid), e.getClass().getName(),false));
         }
     }
 
@@ -152,27 +154,29 @@ public class FileSystemController {
         } catch (Exception e) {
             logger.error("Cannot remove file #{}: {}", fileid, e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(String.format("Failed remove file with Id %d: %s", fileid, e.getMessage()), false));
+                    body(new JSONErrorResponse(
+                            String.format("Failed remove file with Id %d: %s", fileid, e.getMessage()),
+                            e.getClass().getName(), false));
         }
     }
 
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
         try {
-            // DEBUG
-//            logger.info("output id path {}",
-//                    fileUtility.generateIdPaths("/home/aksell/IdeaProjects/NetworkCloudDrive/root/test_user1/test2/test1/test1/test1/"));
-            List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder((folderid != 0 ?
-                    fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(folderid).getPath())
-                    :
-                    fileStorageProperties.getOnlyUserName()));
+            List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder(fileUtility.getFolderPath(folderid));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(fileSystemService.getListOfMetadataFromPath(fileList, folderid));
         } catch (FileSystemException fileSystemException) {
+            logger.error("Some folders couldn't be found at folder with Id {}, reason: {}", folderid, fileSystemException.getMessage());
             return ResponseEntity.internalServerError().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(fileSystemException.getMessage(), false));
+                    body(new JSONErrorResponse(String.format("Some folders couldn't be found at folder with Id %d", folderid),
+                            fileSystemException.getClass().getName(), false));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(new JSONResponse(e.getMessage(), false));
+            logger.error("Failed to list items in folder with Id {}, reason: {}", folderid, e.getMessage());
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(
+                    new JSONErrorResponse(
+                            String.format("Failed to list items inside folder with Id %d", folderid),
+                            e.getClass().getName(), false));
         }
     }
 }
