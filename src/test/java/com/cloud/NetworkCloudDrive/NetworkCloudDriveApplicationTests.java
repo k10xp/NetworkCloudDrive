@@ -156,12 +156,15 @@ class NetworkCloudDriveApplicationTests {
         String filePath = "";
         try {
             // get latest ID
-            if (last_saved_folder_metadata == null) throw new FileSystemException("metadata is null");
-            filePath = fileUtility.resolvePathFromIdString(last_saved_folder_metadata.getPath());
+            FolderMetadata folderMetadata = sqLiteDAO.queryFolderMetadata(1L);
+            filePath = fileUtility.resolvePathFromIdString(folderMetadata.getPath());
         } catch (FileSystemException e) {
             logger.error("Failed to resolve path for Unit Testing. {}", e.getMessage());
             Assertions.fail(e.getMessage());
+        } catch (SQLException e) {
+            logger.error("Failed to get folder metadata for Unit Testing. {}", e.getMessage());
+            Assertions.fail(e.getMessage());
         }
-        Assertions.assertEquals("0/1", filePath);
+        Assertions.assertEquals("test_user1/folderMetadata_test", filePath);
     }
 }
