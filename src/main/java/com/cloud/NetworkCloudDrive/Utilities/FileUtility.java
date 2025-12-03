@@ -212,7 +212,7 @@ public class FileUtility {
     // Generate ID path from System path
     public String generateIdPaths(String filePath, String startingIdPath) {
         logger.info("String path {}", filePath);
-        String[] folders = filePath.split("/");
+        String[] folders = filePath.split(File.separator);
         StringBuilder idPath = new StringBuilder();
         //HOPEFULLY generate ID path starting from '0/'
         // cut beginning of path before to avoid having boolean conditional
