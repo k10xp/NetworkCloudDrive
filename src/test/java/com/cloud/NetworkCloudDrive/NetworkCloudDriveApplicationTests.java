@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.nio.file.FileSystemException;
 import java.sql.SQLException;
 
@@ -25,8 +26,6 @@ import java.sql.SQLException;
 class NetworkCloudDriveApplicationTests {
 
     private final Logger logger = LoggerFactory.getLogger(NetworkCloudDriveApplicationTests.class);
-
-    private FolderMetadata last_saved_folder_metadata;
 
     @Autowired
     EntityManager entityManager;
@@ -43,6 +42,49 @@ class NetworkCloudDriveApplicationTests {
         logger.info("Operating System: {}", System.getProperty("os.name"));
     }
 
+    public FolderMetadata setupFolderMetadataObject(String name) {
+        FolderMetadata folderMetadata = new FolderMetadata();
+        entityManager.persist(folderMetadata);
+        folderMetadata.setUserid(0L);
+        folderMetadata.setName(name);
+        folderMetadata.setPath("0/" + folderMetadata.getId());
+        logger.info("Arranged Folder Metadata: name {} ID path {} and belongs to user {}. Extra details: created at {}",
+                folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getUserid(), folderMetadata.getCreatedAt());
+        return folderMetadata;
+    }
+
+    public FileMetadata setupFileMetadataObject(String name, String mimeType) {
+        FileMetadata fileMetadata = new FileMetadata();
+        fileMetadata.setUserid(0L);
+        fileMetadata.setName(name);
+        fileMetadata.setMimiType(mimeType);
+        fileMetadata.setFolderId(0L);
+        logger.info("Arranged File Metadata: name {} inside folder ID {} and belongs to user {}. Extra details: mimetype {} and created at {}",
+                fileMetadata.getName(),
+                fileMetadata.getFolderId(),
+                fileMetadata.getUserid(),
+                fileMetadata.getMimiType(),
+                fileMetadata.getCreatedAt());
+        return fileMetadata;
+    }
+
+    public User setupUserObject(String name, String mail, String password, UserRole userRole) {
+        User user = new User();
+        user.setName("unit_test_username");
+        user.setMail("unit_test_username@test.com");
+        user.setPassword("unhashed_password_for_unit_test");
+        user.setRole(UserRole.GUEST);
+        logger.info("Arranged User details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+                user.getName(),
+                user.getMail(),
+                user.getPassword(),
+                user.getRegisteredAt(),
+                user.getLastLogin(),
+                user.getRole()
+        );
+        return user;
+    }
+
     //TODO test to check if "findbyId" is working after save tests succeed
 
     // JPA TESTS
@@ -51,13 +93,7 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void FolderMetadata_Save_ReturnSavedFolderMetadata() {
         // Arrange
-        FolderMetadata folderMetadata = new FolderMetadata();
-        entityManager.persist(folderMetadata);
-        folderMetadata.setUserid(0L);
-        folderMetadata.setName("folderMetadata_test");
-        folderMetadata.setPath("0/" + folderMetadata.getId());
-        logger.info("Arranged Folder Metadata: name {} ID path {} and belongs to user {}. Extra details: created at {}",
-                folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getUserid(), folderMetadata.getCreatedAt());
+        FolderMetadata folderMetadata = setupFolderMetadataObject("folderMetadata_test");
         // Act
         FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(folderMetadata);
 
@@ -72,7 +108,6 @@ class NetworkCloudDriveApplicationTests {
             );
 
         // Assert
-        last_saved_folder_metadata = savedFolderMetadata;
         Assertions.assertEquals(folderMetadata, savedFolderMetadata);
     }
 
@@ -81,17 +116,7 @@ class NetworkCloudDriveApplicationTests {
     @Order(3)
     public void FileMetadata_Save_ReturnSavedFileMetadata() {
         // Arrange
-        FileMetadata fileMetadata = new FileMetadata();
-        fileMetadata.setUserid(0L);
-        fileMetadata.setName("fileMetadata_test.txt");
-        fileMetadata.setMimiType("text/plain");
-        fileMetadata.setFolderId(0L);
-        logger.info("Arranged File Metadata: name {} inside folder ID {} and belongs to user {}. Extra details: mimetype {} and created at {}",
-                fileMetadata.getName(),
-                fileMetadata.getFolderId(),
-                fileMetadata.getUserid(),
-                fileMetadata.getMimiType(),
-                fileMetadata.getCreatedAt());
+        FileMetadata fileMetadata = setupFileMetadataObject("fileMetadata_test.txt", "text/plain");
 
         // Act
         FileMetadata savedFileMetadata = sqLiteDAO.saveFile(fileMetadata);
@@ -116,18 +141,11 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void User_Save_ReturnSavedUser() {
         // Arrange
-        User user = new User();
-        user.setName("unit_test_username");
-        user.setMail("unit_test_username@test.com");
-        user.setPassword("unhashed_password_for_unit_test");
-        user.setRole(UserRole.GUEST);
-        logger.info("Arranged User details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
-                user.getName(),
-                user.getMail(),
-                user.getPassword(),
-                user.getRegisteredAt(),
-                user.getLastLogin(),
-                user.getRole()
+        User user = setupUserObject(
+                "unit_test_username",
+                "unit_test_username@test.com",
+                "unhashed_password_for_unit_test",
+                UserRole.GUEST
         );
 
         // Act
@@ -153,20 +171,18 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     @Order(5)
     public void File_Utility_Reserve_Path_From_ID_Path_Returns_Path() {
+        String folderNameToAssert = "resolvePath_FolderMetadata";
         String filePath = "";
         try {
-            // get latest ID
-            FolderMetadata folderMetadata = new FolderMetadata();
-            entityManager.persist(folderMetadata);
-            folderMetadata.setUserid(0L);
-            folderMetadata.setName("folderMetadata_test");
-            folderMetadata.setPath("0/" + folderMetadata.getId());
-            FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(folderMetadata);
+            // Arrange
+            FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(setupFolderMetadataObject(folderNameToAssert));
+            // Act
             filePath = fileUtility.resolvePathFromIdString(savedFolderMetadata.getPath());
         } catch (FileSystemException e) {
             logger.error("Failed to resolve path for Unit Testing. {}", e.getMessage());
             Assertions.fail(e.getMessage());
         }
-        Assertions.assertEquals("test_user1/folderMetadata_test", filePath);
+        // Assert
+        Assertions.assertEquals("test_user1" + File.separator + folderNameToAssert, filePath);
     }
 }
