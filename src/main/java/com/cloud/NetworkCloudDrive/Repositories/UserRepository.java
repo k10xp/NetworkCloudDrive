@@ -12,5 +12,5 @@ public interface UserRepository {
     boolean updateMail();
     boolean updateName();
     boolean deleteUser();
-    boolean elevateUserToAdmin();
+    boolean elevateUserPrivileges();
 }

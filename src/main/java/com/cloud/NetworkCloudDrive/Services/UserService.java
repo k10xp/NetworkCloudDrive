@@ -59,7 +59,7 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public boolean elevateUserToAdmin() {
+    public boolean elevateUserPrivileges() {
         return false;
     }
 }
