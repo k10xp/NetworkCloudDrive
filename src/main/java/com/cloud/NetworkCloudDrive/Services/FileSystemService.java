@@ -177,49 +177,47 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     //TODO OPTIMIZE
+    /**
+     * <p>Moves folder(s) to new location.</p>
+     *
+     * <p>How it works:</p>
+     * Generates Folder ID path if the target is 0 and the source is at 0/1/4/2 then it will be 0/2
+     * original source will be 0/1/4 if target is 0/5/9 then it will be 0/5/9/2 and contents will be 0/5/9/2/x
+     * @param folder source folder metadata
+     * @param destinationFolderId   destination folder id
+     * @return  updated path
+     * @throws Exception    throws FileSystemException and FileNotFoundException
+     */
     @Transactional
     @Override
     public String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception {
-        String sourceFolderPath = fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(folder.getPath());
-        FolderMetadata destinationFolderMetadata = informationService.getFolderMetadata(destinationFolderId);
-        String destinationFolderPath =
-                fileStorageProperties.getBasePath() + fileUtility.resolvePathFromIdString(destinationFolderMetadata.getPath());
-        logger.debug("destination folder path = {}", destinationFolderPath);
-        File sourceFolderObj = new File(sourceFolderPath);
-        File destinationFolderObj = new File(destinationFolderPath);
-        // validate
-        if (!Files.exists(destinationFolderObj.toPath()))
-            throw new FileNotFoundException("Destination folder not found at path " + destinationFolderObj.getPath() + "!");
-        if (!Files.exists(sourceFolderObj.toPath()))
-            throw new FileNotFoundException("Source folder not found at path " + sourceFolderObj.getPath() + "!");
-        logger.debug("concat id path {}", folder.getPath());
+        String sourceFolderPath = fileUtility.resolvePathFromIdString(folder.getPath());
+        File destinationFolderObj;
+        FolderMetadata destinationFolderMetadata;
+        String destinationIdPath;
+        if (destinationFolderId == 0) {
+            destinationFolderObj = new File(fileStorageProperties.getFullPath());
+            destinationIdPath = "0";
+        } else {
+            destinationFolderMetadata = informationService.getFolderMetadata(destinationFolderId);
+            destinationIdPath = destinationFolderMetadata.getPath();
+            destinationFolderObj = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(destinationFolderMetadata.getPath()));
+        }
+        File sourceFolderObj = fileUtility.returnFileIfItExists(sourceFolderPath);
         // get children folders to update
         List<FolderMetadata> foldersToMove = queryUtility.getChildrenFoldersInDirectory(folder.getPath());
-        /*
-        generate folder id path
-        if the target is 0 and the source is at 0/1/4/2
-        then it will be 0/2 original source will be 0/1/4
-        if target is 0/5/9 then it will be 0/5/9/2 and contents will be 0/5/9/2/x
-         */
-        String formerIdPath = destinationFolderMetadata.getPath();
+        String formerIdPath = destinationIdPath;
         String backupPath = "";
-        logger.debug("former path {}", formerIdPath);
         for (int i = 0; i < foldersToMove.size(); i++) {
             if (i != 0) {
                 foldersToMove.get(i).setPath(backupPath + "/" + foldersToMove.get(i).getId());
-                logger.debug(
-                        "beginning id {} name {} path {}",
-                        foldersToMove.get(i).getId(), foldersToMove.get(i).getName(), foldersToMove.get(i).getPath());
                 continue;
             }
             foldersToMove.get(i).setPath(formerIdPath + "/" + foldersToMove.get(i).getId());
             backupPath = foldersToMove.get(i).getPath();
-            logger.debug("backup path {}", backupPath);
-            logger.debug("id {} name {} path {}", foldersToMove.get(i).getId(), foldersToMove.get(i).getName(), foldersToMove.get(i).getPath());
         }
-
         // perform filesystem move
-        String updatedPath = destinationFolderPath + File.separator + sourceFolderObj.getName();
+        String updatedPath = destinationFolderObj.getPath() + File.separator + sourceFolderObj.getName();
         Path moveFolderAction = Files.move(sourceFolderObj.toPath(), Path.of(updatedPath));
         if (!Files.exists(moveFolderAction))
             throw new FileSystemException(String.format("Failed to move the folder from %s to %s", sourceFolderPath, updatedPath));

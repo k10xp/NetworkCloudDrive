@@ -28,43 +28,66 @@ public class FileUtility {
         this.queryUtility = queryUtility;
     }
 
-    public List<Path> walkFsTree(Path dir) throws IOException {
-        List<Path> fileTreeStream;
-        try(Stream<Path> fileTree = Files.walk(dir)) {
-            fileTreeStream = fileTree.toList();
+    public List<Path> walkFsTree(Path dir, boolean reverse) throws IOException {
+        try (Stream<Path> fileTree = Files.walk(dir)) {
+            return (reverse ? fileTree.sorted(Comparator.reverseOrder()) : fileTree).toList();
+        } catch (IOException e) {
+            throw new IOException("Failed to walk file tree. " + e.getMessage());
         }
-        return fileTreeStream;
+    }
+
+    public void deleteFSTree_PlaceHolder(Path dir) throws IOException {
+        logger.info("Start File Tree deletion operation (PLACEHOLDER");
+        long errorCount = 0, skippedFileCount = 0, skippedFolderCountInside = 0, skippedDuplicateCount = 0, discoveredFolderCount = 0;;
+        List<Path> fileTreeStream = walkFsTree(dir, true);
+        for (Path path : fileTreeStream) {
+            List<Path> folderContentsList = getFilesAndFolderPathsfromFolderImprovised(path);
+            for (Path paths : folderContentsList) {
+                if (!paths.toFile().isFile()) {
+                    skippedFolderCountInside++;
+                    continue;
+                }
+                System.out.println("-> FILE "+paths);
+            }
+        }
     }
 
     //TODO implement folder type handling
     public void deleteFsTree(Path dir, String startingIdPath) throws IOException {
         logger.info("Start File Tree deletion operation");
         long errorCount = 0;
-        List<Path> fileTreeStream = walkFsTree(dir);
+        List<Path> fileTreeStream = walkFsTree(dir, true);
         for (Path path : fileTreeStream) {
             File file = path.toFile();
             if (file.getParentFile().equals(new File(fileStorageProperties.getFullPath()))) {
                 logger.info("Skipped base path");
                 continue;
             }
-            String parentFolderIdPath = generateIdPaths(file.getParent());
+            // some progress
+            String parentFolderIdPath = generateIdPaths(file.getPath(), startingIdPath);
             logger.info("generated path: {}", parentFolderIdPath);
             FolderMetadata folderMetadata =
-                    queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
+                    queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getName(), 0L);
             if (file.isFile()) {
-                if (!Files.deleteIfExists(file.toPath())) {
+                // use deleteIfExists at prod
+                if (!Files.exists(file.toPath())) {
                     errorCount++;
                     continue;
                 }
-                queryUtility.deleteFile(queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
+                FileMetadata output = queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L);
+                logger.info("File metadata: name {} path {} Id {}", output.getName(), output.getFolderId(), output.getId());
+//                queryUtility.deleteFile(queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
                 continue;
             }
             // manage folders here
-            if (!Files.deleteIfExists(file.toPath())) {
-                errorCount++;
-                continue;
-            }
-            queryUtility.deleteFolder(folderMetadata);
+            //temporary comment out to test
+//            if (!Files.deleteIfExists(file.toPath())) {
+//                errorCount++;
+//                continue;
+//            }
+//            queryUtility.deleteFolder(folderMetadata);
+            //check if its correct
+            logger.info("Folder metadata: name {} path {} Id {}", folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getId());
         }
         logger.info("File Tree deletion operation: Error count {}", errorCount);
     }
@@ -95,6 +118,14 @@ public class FileUtility {
                 resolvePathFromIdString(queryUtility.queryFolderMetadata(folderId).getPath())
                 :
                 fileStorageProperties.getOnlyUserName();
+    }
+
+    public List<Path> getFilesAndFolderPathsfromFolderImprovised(Path folderPath) throws IOException {
+        List<Path> fileList;
+        try (Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() + folderPath))) {
+            fileList = stream.toList();
+        }
+        return fileList;
     }
 
     public String concatIdPaths(String former, long latterId) {
@@ -168,12 +199,8 @@ public class FileUtility {
         return fullPath.toString();
     }
 
-    public String generateIdPathStartingFrom(String filePath, String startingIdPath) {
-        return "";
-    }
-
     // Generate ID path from System path
-    public String generateIdPaths(String filePath) {
+    public String generateIdPaths(String filePath, String startingIdPath) {
         logger.info("String path {}", filePath);
         String[] folders = filePath.split("/");
         StringBuilder idPath = new StringBuilder();
@@ -181,7 +208,7 @@ public class FileUtility {
         // cut beginning of path before to avoid having boolean conditional
         boolean startAdding = false;
         int depth = 0;
-        idPath.append(0).append("/");
+        idPath.append(startingIdPath).append("/");
         for (String folderName : folders) {
             if (folderName.equals(fileStorageProperties.getOnlyUserName())) {
                 startAdding = !startAdding;

@@ -2,10 +2,10 @@
 
 ## Query Metadata
 
-| Method | 	Route                                      | 	Description                   | Working            |
-|--------|---------------------------------------------|--------------------------------|--------------------|
-| GET    | 	/api/info/get/filemetadata?fileid={id}     | 	Returns File Metadata by ID   | :heavy_check_mark: |
-| GET    | 	/api/info/get/foldermetadata?folderid={id} | 	Returns Folder Metadata by ID | :heavy_check_mark: |
+| Method | 	Route                                     | 	Description                   | Working            |
+|--------|--------------------------------------------|--------------------------------|--------------------|
+| GET    | 	api/info/get/filemetadata?fileid={id}     | 	Returns File Metadata by ID   | :heavy_check_mark: |
+| GET    | 	api/info/get/foldermetadata?folderid={id} | 	Returns Folder Metadata by ID | :heavy_check_mark: |
 
 ## FileSystem File Endpoints
 
@@ -39,10 +39,10 @@
 
 ## User Endpoints
 
-| Method | 	Route              | 	Description   | Working |
-|--------|---------------------|----------------|---------|
-| POST   | 	api/user/login     | User login     | :x:     |
-| POST   | 	/api/user/register | Registers user | :x:     |
+| Method | 	Route             | 	Description   | Working |
+|--------|--------------------|----------------|---------|
+| POST   | 	api/user/login    | User login     | :x:     |
+| POST   | 	api/user/register | Registers user | :x:     |
 
 ## Maintenance Endpoints
 

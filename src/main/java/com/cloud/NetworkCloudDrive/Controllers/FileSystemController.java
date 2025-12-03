@@ -163,10 +163,7 @@ public class FileSystemController {
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
         try {
-            List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder((folderid != 0 ?
-                    fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(folderid).getPath())
-                    :
-                    fileStorageProperties.getOnlyUserName()));
+            List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder(fileUtility.getFolderPath(folderid));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(fileSystemService.getListOfMetadataFromPath(fileList, folderid));
         } catch (FileSystemException fileSystemException) {
