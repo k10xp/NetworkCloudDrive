@@ -37,23 +37,6 @@ public class FileUtility {
         }
     }
 
-    public void deleteFSTree_PlaceHolder(Path dir) throws IOException {
-        logger.info("Start File Tree deletion operation (PLACEHOLDER");
-        long errorCount = 0, skippedFileCount = 0, skippedFolderCountInside = 0, skippedDuplicateCount = 0, discoveredFolderCount = 0;;
-        List<Path> fileTreeStream = walkFsTree(dir, true);
-        for (Path path : fileTreeStream) {
-            List<Path> folderContentsList = getFilesAndFolderPathsfromFolderImprovised(path);
-            for (Path paths : folderContentsList) {
-                if (!paths.toFile().isFile()) {
-                    skippedFolderCountInside++;
-                    continue;
-                }
-                System.out.println("-> FILE "+paths);
-            }
-        }
-    }
-
-    //TODO implement folder type handling
     //WHAT A MESS
     public void deleteFsTree(Path dir, String startingIdPath) throws IOException {
         logger.info("Start File Tree deletion operation");
@@ -99,7 +82,7 @@ public class FileUtility {
             //check if it's correct
             logger.info("Folder metadata: name {} path {} Id {}", folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getId());
         }
-        logger.info("File Tree deletion operation: Error count {}", errorCount);
+        logger.info("Completed file tree deletion operation. Error count {}", errorCount);
     }
 
     public String getIdPath(long folderId) throws SQLException {
@@ -128,18 +111,6 @@ public class FileUtility {
                 resolvePathFromIdString(sqLiteDAO.queryFolderMetadata(folderId).getPath())
                 :
                 fileStorageProperties.getOnlyUserName();
-    }
-
-    public List<Path> getFilesAndFolderPathsfromFolderImprovised(Path folderPath) throws IOException {
-        List<Path> fileList;
-        try (Stream<Path> stream = Files.list(Path.of(fileStorageProperties.getBasePath() + folderPath))) {
-            fileList = stream.toList();
-        }
-        return fileList;
-    }
-
-    public String concatIdPaths(String former, long latterId) {
-        return former.concat("/" + latterId);
     }
 
     public List<Path> getFileAndFolderPathsFromFolder(String folderPath) throws IOException {

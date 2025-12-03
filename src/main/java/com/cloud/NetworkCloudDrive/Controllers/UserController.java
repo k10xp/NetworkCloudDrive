@@ -1,6 +1,6 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
-import com.cloud.NetworkCloudDrive.DTOs.UserLoginDTO;
+import com.cloud.NetworkCloudDrive.DTOs.UserDTO;
 import com.cloud.NetworkCloudDrive.Services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,21 +22,21 @@ public class UserController {
 
     // Temporary endpoint
     @PostMapping("login")
-    public @ResponseBody ResponseEntity<?> login(@RequestBody UserLoginDTO userLoginDTO) {
+    public @ResponseBody ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                 body(Map.of("message", "login in progress...",
-                        "username", userLoginDTO.getName(),
-                        "mail", userLoginDTO.getMail(),
-                        "passwordHehe", userLoginDTO.getPassword()));
+                        "username", userDTO.getName(),
+                        "mail", userDTO.getMail(),
+                        "passwordHehe", userDTO.getPassword()));
     }
 
     // Temporary endpoint
     @PostMapping("register")
-    public @ResponseBody ResponseEntity<?> register(@RequestBody UserLoginDTO userLoginDTO) {
+    public @ResponseBody ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                 body(Map.of("message", "register in progress...",
-                        "username", userLoginDTO.getName(),
-                        "mail", userLoginDTO.getMail(),
-                        "passwordHehe", userLoginDTO.getPassword()));
+                        "username", userDTO.getName(),
+                        "mail", userDTO.getMail(),
+                        "passwordHehe", userDTO.getPassword()));
     }
 }
