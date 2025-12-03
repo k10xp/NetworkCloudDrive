@@ -5,6 +5,7 @@ import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
@@ -35,6 +36,9 @@ class NetworkCloudDriveApplicationTests {
 
     @Autowired
     FileUtility fileUtility;
+
+    @Autowired
+    FileStorageProperties fileStorageProperties;
 
     @Test
     @Order(1)
@@ -184,5 +188,18 @@ class NetworkCloudDriveApplicationTests {
         }
         // Assert
         Assertions.assertEquals("test_user1" + File.separator + folderNameToAssert, filePath);
+    }
+
+    @Test
+    @Transactional
+    @Order(6)
+    public void File_Utility_generate_ID_Path_From_Path_Returns_ID_Path() {
+        // Arrange
+        FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata"));
+        File file = new File(fileStorageProperties.getOnlyUserName() + File.separator + savedFolderMetadata.getName());
+        // Act
+        String IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
+        // Assert
+        Assertions.assertEquals("0/" + savedFolderMetadata.getId(), IdPath);
     }
 }
