@@ -156,13 +156,15 @@ class NetworkCloudDriveApplicationTests {
         String filePath = "";
         try {
             // get latest ID
-            FolderMetadata folderMetadata = sqLiteDAO.queryFolderMetadata(1L);
-            filePath = fileUtility.resolvePathFromIdString(folderMetadata.getPath());
+            FolderMetadata folderMetadata = new FolderMetadata();
+            entityManager.persist(folderMetadata);
+            folderMetadata.setUserid(0L);
+            folderMetadata.setName("folderMetadata_test");
+            folderMetadata.setPath("0/" + folderMetadata.getId());
+            FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(folderMetadata);
+            filePath = fileUtility.resolvePathFromIdString(savedFolderMetadata.getPath());
         } catch (FileSystemException e) {
             logger.error("Failed to resolve path for Unit Testing. {}", e.getMessage());
-            Assertions.fail(e.getMessage());
-        } catch (SQLException e) {
-            logger.error("Failed to get folder metadata for Unit Testing. {}", e.getMessage());
             Assertions.fail(e.getMessage());
         }
         Assertions.assertEquals("test_user1/folderMetadata_test", filePath);
