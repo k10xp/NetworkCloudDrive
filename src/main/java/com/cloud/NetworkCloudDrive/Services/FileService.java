@@ -1,5 +1,6 @@
 package com.cloud.NetworkCloudDrive.Services;
 
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileRepository;
@@ -28,12 +29,12 @@ import java.util.Map;
 @Service
 public class FileService implements FileRepository {
     private final FileStorageProperties fileStorageProperties;
-    private final SQLiteFileRepository sqLiteFileRepository;
+    private final SQLiteDAO sqLiteDAO;
     private final Path rootPath;
     private final Logger logger = LoggerFactory.getLogger(FileService.class);
 
-    public FileService(FileStorageProperties fileStorageProperties, SQLiteFileRepository sqLiteFileRepository) {
-        this.sqLiteFileRepository = sqLiteFileRepository;
+    public FileService(FileStorageProperties fileStorageProperties, SQLiteDAO sqLiteDAO) {
+        this.sqLiteDAO = sqLiteDAO;
         this.fileStorageProperties = fileStorageProperties;
         this.rootPath = Paths.get(fileStorageProperties.getBasePath());
     }
@@ -48,12 +49,12 @@ public class FileService implements FileRepository {
             try (InputStream inputStream = file.getInputStream()) {
                 storagePath = storeFile(inputStream, file.getOriginalFilename(), folderPath);
             }
-            long place_holder_id = 0; // get userid with auth
-            FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), folderId, place_holder_id, file.getContentType(), file.getSize());
+            // place holder userid 0L
+            FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), folderId, 0L, file.getContentType(), file.getSize());
             uploadedFiles.add(metadata);
             storagePathList.add(storagePath);
         }
-        return Map.of("files", sqLiteFileRepository.saveAll(uploadedFiles), "storage_path", storagePathList);
+        return Map.of("files", sqLiteDAO.saveAllFiles(uploadedFiles), "storage_path", storagePathList);
     }
 
     public String storeFile(InputStream inputStream, String fileName, String parentPath) throws IOException {

@@ -4,9 +4,11 @@ import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.User;
-import com.cloud.NetworkCloudDrive.Utilities.QueryUtility;
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,19 +17,28 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.FileSystemException;
+import java.sql.SQLException;
+
 @SpringBootTest
 @TestPropertySource(locations = "classpath:/application-test.properties")
 class NetworkCloudDriveApplicationTests {
 
     private final Logger logger = LoggerFactory.getLogger(NetworkCloudDriveApplicationTests.class);
 
+    private FolderMetadata last_saved_folder_metadata;
+
     @Autowired
     EntityManager entityManager;
 
     @Autowired
-    QueryUtility queryUtility;
+    SQLiteDAO sqLiteDAO;
+
+    @Autowired
+    FileUtility fileUtility;
 
     @Test
+    @Order(1)
     void contextLoads() {
         logger.info("Operating System: {}", System.getProperty("os.name"));
     }
@@ -36,6 +47,7 @@ class NetworkCloudDriveApplicationTests {
 
     // JPA TESTS
     @Test
+    @Order(2)
     @Transactional
     public void FolderMetadata_Save_ReturnSavedFolderMetadata() {
         // Arrange
@@ -47,7 +59,7 @@ class NetworkCloudDriveApplicationTests {
         logger.info("Arranged Folder Metadata: name {} ID path {} and belongs to user {}. Extra details: created at {}",
                 folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getUserid(), folderMetadata.getCreatedAt());
         // Act
-        FolderMetadata savedFolderMetadata = queryUtility.saveFolder(folderMetadata);
+        FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(folderMetadata);
 
         if (savedFolderMetadata != null)
             logger.info(
@@ -60,11 +72,13 @@ class NetworkCloudDriveApplicationTests {
             );
 
         // Assert
+        last_saved_folder_metadata = savedFolderMetadata;
         Assertions.assertEquals(folderMetadata, savedFolderMetadata);
     }
 
     @Test
     @Transactional
+    @Order(3)
     public void FileMetadata_Save_ReturnSavedFileMetadata() {
         // Arrange
         FileMetadata fileMetadata = new FileMetadata();
@@ -80,7 +94,7 @@ class NetworkCloudDriveApplicationTests {
                 fileMetadata.getCreatedAt());
 
         // Act
-        FileMetadata savedFileMetadata = queryUtility.saveFile(fileMetadata);
+        FileMetadata savedFileMetadata = sqLiteDAO.saveFile(fileMetadata);
 
         if (savedFileMetadata != null)
             logger.info(
@@ -98,6 +112,7 @@ class NetworkCloudDriveApplicationTests {
     }
 
     @Test
+    @Order(4)
     @Transactional
     public void User_Save_ReturnSavedUser() {
         // Arrange
@@ -105,7 +120,7 @@ class NetworkCloudDriveApplicationTests {
         user.setName("unit_test_username");
         user.setMail("unit_test_username@test.com");
         user.setPassword("unhashed_password_for_unit_test");
-        user.setRole(UserRole.NORMAL_USER);
+        user.setRole(UserRole.GUEST);
         logger.info("Arranged User details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
                 user.getName(),
                 user.getMail(),
@@ -116,7 +131,7 @@ class NetworkCloudDriveApplicationTests {
         );
 
         // Act
-        User savedUser = queryUtility.saveUser(user);
+        User savedUser = sqLiteDAO.saveUser(user);
 
         if (savedUser != null)
             logger.info(
@@ -132,5 +147,21 @@ class NetworkCloudDriveApplicationTests {
 
         // Assert
         Assertions.assertEquals(user, savedUser);
+    }
+
+    @Test
+    @Transactional
+    @Order(5)
+    public void File_Utility_Reserve_Path_From_ID_Path_Returns_Path() {
+        String filePath = "";
+        try {
+            // get latest ID
+            if (last_saved_folder_metadata == null) throw new FileSystemException("metadata is null");
+            filePath = fileUtility.resolvePathFromIdString(last_saved_folder_metadata.getPath());
+        } catch (FileSystemException e) {
+            logger.error("Failed to resolve path for Unit Testing. {}", e.getMessage());
+            Assertions.fail(e.getMessage());
+        }
+        Assertions.assertEquals("0/1", filePath);
     }
 }

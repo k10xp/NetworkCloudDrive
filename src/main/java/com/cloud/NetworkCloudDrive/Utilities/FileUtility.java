@@ -1,5 +1,6 @@
 package com.cloud.NetworkCloudDrive.Utilities;
 
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
@@ -20,12 +21,12 @@ import java.util.stream.Stream;
 @Component
 public class FileUtility {
     private final FileStorageProperties fileStorageProperties;
-    private final QueryUtility queryUtility;
+    private final SQLiteDAO SQLiteDAO;
     private final Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
-    public FileUtility(QueryUtility queryUtility, FileStorageProperties fileStorageProperties) {
+    public FileUtility(SQLiteDAO SQLiteDAO, FileStorageProperties fileStorageProperties) {
         this.fileStorageProperties = fileStorageProperties;
-        this.queryUtility = queryUtility;
+        this.SQLiteDAO = SQLiteDAO;
     }
 
     public List<Path> walkFsTree(Path dir, boolean reverse) throws IOException {
@@ -53,6 +54,7 @@ public class FileUtility {
     }
 
     //TODO implement folder type handling
+    //WHAT A MESS
     public void deleteFsTree(Path dir, String startingIdPath) throws IOException {
         logger.info("Start File Tree deletion operation");
         long errorCount = 0;
@@ -67,14 +69,14 @@ public class FileUtility {
             String parentFolderIdPath = generateIdPaths(file.getPath(), startingIdPath);
             logger.info("generated path: {}", parentFolderIdPath);
             FolderMetadata folderMetadata =
-                    queryUtility.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getName(), 0L);
+                    SQLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getName(), 0L);
             if (file.isFile()) {
                 // use deleteIfExists at prod
                 if (!Files.exists(file.toPath())) {
                     errorCount++;
                     continue;
                 }
-                FileMetadata output = queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L);
+                FileMetadata output = SQLiteDAO.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L);
                 logger.info("File metadata: name {} path {} Id {}", output.getName(), output.getFolderId(), output.getId());
 //                queryUtility.deleteFile(queryUtility.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
                 continue;
@@ -93,7 +95,7 @@ public class FileUtility {
     }
 
     public String getIdPath(long folderId) throws SQLException {
-        return folderId != 0 ? queryUtility.queryFolderMetadata(folderId).getPath() : "0";
+        return folderId != 0 ? SQLiteDAO.queryFolderMetadata(folderId).getPath() : "0";
     }
 
     public File returnIfItsNotADuplicate(String path) throws FileNotFoundException {
@@ -115,7 +117,7 @@ public class FileUtility {
     public String getFolderPath(long folderId) throws SQLException, FileSystemException {
         return folderId != 0
                 ?
-                resolvePathFromIdString(queryUtility.queryFolderMetadata(folderId).getPath())
+                resolvePathFromIdString(SQLiteDAO.queryFolderMetadata(folderId).getPath())
                 :
                 fileStorageProperties.getOnlyUserName();
     }
@@ -183,7 +185,7 @@ public class FileUtility {
 
     private String appendFolderNames(List<Long> folderIdList) throws FileSystemException {
         StringBuilder fullPath = new StringBuilder();
-        List<FolderMetadata> folderMetadataListById = queryUtility.findAllByIdInSQLFolderMetadata(folderIdList);
+        List<FolderMetadata> folderMetadataListById = SQLiteDAO.findAllByIdInSQLFolderMetadata(folderIdList);
         logger.info("size {}", folderMetadataListById.size());
         for (int i = 0; i < folderIdList.size(); i++) {
             if (i == 0) {
@@ -215,7 +217,7 @@ public class FileUtility {
             }
             if (startAdding) {
                 depth++;
-                List<FolderMetadata> folderResults = queryUtility.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString());
+                List<FolderMetadata> folderResults = SQLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString());
                 for (FolderMetadata folderMetadata : folderResults) {
                     String[] splitId = folderMetadata.getPath().split("/");
                     if (splitId.length == depth) {

@@ -17,6 +17,17 @@ public interface FileSystemRepository {
     String removeFolder(FolderMetadata folder) throws IOException;
     String updateFolderName(String newName, FolderMetadata folder) throws Exception;
     String updateFileName(String newName, FileMetadata file) throws Exception;
+    /**
+     * <p>Moves folder(s) to new location.</p>
+     *
+     * <p>How it works:</p>
+     * Generates Folder ID path if the target is 0 and the source is at 0/1/4/2 then it will be 0/2
+     * original source will be 0/1/4 if target is 0/5/9 then it will be 0/5/9/2 and contents will be 0/5/9/2/x
+     * @param folder source folder metadata
+     * @param destinationFolderId   destination folder id
+     * @return  updated path
+     * @throws Exception    throws FileSystemException and FileNotFoundException
+     */
     String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception;
     String moveFile(FileMetadata targetFile, long folderId) throws Exception;
     FolderMetadata createFolder(String folderName, long folderId, long userId) throws Exception;

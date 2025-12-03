@@ -1,4 +1,4 @@
-package com.cloud.NetworkCloudDrive.Utilities;
+package com.cloud.NetworkCloudDrive.DAO;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
@@ -19,13 +19,13 @@ import java.util.Optional;
 
 // Basically DAO but for multiple types*
 @Component
-public class QueryUtility {
-    private final Logger logger = LoggerFactory.getLogger(QueryUtility.class);
+public class SQLiteDAO {
+    private final Logger logger = LoggerFactory.getLogger(SQLiteDAO.class);
     private final SQLiteFolderRepository sqLiteFolderRepository;
     private final SQLiteFileRepository sqLiteFileRepository;
     private final SQLiteUserRepository sqLiteUserRepository;
 
-    public QueryUtility(
+    public SQLiteDAO(
             SQLiteFolderRepository sqLiteFolderRepository,
             SQLiteFileRepository sqLiteFileRepository,
             SQLiteUserRepository sqLiteUserRepository) {
@@ -35,6 +35,19 @@ public class QueryUtility {
     }
 
     // DAO stuff
+
+    // Get access to sqlite repositories anyway
+    public SQLiteFolderRepository getSqLiteFolderRepository() {
+        return sqLiteFolderRepository;
+    }
+
+    public SQLiteUserRepository getSqLiteUserRepository() {
+        return sqLiteUserRepository;
+    }
+
+    public SQLiteFileRepository getSqLiteFileRepository() {
+        return sqLiteFileRepository;
+    }
 
     // Delete
     @Transactional
@@ -69,13 +82,13 @@ public class QueryUtility {
     }
 
     @Transactional
-    public void saveAllFolders(List<FolderMetadata> folderMetadata) {
-        sqLiteFolderRepository.saveAll(folderMetadata);
+    public List<FolderMetadata> saveAllFolders(List<FolderMetadata> folderMetadata) {
+        return sqLiteFolderRepository.saveAll(folderMetadata);
     }
 
     @Transactional
-    public void saveAllFiles(List<FileMetadata> fileMetadata) {
-        sqLiteFileRepository.saveAll(fileMetadata);
+    public List<FileMetadata> saveAllFiles(List<FileMetadata> fileMetadata) {
+        return sqLiteFileRepository.saveAll(fileMetadata);
     }
 
     // Database service layer

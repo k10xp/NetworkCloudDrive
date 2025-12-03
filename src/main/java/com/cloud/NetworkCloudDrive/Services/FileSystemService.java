@@ -5,7 +5,7 @@ import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileSystemRepository;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
-import com.cloud.NetworkCloudDrive.Utilities.QueryUtility;
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,7 @@ public class FileSystemService implements FileSystemRepository {
     private final EntityManager entityManager;
     private final InformationService informationService;
     private final FileUtility fileUtility;
-    private final QueryUtility queryUtility;
+    private final SQLiteDAO sqLiteDAO;
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
 
     public FileSystemService(
@@ -35,12 +35,12 @@ public class FileSystemService implements FileSystemRepository {
             FileStorageProperties fileStorageProperties,
             EntityManager entityManager,
             FileUtility fileUtility,
-            QueryUtility queryUtility) {
+            SQLiteDAO sqLiteDAO) {
         this.fileStorageProperties = fileStorageProperties;
         this.informationService = informationService;
         this.entityManager = entityManager;
         this.fileUtility = fileUtility;
-        this.queryUtility = queryUtility;
+        this.sqLiteDAO = sqLiteDAO;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class FileSystemService implements FileSystemRepository {
             File file = path.toFile();
             logger.info("file/folder in queue {}", file);
             if (file.isFile()) {
-                folderAndFileMetadata.add(queryUtility.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), 0));
+                folderAndFileMetadata.add(sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), 0));
                 continue;
             }
             FolderMetadata foundFolderMetadata =
@@ -71,7 +71,7 @@ public class FileSystemService implements FileSystemRepository {
         //remove Folder
         if (!checkExists.delete())
             throw new FileSystemException(String.format("Failed to remove folder at path %s\n", checkExists.getPath()));
-        queryUtility.deleteFile(file);
+        sqLiteDAO.deleteFile(file);
         return checkExists.getPath();
     }
 
@@ -105,7 +105,7 @@ public class FileSystemService implements FileSystemRepository {
             //set new name and path
             folder.setName(newName);
             //save
-            queryUtility.saveFolder(folder);
+            sqLiteDAO.saveFolder(folder);
             logger.info("Renamed folder full path: {}", renamedFolder.getPath());
         } else {
             throw new FileSystemException(String.format("Failed to rename the folder to %s", renamedFolder.getName()));
@@ -143,7 +143,7 @@ public class FileSystemService implements FileSystemRepository {
         file.setName(newName + oldExtension);
         file.setMimiType(newMimeType != null ? (newMimeType.equals(file.getMimiType()) ? file.getMimiType() : newMimeType) : file.getMimiType());
         //save
-        queryUtility.saveFile(file);
+        sqLiteDAO.saveFile(file);
         logger.info("Renamed file full path: {}", renamedFile.getPath());
         return renamedFile.getPath();
     }
@@ -172,7 +172,7 @@ public class FileSystemService implements FileSystemRepository {
         //set new name and path
         targetFile.setFolderId(folderId);
         //save
-        queryUtility.saveFile(targetFile);
+        sqLiteDAO.saveFile(targetFile);
         return checkDestinationExists.getPath();
     }
 
@@ -205,7 +205,7 @@ public class FileSystemService implements FileSystemRepository {
         }
         File sourceFolderObj = fileUtility.returnFileIfItExists(sourceFolderPath);
         // get children folders to update
-        List<FolderMetadata> foldersToMove = queryUtility.getChildrenFoldersInDirectory(folder.getPath());
+        List<FolderMetadata> foldersToMove = sqLiteDAO.getChildrenFoldersInDirectory(folder.getPath());
         String formerIdPath = destinationIdPath;
         String backupPath = "";
         for (int i = 0; i < foldersToMove.size(); i++) {
@@ -222,7 +222,7 @@ public class FileSystemService implements FileSystemRepository {
         if (!Files.exists(moveFolderAction))
             throw new FileSystemException(String.format("Failed to move the folder from %s to %s", sourceFolderPath, updatedPath));
         //save
-        queryUtility.saveAllFolders(foldersToMove);
+        sqLiteDAO.saveAllFolders(foldersToMove);
         return updatedPath;
     }
 
@@ -254,6 +254,6 @@ public class FileSystemService implements FileSystemRepository {
         createdFolder.setPath(idPath + "/" + createdFolder.getId());
         createdFolder.setUserid(userId); //placeholder
         createdFolder.setName(folderName);
-        return queryUtility.saveFolder(createdFolder);
+        return sqLiteDAO.saveFolder(createdFolder);
     }
 }

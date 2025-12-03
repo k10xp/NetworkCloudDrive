@@ -2,15 +2,15 @@ package com.cloud.NetworkCloudDrive.Services;
 
 import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.Repositories.UserRepository;
-import com.cloud.NetworkCloudDrive.Utilities.QueryUtility;
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService implements UserRepository {
-    private QueryUtility queryUtility;
+    private SQLiteDAO SQLiteDAO;
 
-    public UserService(QueryUtility queryUtility) {
-        this.queryUtility = queryUtility;
+    public UserService(SQLiteDAO SQLiteDAO) {
+        this.SQLiteDAO = SQLiteDAO;
     }
 
     @Override

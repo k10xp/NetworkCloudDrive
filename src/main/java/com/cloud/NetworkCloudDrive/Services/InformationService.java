@@ -2,33 +2,27 @@ package com.cloud.NetworkCloudDrive.Services;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
-import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.InformationRepository;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
-import com.cloud.NetworkCloudDrive.Utilities.QueryUtility;
-import org.springframework.data.domain.Example;
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class InformationService implements InformationRepository {
     private final FileUtility fileUtility;
-    private final QueryUtility queryUtility;
+    private final SQLiteDAO sqLiteDAO;
 
-    public InformationService(FileUtility fileUtility, QueryUtility queryUtility) {
+    public InformationService(FileUtility fileUtility, SQLiteDAO sqLiteDAO) {
         this.fileUtility = fileUtility;
-        this.queryUtility = queryUtility;
+        this.sqLiteDAO = sqLiteDAO;
     }
 
     @Transactional
@@ -36,7 +30,7 @@ public class InformationService implements InformationRepository {
     public FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name, List<Long> skipList)
             throws FileSystemException, SQLException {
         String idPath = fileUtility.getIdPath(folderId);
-        List<FolderMetadata> findAllByPathList = queryUtility.findAllContainingSectionOfIdPathIgnoreCase(idPath);
+        List<FolderMetadata> findAllByPathList = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath);
         if (findAllByPathList.isEmpty())
             throw new FileSystemException("Can't resolve path");
         String[] splitOriginalPath = idPath.split("/");
@@ -56,7 +50,7 @@ public class InformationService implements InformationRepository {
 
     @Override
     public FileMetadata getFileMetadata(long id) throws FileNotFoundException, SQLException, FileSystemException {
-        FileMetadata retrievedFile = queryUtility.queryFileMetadata(id);
+        FileMetadata retrievedFile = sqLiteDAO.queryFileMetadata(id);
         File fileCheck = fileUtility.returnFileIfItExists(
                 fileUtility.getFolderPath(retrievedFile.getFolderId()) + File.separator + retrievedFile.getName());
         retrievedFile.setSize(fileCheck.length()); //bytes
@@ -65,7 +59,7 @@ public class InformationService implements InformationRepository {
 
     @Override
     public FolderMetadata getFolderMetadata(long folderId) throws IOException, SQLException {
-        FolderMetadata folder = queryUtility.queryFolderMetadata(folderId);
+        FolderMetadata folder = sqLiteDAO.queryFolderMetadata(folderId);
         File getFolder = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(folder.getPath()));
         return folder;
     }
