@@ -209,10 +209,19 @@ public class FileUtility {
         return fullPath.toString();
     }
 
+    public String returnCorrectSeparatorRegex() {
+        String operatingSystem = System.getProperty("os.name").toLowerCase();
+        if (operatingSystem.contains("windows")) {
+            return "\\\\";
+        } else {
+            return "/";
+        }
+    }
+
     // Generate ID path from System path
     public String generateIdPaths(String filePath, String startingIdPath) {
         logger.info("String path {}", filePath);
-        String[] folders = filePath.split(File.separator);
+        String[] folders = filePath.split(returnCorrectSeparatorRegex());
         StringBuilder idPath = new StringBuilder();
         //HOPEFULLY generate ID path starting from '0/'
         // cut beginning of path before to avoid having boolean conditional
