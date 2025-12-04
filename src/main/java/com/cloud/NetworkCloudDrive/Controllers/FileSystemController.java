@@ -1,9 +1,9 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
-import com.cloud.NetworkCloudDrive.DTOs.UpdateFileNameDTO;
-import com.cloud.NetworkCloudDrive.DTOs.UpdateFilePathDTO;
-import com.cloud.NetworkCloudDrive.DTOs.UpdateFolderNameDTO;
-import com.cloud.NetworkCloudDrive.DTOs.UpdateFolderPathDTO;
+import com.cloud.NetworkCloudDrive.DTO.UpdateFileNameDTO;
+import com.cloud.NetworkCloudDrive.DTO.UpdateFilePathDTO;
+import com.cloud.NetworkCloudDrive.DTO.UpdateFolderNameDTO;
+import com.cloud.NetworkCloudDrive.DTO.UpdateFolderPathDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;

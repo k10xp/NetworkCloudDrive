@@ -1,4 +1,4 @@
-package com.cloud.NetworkCloudDrive.DTOs;
+package com.cloud.NetworkCloudDrive.DTO;
 
 public class UpdateFilePathDTO {
     private long file_id;

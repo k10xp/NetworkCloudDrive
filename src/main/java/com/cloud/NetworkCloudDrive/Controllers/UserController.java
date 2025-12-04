@@ -1,6 +1,6 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
-import com.cloud.NetworkCloudDrive.DTOs.UserDTO;
+import com.cloud.NetworkCloudDrive.DTO.UserDTO;
 import com.cloud.NetworkCloudDrive.Services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

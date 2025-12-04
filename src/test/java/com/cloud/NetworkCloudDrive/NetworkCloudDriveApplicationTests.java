@@ -93,7 +93,6 @@ class NetworkCloudDriveApplicationTests {
 
     // JPA TESTS
     @Test
-    @Order(2)
     @Transactional
     public void FolderMetadata_Save_ReturnSavedFolderMetadata() {
         // Arrange
@@ -117,7 +116,6 @@ class NetworkCloudDriveApplicationTests {
 
     @Test
     @Transactional
-    @Order(3)
     public void FileMetadata_Save_ReturnSavedFileMetadata() {
         // Arrange
         FileMetadata fileMetadata = setupFileMetadataObject("fileMetadata_test.txt", "text/plain");
@@ -141,7 +139,6 @@ class NetworkCloudDriveApplicationTests {
     }
 
     @Test
-    @Order(4)
     @Transactional
     public void User_Save_ReturnSavedUser() {
         // Arrange
@@ -173,7 +170,6 @@ class NetworkCloudDriveApplicationTests {
 
     @Test
     @Transactional
-    @Order(5)
     public void File_Utility_Reserve_Path_From_ID_Path_Returns_Path() {
         String folderNameToAssert = "resolvePath_FolderMetadata";
         String filePath = "";
@@ -192,7 +188,6 @@ class NetworkCloudDriveApplicationTests {
 
     @Test
     @Transactional
-    @Order(6)
     public void File_Utility_generate_ID_Path_From_Path_Returns_ID_Path() {
         // Arrange
         FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata"));

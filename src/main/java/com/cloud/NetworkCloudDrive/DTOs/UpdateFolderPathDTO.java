@@ -1,4 +1,4 @@
-package com.cloud.NetworkCloudDrive.DTOs;
+package com.cloud.NetworkCloudDrive.DTO;
 
 public class UpdateFolderPathDTO {
     private long former_folder_id;
