@@ -30,7 +30,10 @@ public class FileController {
     private final Logger logger = LoggerFactory.getLogger(FileController.class);
 
     public FileController(
-            FileSystemService fileSystemService, FileService fileService, InformationService informationService, FileUtility fileUtility) {
+            FileSystemService fileSystemService,
+            FileService fileService,
+            InformationService informationService,
+            FileUtility fileUtility) {
         this.fileService = fileService;
         this.fileSystemService = fileSystemService;
         this.informationService = informationService;
