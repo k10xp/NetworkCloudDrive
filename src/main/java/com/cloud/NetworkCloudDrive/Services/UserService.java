@@ -1,16 +1,19 @@
 package com.cloud.NetworkCloudDrive.Services;
 
+import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.Repositories.UserRepository;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
+
 @Service
 public class UserService implements UserRepository {
-    private SQLiteDAO SQLiteDAO;
+    private SQLiteDAO sqLiteDAO;
 
-    public UserService(SQLiteDAO SQLiteDAO) {
-        this.SQLiteDAO = SQLiteDAO;
+    public UserService(SQLiteDAO sqLiteDAO) {
+        this.sqLiteDAO = sqLiteDAO;
     }
 
     @Override
@@ -29,12 +32,21 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public boolean registerUser() {
-        return false;
+    public boolean registerUser(String name, String mail, String password) throws SQLException {
+        User userLogin = new User();
+        userLogin.setName(name);
+        userLogin.setMail(mail);
+        userLogin.setPassword(password);
+        userLogin.setRole(UserRole.GUEST);
+        if (sqLiteDAO.checkIfUserExists(userLogin.getName(), userLogin.getMail())) {
+            throw new SQLException(String.format("User with name %s and mail %s", userLogin.getName(), userLogin.getMail()));
+        }
+        sqLiteDAO.saveUser(userLogin);
+        return true;
     }
 
     @Override
-    public boolean loginUser() {
+    public boolean loginUser(String name, String mail, String password) {
         return false;
     }
 

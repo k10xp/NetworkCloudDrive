@@ -92,6 +92,23 @@ public class SQLiteDAO {
     }
 
     // Database service layer
+
+    @Transactional
+    public boolean checkIfUserExists(String name, String mail) {
+        User user = new User();
+        user.setName(name);
+        user.setMail(mail);
+        user.setRole(null);
+        user.setPassword(null);
+        user.setId(null);
+        user.setSalt(null);
+        user.setLastLogin(null);
+        user.setRegisteredAt(null);
+        Example<User> userExample = Example.of(user);
+        Optional<User> userOptional = sqLiteUserRepository.findOne(userExample);
+        return userOptional.isPresent();
+    }
+
     @Transactional
     public List<FolderMetadata> findAllContainingSectionOfIdPathIgnoreCase(String idPath) {
         return sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);

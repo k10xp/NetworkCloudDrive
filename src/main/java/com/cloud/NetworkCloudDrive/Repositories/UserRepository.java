@@ -2,9 +2,11 @@ package com.cloud.NetworkCloudDrive.Repositories;
 
 import com.cloud.NetworkCloudDrive.Models.User;
 
+import java.sql.SQLException;
+
 public interface UserRepository {
-    boolean loginUser();
-    boolean registerUser();
+    boolean loginUser(String name, String mail, String password);
+    boolean registerUser(String name, String mail, String password) throws SQLException;
     String generateToken();
     boolean logOutUser();
     User currentUserDetails();
