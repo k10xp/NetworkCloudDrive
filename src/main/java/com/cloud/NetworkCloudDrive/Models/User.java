@@ -21,25 +21,24 @@ public class User {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "salt")
-    private String salt;
-
     @Column(name = "role")
     private UserRole role = UserRole.GUEST;
 
+    // change to instant
+    // purely for telemetry
     @Column(name = "lastLogin")
     @CreationTimestamp
     private Instant lastLogin;
 
+    // purely for telemetry
     @Column(name = "registeredAt")
     @CreationTimestamp
     private Instant registeredAt;
 
-    public User(String name, String mail, String password, String salt, UserRole role) {
+    public User(String name, String mail, String password, UserRole role) {
         this.name = name;
         this.mail = mail;
         this.password = password;
-        this.salt = salt;
         this.role = role;
     }
 
@@ -68,12 +67,6 @@ public class User {
     }
     public void setPassword(String password) {
         this.password = password;
-    }
-    public String getSalt() {
-        return salt;
-    }
-    public void setSalt(String salt) {
-        this.salt = salt;
     }
     public UserRole getRole() {
         return role;

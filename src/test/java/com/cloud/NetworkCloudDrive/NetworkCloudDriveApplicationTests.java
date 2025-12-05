@@ -45,7 +45,6 @@ class NetworkCloudDriveApplicationTests {
     FileStorageProperties fileStorageProperties;
 
     @Test
-    @Order(1)
     void contextLoads() {
         logger.info("Operating System: {}", System.getProperty("os.name"));
     }
@@ -206,10 +205,7 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void User_Service_Register_User_Returns_True() {
         // Arrange
-        User user = new User();
-        user.setName("user_Unit-Test");
-        user.setMail("user_Unit-Test@test.com");
-        user.setPassword("super_secret1234*7&");
+        User user = new User("user_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
         userService.registerUser(user.getName(), user.getMail(), user.getPassword());
         boolean userExists = sqLiteDAO.checkIfUserExists(user.getName(), user.getMail());
@@ -221,10 +217,7 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void User_Service_Register_and_Login_User_Returns_True() {
         // Arrange
-        User user = new User();
-        user.setName("user_Unit-Test");
-        user.setMail("user_Unit-Test@test.com");
-        user.setPassword("super_secret1234*7&");
+        User user = new User("user_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
         boolean loginStatus = false;
         try {

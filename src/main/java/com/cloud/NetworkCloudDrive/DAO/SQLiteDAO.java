@@ -93,17 +93,21 @@ public class SQLiteDAO {
 
     // Database service layer
 
-    @Transactional
-    public boolean checkIfUserExists(String name, String mail) {
+    private User setupExampleUser(String name, String mail) {
         User user = new User();
         user.setName(name);
         user.setMail(mail);
         user.setRole(null);
         user.setPassword(null);
         user.setId(null);
-        user.setSalt(null);
         user.setLastLogin(null);
         user.setRegisteredAt(null);
+        return user;
+    }
+
+    @Transactional
+    public boolean checkIfUserExists(String name, String mail) {
+        User user = setupExampleUser(name, mail);
         Example<User> userExample = Example.of(user);
         Optional<User> userOptional = sqLiteUserRepository.findOne(userExample);
         return userOptional.isPresent();
@@ -111,15 +115,7 @@ public class SQLiteDAO {
 
     @Transactional
     public User findUserWithNameAndMail(String name, String mail) throws SQLException {
-        User user = new User();
-        user.setName(name);
-        user.setMail(mail);
-        user.setRole(null);
-        user.setPassword(null);
-        user.setId(null);
-        user.setSalt(null);
-        user.setLastLogin(null);
-        user.setRegisteredAt(null);
+        User user = setupExampleUser(name, mail);
         Example<User> userExample = Example.of(user);
         Optional<User> userOptional = sqLiteUserRepository.findOne(userExample);
         if (userOptional.isEmpty()) throw new SQLException("User does not exist");
