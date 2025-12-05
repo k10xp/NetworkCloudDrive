@@ -6,6 +6,7 @@ import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
+import com.cloud.NetworkCloudDrive.Services.UserService;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
@@ -36,6 +37,9 @@ class NetworkCloudDriveApplicationTests {
 
     @Autowired
     FileUtility fileUtility;
+
+    @Autowired
+    UserService userService;
 
     @Autowired
     FileStorageProperties fileStorageProperties;
@@ -196,5 +200,41 @@ class NetworkCloudDriveApplicationTests {
         String IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
         // Assert
         Assertions.assertEquals("0/" + savedFolderMetadata.getId(), IdPath);
+    }
+
+    @Test
+    @Transactional
+    public void User_Service_Register_User_Returns_True() {
+        // Arrange
+        User user = new User();
+        user.setName("user_Unit-Test");
+        user.setMail("user_Unit-Test@test.com");
+        user.setPassword("super_secret1234*7&");
+        // Act
+        userService.registerUser(user.getName(), user.getMail(), user.getPassword());
+        boolean userExists = sqLiteDAO.checkIfUserExists(user.getName(), user.getMail());
+        // Assert
+        Assertions.assertTrue(userExists);
+    }
+
+    @Test
+    @Transactional
+    public void User_Service_Register_and_Login_User_Returns_True() {
+        // Arrange
+        User user = new User();
+        user.setName("user_Unit-Test");
+        user.setMail("user_Unit-Test@test.com");
+        user.setPassword("super_secret1234*7&");
+        // Act
+        boolean loginStatus = false;
+        try {
+            userService.registerUser(user.getName(), user.getMail(), user.getPassword());
+            loginStatus = userService.loginUser(user.getName(), user.getMail(), user.getPassword());
+        } catch (SQLException e) {
+            logger.error("Login test failed {}", e.getMessage());
+            Assertions.fail(e.getMessage());
+        }
+        // Assert
+        Assertions.assertTrue(loginStatus);
     }
 }
