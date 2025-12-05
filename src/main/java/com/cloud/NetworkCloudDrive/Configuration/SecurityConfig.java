@@ -31,6 +31,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // default strength is 10 might bump it up to 16
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

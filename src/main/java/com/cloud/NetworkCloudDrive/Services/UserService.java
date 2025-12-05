@@ -5,17 +5,19 @@ import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.Repositories.UserRepository;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 
 @Service
 public class UserService implements UserRepository {
-    private SQLiteDAO sqLiteDAO;
-    private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(16);
+    private final SQLiteDAO sqLiteDAO;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(SQLiteDAO sqLiteDAO) {
+    public UserService(SQLiteDAO sqLiteDAO, PasswordEncoder passwordEncoder) {
         this.sqLiteDAO = sqLiteDAO;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -38,7 +40,7 @@ public class UserService implements UserRepository {
         User userLogin = new User();
         userLogin.setName(name);
         userLogin.setMail(mail);
-        userLogin.setPassword(bCryptPasswordEncoder.encode(password));
+        userLogin.setPassword(passwordEncoder.encode(password));
         userLogin.setRole(UserRole.GUEST);
         if (sqLiteDAO.checkIfUserExists(userLogin.getName(), userLogin.getMail())) {
             return false;
@@ -49,7 +51,7 @@ public class UserService implements UserRepository {
 
     @Override
     public boolean loginUser(String name, String mail, String password) throws SQLException {
-        return bCryptPasswordEncoder.matches(password, sqLiteDAO.findUserWithNameAndMail(name, mail).getPassword());
+        return passwordEncoder.matches(password, sqLiteDAO.findUserWithNameAndMail(name, mail).getPassword());
     }
 
     @Override
