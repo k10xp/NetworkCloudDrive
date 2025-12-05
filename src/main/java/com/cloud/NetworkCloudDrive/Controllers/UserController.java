@@ -22,21 +22,29 @@ public class UserController {
         this.userService = userService;
     }
 
-    // Temporary endpoint
     @PostMapping("login")
     public @ResponseBody ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                body(Map.of("message", "login in progress...",
-                        "username", userDTO.getName(),
-                        "mail", userDTO.getMail(),
-                        "passwordHehe", userDTO.getPassword()));
+        try {
+            if (!userService.loginUser(userDTO.getName(), userDTO.getMail(), userDTO.getPassword())) {
+                throw new SecurityException("Wrong password");
+            }
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
+                    body(Map.of("message", "User logged in successfully",
+                            "username", userDTO.getName(),
+                            "mail", userDTO.getMail()));
+        } catch (Exception e) {
+            logger.error("Failed to login, reason: {}", e.getMessage());
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONErrorResponse("Failed to login, reason: " + e.getMessage(), e.getClass().getName(), false));
+        }
     }
 
-    // Temporary endpoint
     @PostMapping("register")
     public @ResponseBody ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
         try {
-            userService.registerUser(userDTO.getName(), userDTO.getMail(), userDTO.getPassword());
+            if (!userService.registerUser(userDTO.getName(), userDTO.getMail(), userDTO.getPassword())) {
+                throw new SQLException(String.format("User with name %s and mail %s", userDTO.getName(), userDTO.getMail()));
+            }
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(Map.of("message", "User successfully registered",
                             "username", userDTO.getName(),
@@ -44,7 +52,7 @@ public class UserController {
         } catch (SQLException e) {
             logger.error("Failed to register user reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse("Failed to register user reason: " + e.getMessage(), e.getClass().getName(), false));
+                    body(new JSONErrorResponse("Failed to register user, reason: " + e.getMessage(), e.getClass().getName(), false));
         }
     }
 }

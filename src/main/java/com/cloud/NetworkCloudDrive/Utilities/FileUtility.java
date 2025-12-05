@@ -181,12 +181,7 @@ public class FileUtility {
     }
 
     public String returnCorrectSeparatorRegex() {
-        String operatingSystem = System.getProperty("os.name").toLowerCase();
-        if (operatingSystem.contains("windows")) {
-            return "\\\\";
-        } else {
-            return "/";
-        }
+        return System.getProperty("os.name").toLowerCase().contains("windows") ? "\\\\" : "/";
     }
 
     // Generate ID path from System path

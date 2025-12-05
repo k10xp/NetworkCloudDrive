@@ -110,6 +110,23 @@ public class SQLiteDAO {
     }
 
     @Transactional
+    public User findUserWithNameAndMail(String name, String mail) throws SQLException {
+        User user = new User();
+        user.setName(name);
+        user.setMail(mail);
+        user.setRole(null);
+        user.setPassword(null);
+        user.setId(null);
+        user.setSalt(null);
+        user.setLastLogin(null);
+        user.setRegisteredAt(null);
+        Example<User> userExample = Example.of(user);
+        Optional<User> userOptional = sqLiteUserRepository.findOne(userExample);
+        if (userOptional.isEmpty()) throw new SQLException("User does not exist");
+        return userOptional.get();
+    }
+
+    @Transactional
     public List<FolderMetadata> findAllContainingSectionOfIdPathIgnoreCase(String idPath) {
         return sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
     }
