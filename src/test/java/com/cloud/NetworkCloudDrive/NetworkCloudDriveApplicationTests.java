@@ -10,7 +10,6 @@ import com.cloud.NetworkCloudDrive.Services.UserService;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,11 +75,7 @@ class NetworkCloudDriveApplicationTests {
     }
 
     public User setupUserObject(String name, String mail, String password, UserRole userRole) {
-        User user = new User();
-        user.setName("unit_test_username");
-        user.setMail("unit_test_username@test.com");
-        user.setPassword("unhashed_password_for_unit_test");
-        user.setRole(UserRole.GUEST);
+        User user = new User(name, mail, password, userRole);
         logger.info("Arranged User details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
                 user.getName(),
                 user.getMail(),
@@ -97,7 +92,7 @@ class NetworkCloudDriveApplicationTests {
     // JPA TESTS
     @Test
     @Transactional
-    public void FolderMetadata_Save_ReturnSavedFolderMetadata() {
+    public void Folder_Metadata_Save_Return_Saved_Folder_Metadata() {
         // Arrange
         FolderMetadata folderMetadata = setupFolderMetadataObject("folderMetadata_test");
         // Act
@@ -119,7 +114,7 @@ class NetworkCloudDriveApplicationTests {
 
     @Test
     @Transactional
-    public void FileMetadata_Save_ReturnSavedFileMetadata() {
+    public void File_Metadata_Save_Return_Saved_File_Metadata() {
         // Arrange
         FileMetadata fileMetadata = setupFileMetadataObject("fileMetadata_test.txt", "text/plain");
 
@@ -143,7 +138,7 @@ class NetworkCloudDriveApplicationTests {
 
     @Test
     @Transactional
-    public void User_Save_ReturnSavedUser() {
+    public void User_Save_Return_Saved_User() {
         // Arrange
         User user = setupUserObject(
                 "unit_test_username",
@@ -205,7 +200,8 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void User_Service_Register_User_Returns_True() {
         // Arrange
-        User user = new User("user_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        User user =
+                setupUserObject("user-register_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
         userService.registerUser(user.getName(), user.getMail(), user.getPassword());
         boolean userExists = sqLiteDAO.checkIfUserExists(user.getName(), user.getMail());
@@ -217,7 +213,8 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void User_Service_Register_and_Login_User_Returns_True() {
         // Arrange
-        User user = new User("user_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        User user =
+                setupUserObject("user-login_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
         boolean loginStatus = false;
         try {
