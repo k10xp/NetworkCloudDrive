@@ -43,7 +43,7 @@
 |--------|--------------------|----------------------|--------------------|
 | POST   | 	api/user/login    | User login           | :heavy_minus_sign: |
 | POST   | 	api/user/register | Registers user       | :heavy_check_mark: |
-| POST   | 	api/user/info     | Returns User details | :heavy_check_mark: |
+| GET    | 	api/user/info     | Returns User details | :heavy_check_mark: |
 
 ## Maintenance Endpoints
 
