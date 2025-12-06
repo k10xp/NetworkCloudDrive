@@ -41,8 +41,8 @@ public class SecurityConfig {
                         // temporarily disable csrf protection
                 ).
                 //shows form login (works but not what I want)
-                formLogin(withDefaults())
-//                httpBasic(withDefaults())
+//                formLogin(withDefaults())
+                httpBasic(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks read more about it
                 // give everyone access to log out
                 .logout(LogoutConfigurer::permitAll);
