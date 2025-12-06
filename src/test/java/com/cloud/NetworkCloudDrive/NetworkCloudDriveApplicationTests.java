@@ -3,7 +3,7 @@ package com.cloud.NetworkCloudDrive;
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
-import com.cloud.NetworkCloudDrive.Models.User;
+import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.UserService;
@@ -48,19 +48,19 @@ class NetworkCloudDriveApplicationTests {
         logger.info("Operating System: {}", System.getProperty("os.name"));
     }
 
-    public User registerUserAndLogDetails(User user) {
-        User userRegisterDetails = userService.registerUser(user.getName(), user.getMail(), user.getPassword());
+    public UserEntity registerUserAndLogDetails(UserEntity userEntity) {
+        UserEntity userEntityRegisterDetails = userService.registerUser(userEntity.getName(), userEntity.getMail(), userEntity.getPassword());
         logger.info(
-                "Registered User ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
-                userRegisterDetails.getId(),
-                userRegisterDetails.getName(),
-                userRegisterDetails.getMail(),
-                userRegisterDetails.getPassword(),
-                userRegisterDetails.getRegisteredAt(),
-                userRegisterDetails.getLastLogin(),
-                userRegisterDetails.getRole()
+                "Registered UserEntity ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+                userEntityRegisterDetails.getId(),
+                userEntityRegisterDetails.getName(),
+                userEntityRegisterDetails.getMail(),
+                userEntityRegisterDetails.getPassword(),
+                userEntityRegisterDetails.getRegisteredAt(),
+                userEntityRegisterDetails.getLastLogin(),
+                userEntityRegisterDetails.getRole()
         );
-        return userRegisterDetails;
+        return userEntityRegisterDetails;
     }
 
     public FolderMetadata setupFolderMetadataObject(String name) {
@@ -89,17 +89,17 @@ class NetworkCloudDriveApplicationTests {
         return fileMetadata;
     }
 
-    public User setupUserObject(String name, String mail, String password, UserRole userRole) {
-        User user = new User(name, mail, password, userRole);
-        logger.info("Arranged User details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
-                user.getName(),
-                user.getMail(),
-                user.getPassword(),
-                user.getRegisteredAt(),
-                user.getLastLogin(),
-                user.getRole()
+    public UserEntity setupUserObject(String name, String mail, String password, UserRole userRole) {
+        UserEntity userEntity = new UserEntity(name, mail, password, userRole);
+        logger.info("Arranged UserEntity details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+                userEntity.getName(),
+                userEntity.getMail(),
+                userEntity.getPassword(),
+                userEntity.getRegisteredAt(),
+                userEntity.getLastLogin(),
+                userEntity.getRole()
         );
-        return user;
+        return userEntity;
     }
 
     //TODO test to check if "findbyId" is working after save tests succeed
@@ -155,7 +155,7 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void User_Save_Return_Saved_User() {
         // Arrange
-        User user = setupUserObject(
+        UserEntity userEntity = setupUserObject(
                 "unit_test_username",
                 "unit_test_username@test.com",
                 "unhashed_password_for_unit_test",
@@ -163,22 +163,22 @@ class NetworkCloudDriveApplicationTests {
         );
 
         // Act
-        User savedUser = sqLiteDAO.saveUser(user);
+        UserEntity savedUserEntity = sqLiteDAO.saveUser(userEntity);
 
-        if (savedUser != null)
+        if (savedUserEntity != null)
             logger.info(
-                    "Saved User ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
-                    savedUser.getId(),
-                    savedUser.getName(),
-                    savedUser.getMail(),
-                    savedUser.getPassword(),
-                    savedUser.getRegisteredAt(),
-                    savedUser.getLastLogin(),
-                    savedUser.getRole()
+                    "Saved UserEntity ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+                    savedUserEntity.getId(),
+                    savedUserEntity.getName(),
+                    savedUserEntity.getMail(),
+                    savedUserEntity.getPassword(),
+                    savedUserEntity.getRegisteredAt(),
+                    savedUserEntity.getLastLogin(),
+                    savedUserEntity.getRole()
             );
 
         // Assert
-        Assertions.assertEquals(user, savedUser);
+        Assertions.assertEquals(userEntity, savedUserEntity);
     }
 
     @Test
@@ -215,11 +215,11 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void User_Service_Register_User_Returns_True() {
         // Arrange
-        User user =
-                setupUserObject("user-register_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        UserEntity userEntity =
+                setupUserObject("userEntity-register_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
-        User userRegisterDetails = registerUserAndLogDetails(user);
-        boolean userExists = sqLiteDAO.checkIfUserExists(userRegisterDetails.getName(), userRegisterDetails.getMail());
+        UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
+        boolean userExists = sqLiteDAO.checkIfUserExists(userEntityRegisterDetails.getName(), userEntityRegisterDetails.getMail());
         // Assert
         Assertions.assertTrue(userExists);
     }
@@ -228,16 +228,16 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void User_Service_Register_and_Login_User_Returns_True() {
         // Arrange
-        User user =
-                setupUserObject("user-login_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        UserEntity userEntity =
+                setupUserObject("userEntity-login_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
         boolean loginStatus = false;
         try {
-            User userRegisterDetails = registerUserAndLogDetails(user);
-            if(!sqLiteDAO.checkIfUserExists(userRegisterDetails.getName(), userRegisterDetails.getMail())) {
-                throw new SecurityException("Failed to register user");
+            UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
+            if(!sqLiteDAO.checkIfUserExists(userEntityRegisterDetails.getName(), userEntityRegisterDetails.getMail())) {
+                throw new SecurityException("Failed to register userEntity");
             }
-            loginStatus = userService.loginUser(user.getName(), user.getMail(), user.getPassword());
+            loginStatus = userService.loginUser(userEntity.getName(), userEntity.getMail(), userEntity.getPassword());
         } catch (SQLException e) {
             logger.error("Login test failed {}", e.getMessage());
             Assertions.fail(e.getMessage());

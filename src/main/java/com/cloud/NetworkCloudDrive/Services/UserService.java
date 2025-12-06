@@ -1,7 +1,7 @@
 package com.cloud.NetworkCloudDrive.Services;
 
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
-import com.cloud.NetworkCloudDrive.Models.User;
+import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Repositories.UserRepository;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,7 +20,7 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public User currentUserDetails() {
+    public UserEntity currentUserDetails() {
         return null;
     }
 
@@ -30,21 +30,21 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public User registerUser(String name, String mail, String password) throws SecurityException {
-        User userLogin = new User();
-        userLogin.setName(name);
-        userLogin.setMail(mail);
-        userLogin.setPassword(passwordEncoder.encode(password));
-        userLogin.setRole(UserRole.GUEST);
-        if (sqLiteDAO.checkIfUserExists(userLogin.getName(), userLogin.getMail())) {
+    public UserEntity registerUser(String name, String mail, String password) throws SecurityException {
+        UserEntity userEntityLogin = new UserEntity();
+        userEntityLogin.setName(name);
+        userEntityLogin.setMail(mail);
+        userEntityLogin.setPassword(passwordEncoder.encode(password));
+        userEntityLogin.setRole(UserRole.GUEST);
+        if (sqLiteDAO.checkIfUserExists(userEntityLogin.getName(), userEntityLogin.getMail())) {
             throw new SecurityException(String.format("User with name %s and mail %s already exists", name, mail));
         }
-        return sqLiteDAO.saveUser(userLogin);
+        return sqLiteDAO.saveUser(userEntityLogin);
     }
 
     @Override
     public boolean loginUser(String name, String mail, String password) throws SQLException {
-        return passwordEncoder.matches(password, sqLiteDAO.findUserWithNameAndMail(name, mail).getPassword());
+        return passwordEncoder.matches(password, sqLiteDAO.findUserByNameAndMail(name, mail).getPassword());
     }
 
     @Override

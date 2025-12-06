@@ -2,13 +2,14 @@ package com.cloud.NetworkCloudDrive.DAO;
 
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
-import com.cloud.NetworkCloudDrive.Models.User;
+import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteUserRepository;
+import com.cloud.NetworkCloudDrive.Repositories.SQLiteUserEntityRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +24,15 @@ public class SQLiteDAO {
     private final Logger logger = LoggerFactory.getLogger(SQLiteDAO.class);
     private final SQLiteFolderRepository sqLiteFolderRepository;
     private final SQLiteFileRepository sqLiteFileRepository;
-    private final SQLiteUserRepository sqLiteUserRepository;
+    private final SQLiteUserEntityRepository sqLiteUserEntityRepository;
 
     public SQLiteDAO(
             SQLiteFolderRepository sqLiteFolderRepository,
             SQLiteFileRepository sqLiteFileRepository,
-            SQLiteUserRepository sqLiteUserRepository) {
+            SQLiteUserEntityRepository sqLiteUserEntityRepository) {
         this.sqLiteFolderRepository = sqLiteFolderRepository;
         this.sqLiteFileRepository = sqLiteFileRepository;
-        this.sqLiteUserRepository = sqLiteUserRepository;
+        this.sqLiteUserEntityRepository = sqLiteUserEntityRepository;
     }
 
     // DAO stuff
@@ -41,8 +42,8 @@ public class SQLiteDAO {
         return sqLiteFolderRepository;
     }
 
-    public SQLiteUserRepository getSqLiteUserRepository() {
-        return sqLiteUserRepository;
+    public SQLiteUserEntityRepository getSqLiteUserEntityRepository() {
+        return sqLiteUserEntityRepository;
     }
 
     public SQLiteFileRepository getSqLiteFileRepository() {
@@ -61,8 +62,8 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public void deleteUser(User user) {
-        sqLiteUserRepository.delete(user);
+    public void deleteUser(UserEntity userEntity) {
+        sqLiteUserEntityRepository.delete(userEntity);
     }
 
     // Add/Update
@@ -77,8 +78,8 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public User saveUser(User user) {
-        return sqLiteUserRepository.save(user);
+    public UserEntity saveUser(UserEntity userEntity) {
+        return sqLiteUserEntityRepository.save(userEntity);
     }
 
     @Transactional
@@ -93,32 +94,36 @@ public class SQLiteDAO {
 
     // Database service layer
 
-    private User setupExampleUser(String name, String mail) {
-        User user = new User();
-        user.setName(name);
-        user.setMail(mail);
-        user.setRole(null);
-        user.setPassword(null);
-        user.setId(null);
-        user.setLastLogin(null);
-        user.setRegisteredAt(null);
-        return user;
+    private UserEntity setupExampleUser(String name, String mail) {
+        UserEntity userEntity = new UserEntity();
+        userEntity.setName(name);
+        userEntity.setMail(mail);
+        userEntity.setRole(null);
+        userEntity.setPassword(null);
+        userEntity.setId(null);
+        userEntity.setLastLogin(null);
+        userEntity.setRegisteredAt(null);
+        return userEntity;
     }
 
     @Transactional
     public boolean checkIfUserExists(String name, String mail) {
-        User user = setupExampleUser(name, mail);
-        Example<User> userExample = Example.of(user);
-        Optional<User> userOptional = sqLiteUserRepository.findOne(userExample);
+        Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findOne(Example.of(setupExampleUser(name, mail)));
         return userOptional.isPresent();
     }
 
     @Transactional
-    public User findUserWithNameAndMail(String name, String mail) throws SQLException {
-        User user = setupExampleUser(name, mail);
-        Example<User> userExample = Example.of(user);
-        Optional<User> userOptional = sqLiteUserRepository.findOne(userExample);
+    public UserEntity findUserByNameAndMail(String name, String mail) throws SQLException {
+        Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findOne(Example.of(setupExampleUser(name, mail)));
         if (userOptional.isEmpty()) throw new SQLException("User does not exist");
+        return userOptional.get();
+    }
+
+    @Transactional
+    public UserEntity findUserByName(String name) throws UsernameNotFoundException {
+        Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findByName(name);
+        if (userOptional.isEmpty())
+            throw new UsernameNotFoundException("User not found by username " + name);
         return userOptional.get();
     }
 

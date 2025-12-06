@@ -41,8 +41,8 @@
 
 | Method | 	Route             | 	Description   | Working            |
 |--------|--------------------|----------------|--------------------|
-| POST   | 	api/user/login    | User login     | :heavy_minus_sign: |
-| POST   | 	api/user/register | Registers user | :heavy_minus_sign: |
+| POST   | 	api/userEntity/login    | User login     | :heavy_minus_sign: |
+| POST   | 	api/userEntity/register | Registers userEntity | :heavy_minus_sign: |
 
 ## Maintenance Endpoints
 

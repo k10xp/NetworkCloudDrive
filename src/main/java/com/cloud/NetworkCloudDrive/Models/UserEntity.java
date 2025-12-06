@@ -7,7 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 @Entity
-public class User {
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,14 +35,14 @@ public class User {
     @CreationTimestamp
     private Instant registeredAt;
 
-    public User(String name, String mail, String password, UserRole role) {
+    public UserEntity(String name, String mail, String password, UserRole role) {
         this.name = name;
         this.mail = mail;
         this.password = password;
         this.role = role;
     }
 
-    public User() {}
+    public UserEntity() {}
 
     public Long getId() {
         return id;
