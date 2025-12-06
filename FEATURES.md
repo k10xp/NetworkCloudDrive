@@ -39,10 +39,11 @@
 
 ## User Endpoints
 
-| Method | 	Route             | 	Description   | Working            |
-|--------|--------------------|----------------|--------------------|
-| POST   | 	api/userEntity/login    | User login     | :heavy_minus_sign: |
-| POST   | 	api/userEntity/register | Registers userEntity | :heavy_minus_sign: |
+| Method | 	Route             | 	Description         | Working            |
+|--------|--------------------|----------------------|--------------------|
+| POST   | 	api/user/login    | User login           | :heavy_minus_sign: |
+| POST   | 	api/user/register | Registers user       | :heavy_check_mark: |
+| POST   | 	api/user/info     | Returns User details | :heavy_check_mark: |
 
 ## Maintenance Endpoints
 
