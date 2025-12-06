@@ -16,6 +16,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -37,7 +39,11 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated()
                         // temporarily disable csrf protection
-                ).csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks read more about it
+                ).
+                //shows form login (works but not what I want)
+                formLogin(withDefaults())
+//                httpBasic(withDefaults())
+                .csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks read more about it
                 // give everyone access to log out
                 .logout(LogoutConfigurer::permitAll);
         return http.build();
