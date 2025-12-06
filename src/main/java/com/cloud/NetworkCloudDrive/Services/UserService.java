@@ -4,7 +4,6 @@ import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.Repositories.UserRepository;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,22 +30,16 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public String generateToken() {
-        return "";
-    }
-
-    @Override
-    public boolean registerUser(String name, String mail, String password) {
+    public User registerUser(String name, String mail, String password) throws SecurityException {
         User userLogin = new User();
         userLogin.setName(name);
         userLogin.setMail(mail);
         userLogin.setPassword(passwordEncoder.encode(password));
         userLogin.setRole(UserRole.GUEST);
         if (sqLiteDAO.checkIfUserExists(userLogin.getName(), userLogin.getMail())) {
-            return false;
+            throw new SecurityException(String.format("User with name %s and mail %s already exists", name, mail));
         }
-        sqLiteDAO.saveUser(userLogin);
-        return true;
+        return sqLiteDAO.saveUser(userLogin);
     }
 
     @Override

@@ -2,6 +2,8 @@ package com.cloud.NetworkCloudDrive.Controllers;
 
 import com.cloud.NetworkCloudDrive.DTO.UserDTO;
 import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
+import com.cloud.NetworkCloudDrive.Models.JSONMapResponse;
+import com.cloud.NetworkCloudDrive.Models.User;
 import com.cloud.NetworkCloudDrive.Services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +31,8 @@ public class UserController {
                 throw new SecurityException("Wrong password");
             }
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(Map.of("message", "User logged in successfully",
-                            "username", userDTO.getName(),
-                            "mail", userDTO.getMail()));
+                    body(new JSONMapResponse("User logged in successfully", true,
+                            Map.of("username", userDTO.getName(), "mail", userDTO.getMail())));
         } catch (Exception e) {
             logger.error("Failed to login, reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
@@ -42,14 +43,18 @@ public class UserController {
     @PostMapping("register")
     public @ResponseBody ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
         try {
-            if (!userService.registerUser(userDTO.getName(), userDTO.getMail(), userDTO.getPassword())) {
-                throw new SQLException(String.format("User with name %s and mail %s", userDTO.getName(), userDTO.getMail()));
-            }
+            User registeredUser = userService.registerUser(userDTO.getName(), userDTO.getMail(), userDTO.getPassword());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(Map.of("message", "User successfully registered",
-                            "username", userDTO.getName(),
-                            "mail", userDTO.getMail()));
-        } catch (SQLException e) {
+                    body(new JSONMapResponse("User successfully registered",
+                            true,
+                            Map.of(
+                            "id", registeredUser.getId(),
+                            "username", registeredUser.getName(),
+                            "mail", registeredUser.getMail(),
+                            "role", registeredUser.getRole(),
+                            "registeredAt", registeredUser.getRegisteredAt()
+                            )));
+        } catch (SecurityException e) {
             logger.error("Failed to register user reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONErrorResponse("Failed to register user, reason: " + e.getMessage(), e.getClass().getName(), false));

@@ -6,8 +6,7 @@ import java.sql.SQLException;
 
 public interface UserRepository {
     boolean loginUser(String name, String mail, String password) throws SQLException;
-    boolean registerUser(String name, String mail, String password);
-    String generateToken();
+    User registerUser(String name, String mail, String password) throws SecurityException;
     boolean logOutUser();
     User currentUserDetails();
     boolean updatePassword();

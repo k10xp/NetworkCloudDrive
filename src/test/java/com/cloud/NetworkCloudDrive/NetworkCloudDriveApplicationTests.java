@@ -48,6 +48,21 @@ class NetworkCloudDriveApplicationTests {
         logger.info("Operating System: {}", System.getProperty("os.name"));
     }
 
+    public User registerUserAndLogDetails(User user) {
+        User userRegisterDetails = userService.registerUser(user.getName(), user.getMail(), user.getPassword());
+        logger.info(
+                "Registered User ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+                userRegisterDetails.getId(),
+                userRegisterDetails.getName(),
+                userRegisterDetails.getMail(),
+                userRegisterDetails.getPassword(),
+                userRegisterDetails.getRegisteredAt(),
+                userRegisterDetails.getLastLogin(),
+                userRegisterDetails.getRole()
+        );
+        return userRegisterDetails;
+    }
+
     public FolderMetadata setupFolderMetadataObject(String name) {
         FolderMetadata folderMetadata = new FolderMetadata();
         entityManager.persist(folderMetadata);
@@ -203,8 +218,8 @@ class NetworkCloudDriveApplicationTests {
         User user =
                 setupUserObject("user-register_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
-        userService.registerUser(user.getName(), user.getMail(), user.getPassword());
-        boolean userExists = sqLiteDAO.checkIfUserExists(user.getName(), user.getMail());
+        User userRegisterDetails = registerUserAndLogDetails(user);
+        boolean userExists = sqLiteDAO.checkIfUserExists(userRegisterDetails.getName(), userRegisterDetails.getMail());
         // Assert
         Assertions.assertTrue(userExists);
     }
@@ -218,7 +233,10 @@ class NetworkCloudDriveApplicationTests {
         // Act
         boolean loginStatus = false;
         try {
-            userService.registerUser(user.getName(), user.getMail(), user.getPassword());
+            User userRegisterDetails = registerUserAndLogDetails(user);
+            if(!sqLiteDAO.checkIfUserExists(userRegisterDetails.getName(), userRegisterDetails.getMail())) {
+                throw new SecurityException("Failed to register user");
+            }
             loginStatus = userService.loginUser(user.getName(), user.getMail(), user.getPassword());
         } catch (SQLException e) {
             logger.error("Login test failed {}", e.getMessage());
