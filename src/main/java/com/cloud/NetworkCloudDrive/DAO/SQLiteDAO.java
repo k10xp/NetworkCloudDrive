@@ -95,8 +95,14 @@ public class SQLiteDAO {
     // Database service layer
 
     @Transactional
-    public long getCurrentUserID(String username) {
-        UserEntity user = findUserByName(username);
+    public long getCurrentUserID(String name) {
+        UserEntity user = findUserByName(name);
+        return user.getId();
+    }
+
+    @Transactional
+    public long getCurrentUsername(String name) {
+        UserEntity user = findUserByName(name);
         return user.getId();
     }
 

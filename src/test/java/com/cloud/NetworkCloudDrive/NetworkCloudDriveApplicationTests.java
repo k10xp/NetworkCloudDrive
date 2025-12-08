@@ -186,7 +186,7 @@ class NetworkCloudDriveApplicationTests {
             // Act
             filePath = fileUtility.resolvePathFromIdString(savedFolderMetadata.getPath());
         } catch (FileSystemException e) {
-            logger.error("Failed to resolve path for Unit Testing. {}", e.getMessage());
+            logger.error("File_Utility_Reserve_Path_From_ID_Path_Returns_Path {}", e.getMessage());
             Assertions.fail(e.getMessage());
         }
         // Assert
@@ -234,7 +234,7 @@ class NetworkCloudDriveApplicationTests {
             }
             loginStatus = userService.loginUser(userEntity.getName(), userEntity.getMail(), userEntity.getPassword());
         } catch (SQLException e) {
-            logger.error("Login test failed {}", e.getMessage());
+            logger.error("User_Service_Register_and_Login_User_Returns_True {}", e.getMessage());
             Assertions.fail(e.getMessage());
         }
         // Assert
@@ -261,7 +261,7 @@ class NetworkCloudDriveApplicationTests {
             sqLiteDAO.checkIfUserExists(userEntity1RegisterDetails.getName(), userEntity1RegisterDetails.getMail());
             sqLiteDAO.checkIfUserExists(userEntity2RegisterDetails.getName(), userEntity2RegisterDetails.getMail());
         } catch (Exception e) {
-            logger.error("Duplicate user test failed {}", e.getMessage());
+            logger.error("User_Service_Register_Duplicate_User_Returns_False {}", e.getMessage());
             success = true;
         }
         Assertions.assertTrue(success);
