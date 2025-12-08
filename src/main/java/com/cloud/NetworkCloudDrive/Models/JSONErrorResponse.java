@@ -1,18 +1,17 @@
 package com.cloud.NetworkCloudDrive.Models;
 
 public class JSONErrorResponse extends JSONResponse {
-    private String exceptionType;
+    private String exception_type;
 
-    public JSONErrorResponse(String message, String exceptionType, boolean success) {
+    public JSONErrorResponse(String message, String exception_type, boolean success) {
         super(message, success);
-        this.exceptionType = exceptionType;
+        this.exception_type = exception_type;
     }
 
-    public String getExceptionType() {
-        return exceptionType;
+    public String getException_type() {
+        return exception_type;
     }
-
-    public void setExceptionType(String exceptionType) {
-        this.exceptionType = exceptionType;
+    public void setException_type(String exception_type) {
+        this.exception_type = exception_type;
     }
 }

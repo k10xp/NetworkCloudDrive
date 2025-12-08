@@ -75,7 +75,6 @@ public class FileSystemService implements FileSystemRepository {
         return checkExists.getPath();
     }
 
-    //TODO implement walk fs tree to recursively remove contents of a folder from system and database
     @Override
     @Transactional
     public String removeFolder(FolderMetadata folder) throws IOException {
@@ -188,6 +187,7 @@ public class FileSystemService implements FileSystemRepository {
      * @return  updated path
      * @throws Exception    throws FileSystemException and FileNotFoundException
      */
+    //TODO destination ID 0 doesn't work reliably
     @Transactional
     @Override
     public String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception {

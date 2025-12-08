@@ -1,11 +1,20 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
-import com.cloud.NetworkCloudDrive.DTOs.UserLoginDTO;
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
+import com.cloud.NetworkCloudDrive.DTO.UserDTO;
+import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
+import com.cloud.NetworkCloudDrive.Models.JSONMapResponse;
+import com.cloud.NetworkCloudDrive.Models.JSONObjectResponse;
+import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -15,28 +24,61 @@ import java.util.Map;
 public class UserController {
     private final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
+    private final SQLiteDAO sqLiteDAO;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, SQLiteDAO sqLiteDAO) {
         this.userService = userService;
+        this.sqLiteDAO = sqLiteDAO;
     }
 
-    // Temporary endpoint
     @PostMapping("login")
-    public @ResponseBody ResponseEntity<?> login(@RequestBody UserLoginDTO userLoginDTO) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                body(Map.of("message", "login in progress...",
-                        "username", userLoginDTO.getName(),
-                        "mail", userLoginDTO.getMail(),
-                        "passwordHehe", userLoginDTO.getPassword()));
+    public @ResponseBody ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
+        try {
+            if (!userService.loginUser(userDTO.getName(), userDTO.getMail(), userDTO.getPassword())) {
+                throw new SecurityException("Wrong password");
+            }
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONMapResponse("User logged in successfully", true,
+                            Map.of("username", userDTO.getName(), "mail", userDTO.getMail())));
+        } catch (Exception e) {
+            logger.error("Failed to login, reason: {}", e.getMessage());
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONErrorResponse("Failed to login, reason: " + e.getMessage(), e.getClass().getName(), false));
+        }
     }
 
-    // Temporary endpoint
     @PostMapping("register")
-    public @ResponseBody ResponseEntity<?> register(@RequestBody UserLoginDTO userLoginDTO) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                body(Map.of("message", "register in progress...",
-                        "username", userLoginDTO.getName(),
-                        "mail", userLoginDTO.getMail(),
-                        "passwordHehe", userLoginDTO.getPassword()));
+    public @ResponseBody ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
+        try {
+            UserEntity registeredUserEntity = userService.registerUser(userDTO.getName(), userDTO.getMail(), userDTO.getPassword());
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONMapResponse("User successfully registered",
+                            true,
+                            Map.of(
+                            "id", registeredUserEntity.getId(),
+                            "username", registeredUserEntity.getName(),
+                            "mail", registeredUserEntity.getMail(),
+                            "role", registeredUserEntity.getRole(),
+                            "registeredAt", registeredUserEntity.getRegisteredAt()
+                            )));
+        } catch (SecurityException e) {
+            logger.error("Failed to register user reason: {}", e.getMessage());
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONErrorResponse(
+                            "Failed to register user, reason: " + e.getMessage(), e.getClass().getName(), false));
+        }
+    }
+
+    @GetMapping("info")
+    public @ResponseBody ResponseEntity<?> info() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONObjectResponse("Currently authenticated user info", userService.currentUserDetails(auth), true));
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONErrorResponse(
+                            "Failed to get user details, reason: " + e.getMessage(), e.getClass().getName(), false));
+        }
     }
 }

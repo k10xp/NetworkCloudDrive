@@ -1,11 +1,11 @@
-package com.cloud.NetworkCloudDrive.DTOs;
+package com.cloud.NetworkCloudDrive.DTO;
 
-public class UserLoginDTO {
+public class UserDTO {
     private String name;
     private String mail;
     private String password;
 
-    public UserLoginDTO() {}
+    public UserDTO() {}
 
     public String getName() {
         return name;

@@ -1,16 +1,18 @@
 package com.cloud.NetworkCloudDrive.Repositories;
 
-import com.cloud.NetworkCloudDrive.Models.User;
+import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
+import com.cloud.NetworkCloudDrive.Models.UserEntity;
+import org.springframework.security.core.Authentication;
+
+import java.sql.SQLException;
 
 public interface UserRepository {
-    boolean loginUser();
-    boolean registerUser();
-    String generateToken();
-    boolean logOutUser();
-    User currentUserDetails();
-    boolean updatePassword();
-    boolean updateMail();
-    boolean updateName();
-    boolean deleteUser();
-    boolean elevateUserToAdmin();
+    boolean loginUser(String name, String mail, String password) throws SQLException;
+    UserEntity registerUser(String name, String mail, String password) throws SecurityException;
+    CurrentUserDTO currentUserDetails(Authentication authentication);
+    boolean updatePassword(UserEntity user, String newPassword);
+    boolean updateMail(UserEntity user, String newMail);
+    boolean updateName(UserEntity user, String newName);
+    boolean deleteUser(UserEntity user);
+    boolean elevateUserPrivileges();
 }
