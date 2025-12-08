@@ -240,4 +240,30 @@ class NetworkCloudDriveApplicationTests {
         // Assert
         Assertions.assertTrue(loginStatus);
     }
+
+    @Test
+    @Transactional
+    public void User_Service_Register_Duplicate_User_Returns_False() {
+        // Arrange
+        UserEntity userEntity1 =
+                setupUserObject(
+                        "userEntity1-login_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        UserEntity userEntity2 =
+                setupUserObject(
+                        "userEntity2-login_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        // Act
+        boolean success = false;
+        try {
+            UserEntity userEntity1RegisterDetails = registerUserAndLogDetails(userEntity1);
+            UserEntity userEntity2RegisterDetails = registerUserAndLogDetails(userEntity2);
+
+            // Assert
+            sqLiteDAO.checkIfUserExists(userEntity1RegisterDetails.getName(), userEntity1RegisterDetails.getMail());
+            sqLiteDAO.checkIfUserExists(userEntity2RegisterDetails.getName(), userEntity2RegisterDetails.getMail());
+        } catch (Exception e) {
+            logger.error("Duplicate user test failed {}", e.getMessage());
+            success = true;
+        }
+        Assertions.assertTrue(success);
+    }
 }
