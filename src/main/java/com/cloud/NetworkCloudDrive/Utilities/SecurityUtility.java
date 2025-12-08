@@ -22,11 +22,11 @@ public class SecurityUtility implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserEntity returnedUser = sqLiteDAO.findUserByName(username);
-        logger.info("Built user:\nid={}\nname={}\nmail={}\nrole={}\nEND",
+        UserEntity returnedUser = sqLiteDAO.findUserByMail(username);
+        logger.debug("Built user:\nid={}\nname={}\nmail={}\nrole={}\nEND",
                 returnedUser.getId(),returnedUser.getName(), returnedUser.getMail(), getUserRole(returnedUser.getRole()));
         return User.builder().
-                username(returnedUser.getName()).
+                username(returnedUser.getMail()).
                 password(returnedUser.getPassword()).
                 roles(getUserRole(returnedUser.getRole())).
                 build();

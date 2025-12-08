@@ -94,6 +94,12 @@ public class SQLiteDAO {
 
     // Database service layer
 
+    @Transactional
+    public long getCurrentUserID(String username) {
+        UserEntity user = findUserByName(username);
+        return user.getId();
+    }
+
     private UserEntity setupExampleUser(String name, String mail) {
         UserEntity userEntity = new UserEntity();
         userEntity.setName(name);
@@ -113,6 +119,12 @@ public class SQLiteDAO {
     }
 
     @Transactional
+    public boolean checkIfUserExistsByMail(String mail) {
+        Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findByMail(mail);
+        return userOptional.isPresent();
+    }
+
+    @Transactional
     public UserEntity findUserByNameAndMail(String name, String mail) throws SQLException {
         Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findOne(Example.of(setupExampleUser(name, mail)));
         if (userOptional.isEmpty()) throw new SQLException("User does not exist");
@@ -124,6 +136,14 @@ public class SQLiteDAO {
         Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findByName(name);
         if (userOptional.isEmpty())
             throw new UsernameNotFoundException("User not found by username " + name);
+        return userOptional.get();
+    }
+
+    @Transactional
+    public UserEntity findUserByMail(String mail) throws UsernameNotFoundException {
+        Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findByMail(mail);
+        if (userOptional.isEmpty())
+            throw new UsernameNotFoundException("User not found by mail " + mail);
         return userOptional.get();
     }
 

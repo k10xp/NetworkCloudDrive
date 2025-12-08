@@ -25,21 +25,15 @@ import java.sql.SQLException;
 @SpringBootTest
 @TestPropertySource(locations = "classpath:/application-test.properties")
 class NetworkCloudDriveApplicationTests {
-
     private final Logger logger = LoggerFactory.getLogger(NetworkCloudDriveApplicationTests.class);
-
     @Autowired
     EntityManager entityManager;
-
     @Autowired
     SQLiteDAO sqLiteDAO;
-
     @Autowired
     FileUtility fileUtility;
-
     @Autowired
     UserService userService;
-
     @Autowired
     FileStorageProperties fileStorageProperties;
 
@@ -216,7 +210,8 @@ class NetworkCloudDriveApplicationTests {
     public void User_Service_Register_User_Returns_True() {
         // Arrange
         UserEntity userEntity =
-                setupUserObject("userEntity-register_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+                setupUserObject(
+                        "userEntity-register_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
         UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
         boolean userExists = sqLiteDAO.checkIfUserExists(userEntityRegisterDetails.getName(), userEntityRegisterDetails.getMail());

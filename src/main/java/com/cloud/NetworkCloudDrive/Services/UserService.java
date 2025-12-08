@@ -1,9 +1,12 @@
 package com.cloud.NetworkCloudDrive.Services;
 
+import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Repositories.UserRepository;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,13 +23,9 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public UserEntity currentUserDetails() {
-        return null;
-    }
-
-    @Override
-    public boolean logOutUser() {
-        return false;
+    public CurrentUserDTO currentUserDetails(Authentication authentication) {
+        UserEntity user = sqLiteDAO.findUserByMail(authentication.getName());
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override
@@ -36,7 +35,7 @@ public class UserService implements UserRepository {
         userEntityLogin.setMail(mail);
         userEntityLogin.setPassword(passwordEncoder.encode(password));
         userEntityLogin.setRole(UserRole.GUEST);
-        if (sqLiteDAO.checkIfUserExists(userEntityLogin.getName(), userEntityLogin.getMail())) {
+        if (sqLiteDAO.checkIfUserExistsByMail(userEntityLogin.getMail())) {
             throw new SecurityException(String.format("User with name %s and mail %s already exists", name, mail));
         }
         return sqLiteDAO.saveUser(userEntityLogin);
@@ -44,27 +43,34 @@ public class UserService implements UserRepository {
 
     @Override
     public boolean loginUser(String name, String mail, String password) throws SQLException {
-        return passwordEncoder.matches(password, sqLiteDAO.findUserByNameAndMail(name, mail).getPassword());
+        return passwordEncoder.matches(password, sqLiteDAO.findUserByMail(mail).getPassword());
     }
 
     @Override
-    public boolean updatePassword() {
-        return false;
+    public boolean updatePassword(UserEntity user, String newPassword) {
+        user.setPassword(newPassword);
+        sqLiteDAO.saveUser(user);
+        return true;
     }
 
     @Override
-    public boolean updateName() {
-        return false;
+    public boolean updateName(UserEntity user, String newName) {
+        user.setName(newName);
+        sqLiteDAO.saveUser(user);
+        return true;
     }
 
     @Override
-    public boolean updateMail() {
-        return false;
+    public boolean updateMail(UserEntity user, String newMail) {
+        user.setMail(newMail);
+        sqLiteDAO.saveUser(user);
+        return true;
     }
 
     @Override
-    public boolean deleteUser() {
-        return false;
+    public boolean deleteUser(UserEntity user) {
+        sqLiteDAO.deleteUser(user);
+        return true;
     }
 
     @Override

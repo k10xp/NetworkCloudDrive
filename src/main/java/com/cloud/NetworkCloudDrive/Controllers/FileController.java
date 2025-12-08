@@ -1,10 +1,7 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
 import com.cloud.NetworkCloudDrive.DTO.CreateFolderDTO;
-import com.cloud.NetworkCloudDrive.Models.FileMetadata;
-import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
-import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
-import com.cloud.NetworkCloudDrive.Models.JSONResponse;
+import com.cloud.NetworkCloudDrive.Models.*;
 import com.cloud.NetworkCloudDrive.Services.FileService;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import com.cloud.NetworkCloudDrive.Services.InformationService;
@@ -15,6 +12,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 

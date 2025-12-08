@@ -1,8 +1,11 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.DTO.UserDTO;
 import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
 import com.cloud.NetworkCloudDrive.Models.JSONMapResponse;
+import com.cloud.NetworkCloudDrive.Models.JSONObjectResponse;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Services.UserService;
 import org.slf4j.Logger;
@@ -11,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -20,9 +24,11 @@ import java.util.Map;
 public class UserController {
     private final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
+    private final SQLiteDAO sqLiteDAO;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, SQLiteDAO sqLiteDAO) {
         this.userService = userService;
+        this.sqLiteDAO = sqLiteDAO;
     }
 
     @PostMapping("login")
@@ -58,20 +64,21 @@ public class UserController {
         } catch (SecurityException e) {
             logger.error("Failed to register user reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse("Failed to register user, reason: " + e.getMessage(), e.getClass().getName(), false));
+                    body(new JSONErrorResponse(
+                            "Failed to register user, reason: " + e.getMessage(), e.getClass().getName(), false));
         }
     }
 
     @GetMapping("info")
     public @ResponseBody ResponseEntity<?> info() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                body(new JSONMapResponse("Currently authenticated user info",
-                        true,
-                        Map.of(
-                                "id", auth.getDetails(),
-                                "username", auth.getPrincipal(),
-                                "roles", auth.getAuthorities()
-                        )));
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONObjectResponse("Currently authenticated user info", userService.currentUserDetails(auth), true));
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONErrorResponse(
+                            "Failed to get user details, reason: " + e.getMessage(), e.getClass().getName(), false));
+        }
     }
 }
