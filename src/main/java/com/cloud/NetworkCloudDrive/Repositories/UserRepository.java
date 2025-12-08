@@ -9,7 +9,7 @@ import java.sql.SQLException;
 public interface UserRepository {
     boolean loginUser(String name, String mail, String password) throws SQLException;
     UserEntity registerUser(String name, String mail, String password) throws SecurityException;
-    CurrentUserDTO currentUserDetails(Authentication authentication);
+    CurrentUserDTO currentUserDetails(String mail);
     boolean updatePassword(UserEntity user, String newPassword);
     boolean updateMail(UserEntity user, String newMail);
     boolean updateName(UserEntity user, String newName);

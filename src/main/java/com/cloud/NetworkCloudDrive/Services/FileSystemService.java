@@ -1,5 +1,6 @@
 package com.cloud.NetworkCloudDrive.Services;
 
+import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
@@ -45,14 +46,15 @@ public class FileSystemService implements FileSystemRepository {
 
     @Override
     @Transactional
-    public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId) throws FileSystemException, SQLException {
+    public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId, long userId)
+            throws FileSystemException, SQLException {
         List<Object> folderAndFileMetadata = new ArrayList<>();
         List<Long> lastIdList = new ArrayList<>();
         for (Path path : filePaths) {
             File file = path.toFile();
             logger.info("file/folder in queue {}", file);
             if (file.isFile()) {
-                folderAndFileMetadata.add(sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), 0));
+                folderAndFileMetadata.add(sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), userId));
                 continue;
             }
             FolderMetadata foundFolderMetadata =
@@ -67,7 +69,8 @@ public class FileSystemService implements FileSystemRepository {
     @Transactional
     public String removeFile(FileMetadata file) throws Exception {
         //find folder
-        File checkExists = fileUtility.returnFileIfItExists(fileUtility.getFolderPath(file.getFolderId()) + File.separator + file.getName());
+        File checkExists = fileUtility.returnFileIfItExists(
+                fileUtility.getFolderPath(file.getFolderId()) + File.separator + file.getName());
         //remove Folder
         if (!checkExists.delete())
             throw new FileSystemException(String.format("Failed to remove folder at path %s\n", checkExists.getPath()));
@@ -140,7 +143,8 @@ public class FileSystemService implements FileSystemRepository {
         String newMimeType = fileUtility.getMimeTypeFromExtension(newUpdatedPath); /* <- get new mimetype of file */
         //set new name and path
         file.setName(newName + oldExtension);
-        file.setMimiType(newMimeType != null ? (newMimeType.equals(file.getMimiType()) ? file.getMimiType() : newMimeType) : file.getMimiType());
+        file.setMimiType(newMimeType != null ? (newMimeType.equals(file.getMimiType())
+                ? file.getMimiType() : newMimeType) : file.getMimiType());
         //save
         sqLiteDAO.saveFile(file);
         logger.info("Renamed file full path: {}", renamedFile.getPath());
@@ -149,7 +153,7 @@ public class FileSystemService implements FileSystemRepository {
 
     @Transactional
     @Override
-    public String moveFile(FileMetadata targetFile, long folderId) throws Exception {
+    public String moveFile(FileMetadata targetFile, long folderId, String username) throws Exception {
         String destinationFolder = fileStorageProperties.getBasePath() + fileUtility.getFolderPath(folderId);
         String currentFolder = fileUtility.getFolderPath(targetFile.getFolderId());
         String newPath = destinationFolder + File.separator + targetFile.getName();
@@ -190,18 +194,19 @@ public class FileSystemService implements FileSystemRepository {
     //TODO destination ID 0 doesn't work reliably
     @Transactional
     @Override
-    public String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception {
-        String sourceFolderPath = fileUtility.resolvePathFromIdString(folder.getPath());
+    public String moveFolder(FolderMetadata folder, long destinationFolderId, String username) throws Exception {
+        String sourceFolderPath = fileUtility.resolvePathFromIdString(folder.getPath(), username);
         File destinationFolderObj;
         FolderMetadata destinationFolderMetadata;
         String destinationIdPath;
         if (destinationFolderId == 0) {
-            destinationFolderObj = new File(fileStorageProperties.getFullPath());
+            destinationFolderObj = new File(fileStorageProperties.getBasePath(), username);
             destinationIdPath = "0";
         } else {
             destinationFolderMetadata = informationService.getFolderMetadata(destinationFolderId);
             destinationIdPath = destinationFolderMetadata.getPath();
-            destinationFolderObj = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(destinationFolderMetadata.getPath()));
+            destinationFolderObj = fileUtility.returnFileIfItExists(
+                    fileUtility.resolvePathFromIdString(destinationFolderMetadata.getPath(), username));
         }
         File sourceFolderObj = fileUtility.returnFileIfItExists(sourceFolderPath);
         // get children folders to update
@@ -228,18 +233,18 @@ public class FileSystemService implements FileSystemRepository {
 
     @Override
     @Transactional
-    public FolderMetadata createFolder(String folderName, long folderId, long userId) throws Exception {
-        if (!fileUtility.checkAndMakeDirectories(fileStorageProperties.getFullPath()))
+    public FolderMetadata createFolder(String folderName, long folderId, UserDetailsDTO userDetailsDTO) throws Exception {
+        if (!fileUtility.checkAndMakeDirectories(fileStorageProperties.getBasePath() + userDetailsDTO.getUsername()))
             throw new FileSystemException("Failed to create root directory");
         String rootPath = fileStorageProperties.getBasePath();
         String idPath;
         String precedingPath;
         if (folderId != 0) {
             FolderMetadata precedingFolderMetadata = informationService.getFolderMetadata(folderId);
-            precedingPath = fileUtility.resolvePathFromIdString(precedingFolderMetadata.getPath());
+            precedingPath = fileUtility.resolvePathFromIdString(precedingFolderMetadata.getPath(), userDetailsDTO.getUsername());
             idPath = precedingFolderMetadata.getPath();
         } else {
-            precedingPath = fileStorageProperties.getOnlyUserName();
+            precedingPath = userDetailsDTO.getUsername();
             idPath = "0";
         }
         File folder = new File(rootPath + precedingPath + File.separator + folderName);
@@ -252,7 +257,7 @@ public class FileSystemService implements FileSystemRepository {
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
         createdFolder.setPath(idPath + "/" + createdFolder.getId());
-        createdFolder.setUserid(userId); //placeholder
+        createdFolder.setUserid(userDetailsDTO.getId());
         createdFolder.setName(folderName);
         return sqLiteDAO.saveFolder(createdFolder);
     }

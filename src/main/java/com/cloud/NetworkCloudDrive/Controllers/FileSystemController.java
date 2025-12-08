@@ -11,6 +11,7 @@ import com.cloud.NetworkCloudDrive.Models.JSONResponse;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import com.cloud.NetworkCloudDrive.Services.InformationService;
+import com.cloud.NetworkCloudDrive.Services.UserService;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.FileSystemException;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
 @RequestMapping(path = "/api/filesystem")
 public class FileSystemController {
     private final FileSystemService fileSystemService;
+    private final UserService userService;
     private final FileUtility fileUtility;
     private final FileStorageProperties fileStorageProperties;
     private final InformationService informationService;
@@ -35,11 +38,13 @@ public class FileSystemController {
             FileSystemService fileSystemService,
             FileStorageProperties fileStorageProperties,
             InformationService informationService,
+            UserService userService,
             FileUtility fileUtility) {
         this.fileSystemService = fileSystemService;
         this.fileStorageProperties = fileStorageProperties;
         this.informationService = informationService;
         this.fileUtility = fileUtility;
+        this.userService = userService;
     }
 
     @PostMapping(value = "file/rename", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -161,11 +166,12 @@ public class FileSystemController {
     }
 
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
+    public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid, Principal principal) {
         try {
             List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder(fileUtility.getFolderPath(folderid));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(fileSystemService.getListOfMetadataFromPath(fileList, folderid));
+                    body(fileSystemService.getListOfMetadataFromPath(
+                            fileList, folderid, userService.currentUserDetails(principal.getName()).getId()));
         } catch (FileSystemException fileSystemException) {
             logger.error("Some folders couldn't be found at folder with Id {}, reason: {}", folderid, fileSystemException.getMessage());
             return ResponseEntity.internalServerError().contentType(MediaType.APPLICATION_JSON).

@@ -23,8 +23,8 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public CurrentUserDTO currentUserDetails(Authentication authentication) {
-        UserEntity user = sqLiteDAO.findUserByMail(authentication.getName());
+    public CurrentUserDTO currentUserDetails(String mail) {
+        UserEntity user = sqLiteDAO.findUserByMail(mail);
         return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 

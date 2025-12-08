@@ -1,6 +1,7 @@
 package com.cloud.NetworkCloudDrive.Utilities;
 
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
@@ -38,7 +39,7 @@ public class FileUtility {
     }
 
     //WHAT A MESS
-    public void deleteFsTree(Path dir, String startingIdPath) throws IOException {
+    public void deleteFsTree(Path dir, String startingIdPath, UserDetailsDTO userDetailsDTO) throws IOException {
         logger.info("Start File Tree deletion operation");
         long errorCount = 0;
         List<Path> fileTreeStream = walkFsTree(dir, true);
@@ -105,12 +106,12 @@ public class FileUtility {
         return checkExists;
     }
 
-    public String getFolderPath(long folderId) throws SQLException, FileSystemException {
+    public String getFolderPath(long folderId, String username) throws SQLException, FileSystemException {
         return folderId != 0
                 ?
-                resolvePathFromIdString(sqLiteDAO.queryFolderMetadata(folderId).getPath())
+                resolvePathFromIdString(sqLiteDAO.queryFolderMetadata(folderId).getPath(), username)
                 :
-                fileStorageProperties.getOnlyUserName();
+                username;
     }
 
     public List<Path> getFileAndFolderPathsFromFolder(String folderPath) throws IOException {
@@ -151,7 +152,7 @@ public class FileUtility {
         return null;
     }
 
-    public String resolvePathFromIdString(String idString) throws FileSystemException {
+    public String resolvePathFromIdString(String idString, String username) throws FileSystemException {
         String[] splitLine = idString.split("/");
         List<Long> idList = new ArrayList<>();
         for (String idAsString : splitLine) {
@@ -159,16 +160,16 @@ public class FileUtility {
             idList.add(Long.parseLong(idAsString));
         }
         logger.info("id size {}", idList.size());
-        return appendFolderNames(idList);
+        return appendFolderNames(idList, username);
     }
 
-    private String appendFolderNames(List<Long> folderIdList) throws FileSystemException {
+    private String appendFolderNames(List<Long> folderIdList, String username) throws FileSystemException {
         StringBuilder fullPath = new StringBuilder();
         List<FolderMetadata> folderMetadataListById = sqLiteDAO.findAllByIdInSQLFolderMetadata(folderIdList);
         logger.info("size {}", folderMetadataListById.size());
         for (int i = 0; i < folderIdList.size(); i++) {
             if (i == 0) {
-                fullPath.append(fileStorageProperties.getOnlyUserName()).append(File.separator);
+                fullPath.append(username).append(File.separator);
                 continue;
             }
             String fileNameFromId = getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName();

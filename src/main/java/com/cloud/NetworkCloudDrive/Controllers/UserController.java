@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -70,11 +71,12 @@ public class UserController {
     }
 
     @GetMapping("info")
-    public @ResponseBody ResponseEntity<?> info() {
+    public @ResponseBody ResponseEntity<?> info(Principal principal) {
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONObjectResponse("Currently authenticated user info", userService.currentUserDetails(auth), true));
+                    body(new JSONObjectResponse(
+                            "Currently authenticated user info", userService.currentUserDetails(principal.getName()),
+                            true));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONErrorResponse(

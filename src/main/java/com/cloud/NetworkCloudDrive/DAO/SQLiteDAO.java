@@ -1,5 +1,8 @@
 package com.cloud.NetworkCloudDrive.DAO;
 
+import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
+import com.cloud.NetworkCloudDrive.DTO.UserDTO;
+import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
@@ -95,15 +98,21 @@ public class SQLiteDAO {
     // Database service layer
 
     @Transactional
+    public UserDetailsDTO getUserIDNameAndRoleByMail(String mail) {
+        UserEntity user = findUserByMail(mail);
+        return new UserDetailsDTO(user.getId(), user.getName(), user.getRole());
+    }
+
+    @Transactional
     public long getCurrentUserID(String name) {
         UserEntity user = findUserByName(name);
         return user.getId();
     }
 
     @Transactional
-    public long getCurrentUsername(String name) {
+    public CurrentUserDTO getCurrentUserDTO(String name) {
         UserEntity user = findUserByName(name);
-        return user.getId();
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     private UserEntity setupExampleUser(String name, String mail) {

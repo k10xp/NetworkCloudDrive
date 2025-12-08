@@ -1,5 +1,6 @@
 package com.cloud.NetworkCloudDrive.Repositories;
 
+import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import org.springframework.stereotype.Repository;
@@ -30,7 +31,7 @@ public interface FileSystemRepository {
      */
     String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception;
     String moveFile(FileMetadata targetFile, long folderId) throws Exception;
-    FolderMetadata createFolder(String folderName, long folderId, long userId) throws Exception;
-    List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
+    FolderMetadata createFolder(String folderName, long folderId, UserDetailsDTO userDetailsDTO) throws Exception;
+    List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId, long userId)
             throws FileSystemException, SQLException;
 }
