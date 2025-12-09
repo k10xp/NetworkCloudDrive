@@ -1,7 +1,6 @@
 package com.cloud.NetworkCloudDrive.DAO;
 
 import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
-import com.cloud.NetworkCloudDrive.DTO.UserDTO;
 import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
@@ -196,8 +195,10 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public List<FolderMetadata> findAllByIdInSQLFolderMetadata(List<Long> folderIdList) {
-        return sqLiteFolderRepository.findAllById(folderIdList);
+    public List<FolderMetadata> findAllByIdInSQLFolderMetadata(List<Long> folderIdList, long userId) {
+        return sqLiteFolderRepository.findAllById(folderIdList).stream()
+                .filter(f -> f.getId() == userId)
+                .collect(Collectors.toList());
     }
 
     @Transactional

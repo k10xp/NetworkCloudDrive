@@ -1,7 +1,5 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
-import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
-import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.DTO.UserDTO;
 import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
 import com.cloud.NetworkCloudDrive.Models.JSONMapResponse;
@@ -12,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,13 +21,13 @@ import java.util.Map;
 public class UserController {
     private final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
-    private final SQLiteDAO sqLiteDAO;
 
-    public UserController(UserService userService, SQLiteDAO sqLiteDAO) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.sqLiteDAO = sqLiteDAO;
     }
 
+    //TODO replace with 2 endpoints, one for failure to login and other for success.
+    // On success initialize SessionScope user details and update lastlogin
     @PostMapping("login")
     public @ResponseBody ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
         try {

@@ -1,7 +1,6 @@
 package com.cloud.NetworkCloudDrive.Properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.io.File;

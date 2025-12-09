@@ -2,7 +2,6 @@ package com.cloud.NetworkCloudDrive.Repositories;
 
 import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
-import org.springframework.security.core.Authentication;
 
 import java.sql.SQLException;
 

@@ -1,11 +1,11 @@
 package com.cloud.NetworkCloudDrive;
 
+import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
-import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.UserService;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import jakarta.persistence.EntityManager;
@@ -34,8 +34,6 @@ class NetworkCloudDriveApplicationTests {
     FileUtility fileUtility;
     @Autowired
     UserService userService;
-    @Autowired
-    FileStorageProperties fileStorageProperties;
 
     @Test
     void contextLoads() {
@@ -197,8 +195,13 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void File_Utility_generate_ID_Path_From_Path_Returns_ID_Path() {
         // Arrange
+        UserEntity userEntity =
+                setupUserObject(
+                        "userEntity1-Functions_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
+        UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(userEntityRegisterDetails.getMail());
         FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata"));
-        File file = new File(fileStorageProperties.getOnlyUserName() + File.separator + savedFolderMetadata.getName());
+        File file = new File(userDetailsDTO.getUsername() + File.separator + savedFolderMetadata.getName());
         // Act
         String IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
         // Assert
