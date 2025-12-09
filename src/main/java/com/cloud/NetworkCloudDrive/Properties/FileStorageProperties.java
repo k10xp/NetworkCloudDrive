@@ -15,6 +15,9 @@ public class FileStorageProperties {
         this.basePath = "."+ File.separator + "root" + File.separator;
     }
 
+    public String getFullPath(String username) {
+        return basePath + username;
+    }
     public String getBasePath() {
         return basePath;
     }

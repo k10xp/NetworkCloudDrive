@@ -45,7 +45,7 @@ public class FileUtility {
         List<Path> fileTreeStream = walkFsTree(dir, true);
         for (Path path : fileTreeStream) {
             File file = path.toFile();
-            if (file.getParentFile().equals(new File(fileStorageProperties.getFullPath()))) {
+            if (file.getParentFile().equals(new File(fileStorageProperties.getFullPath(userDetailsDTO.getUsername())))) {
                 logger.info("Skipped base path");
                 continue;
             }
@@ -55,21 +55,24 @@ public class FileUtility {
             }
             if (file.isFile()) {
                 // use deleteIfExists at prod
-                String parentFolderIdPath = generateIdPaths(file.getParentFile().getPath(), startingIdPath);
+                String parentFolderIdPath = generateIdPaths(file.getParentFile().getPath(), startingIdPath, userDetailsDTO.getUsername());
                 logger.info("generated file path: {}", parentFolderIdPath);
                 FolderMetadata folderMetadata =
-                        sqLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getParentFile().getName(), 0L);
-                FileMetadata output = sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L);
+                        sqLiteDAO.getFolderMetadataFromIdPathAndName(
+                                parentFolderIdPath, file.getParentFile().getName(), userDetailsDTO.getId());
+                FileMetadata output = sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(
+                        folderMetadata.getId(), file.getName(), userDetailsDTO.getId());
                 if (!Files.deleteIfExists(file.toPath())) {
                     errorCount++;
                     continue;
                 }
-                sqLiteDAO.deleteFile(sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(folderMetadata.getId(), file.getName(), 0L));
+                sqLiteDAO.deleteFile(sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(
+                        folderMetadata.getId(), file.getName(), userDetailsDTO.getId()));
                 logger.info("File metadata: name {} path {} Id {}", output.getName(), output.getFolderId(), output.getId());
                 continue;
             }
             // some progress
-            String parentFolderIdPath = generateIdPaths(file.getPath(), startingIdPath);
+            String parentFolderIdPath = generateIdPaths(file.getPath(), startingIdPath, userDetailsDTO.getUsername());
             logger.info("generated folder path: {}", parentFolderIdPath);
             FolderMetadata folderMetadata =
                     sqLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getName(), 0L);
@@ -186,7 +189,8 @@ public class FileUtility {
     }
 
     // Generate ID path from System path
-    public String generateIdPaths(String filePath, String startingIdPath) {
+    //TODO cut folder path before generating
+    public String generateIdPaths(String filePath, String startingIdPath, UserDetailsDTO userDetailsDTO) {
         logger.info("String path {}", filePath);
         String[] folders = filePath.split(returnCorrectSeparatorRegex());
         StringBuilder idPath = new StringBuilder();
@@ -196,12 +200,12 @@ public class FileUtility {
         int depth = 0;
         idPath.append(startingIdPath).append("/");
         for (String folderName : folders) {
-            if (folderName.equals(fileStorageProperties.getOnlyUserName())) {
+            if (folderName.equals(userDetailsDTO.getUsername())) {
                 startAdding = !startAdding;
             }
             if (startAdding) {
                 depth++;
-                List<FolderMetadata> folderResults = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString());
+                List<FolderMetadata> folderResults = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString(), userDetailsDTO.getId());
                 for (FolderMetadata folderMetadata : folderResults) {
                     String[] splitId = folderMetadata.getPath().split("/");
                     if (splitId.length == depth) {

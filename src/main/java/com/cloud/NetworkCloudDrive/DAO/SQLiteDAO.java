@@ -20,6 +20,8 @@ import java.nio.file.FileSystemException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 // Basically DAO but for multiple types*
 @Component
@@ -163,8 +165,10 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public List<FolderMetadata> findAllContainingSectionOfIdPathIgnoreCase(String idPath) {
-        return sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
+    public List<FolderMetadata> findAllContainingSectionOfIdPathIgnoreCase(String idPath, long userId) {
+        return sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath).stream()
+                .filter(f -> f.getId() == userId)
+                .collect(Collectors.toList());
     }
 
     @Transactional

@@ -1,9 +1,7 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
-import com.cloud.NetworkCloudDrive.DTO.UpdateFileNameDTO;
-import com.cloud.NetworkCloudDrive.DTO.UpdateFilePathDTO;
-import com.cloud.NetworkCloudDrive.DTO.UpdateFolderNameDTO;
-import com.cloud.NetworkCloudDrive.DTO.UpdateFolderPathDTO;
+import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import com.cloud.NetworkCloudDrive.DTO.*;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
@@ -32,6 +30,7 @@ public class FileSystemController {
     private final FileUtility fileUtility;
     private final FileStorageProperties fileStorageProperties;
     private final InformationService informationService;
+    private final SQLiteDAO sqLiteDAO;
     private final Logger logger = LoggerFactory.getLogger(FileSystemController.class);
 
     public FileSystemController(
@@ -39,17 +38,20 @@ public class FileSystemController {
             FileStorageProperties fileStorageProperties,
             InformationService informationService,
             UserService userService,
+            SQLiteDAO sqLiteDAO,
             FileUtility fileUtility) {
         this.fileSystemService = fileSystemService;
         this.fileStorageProperties = fileStorageProperties;
         this.informationService = informationService;
+        this.sqLiteDAO = sqLiteDAO;
         this.fileUtility = fileUtility;
         this.userService = userService;
     }
 
     @PostMapping(value = "file/rename", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> updateFileName(@RequestBody UpdateFileNameDTO updateFileNameDTO) {
+    public @ResponseBody ResponseEntity<JSONResponse> updateFileName(@RequestBody UpdateFileNameDTO updateFileNameDTO, Principal principal) {
         try {
+            UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
             FileMetadata oldFile = informationService.getFileMetadata(updateFileNameDTO.getFile_id());
             String oldName = oldFile.getName();
             String updatedPath = fileSystemService.updateFileName(updateFileNameDTO.getName(), oldFile);
@@ -69,8 +71,10 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "folder/rename", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> updateFolderName(@RequestBody UpdateFolderNameDTO updateFolderNameDTO) {
+    public @ResponseBody ResponseEntity<JSONResponse> updateFolderName(
+            @RequestBody UpdateFolderNameDTO updateFolderNameDTO, Principal principal) {
         try {
+            UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
             FolderMetadata oldFolder = informationService.getFolderMetadata(updateFolderNameDTO.getFolder_id());
             String oldName = oldFolder.getName();
             String updatedPath = fileSystemService.updateFolderName(updateFolderNameDTO.getName(), oldFolder);
@@ -90,8 +94,9 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "folder/move", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFolderPathDTO updateFolderPathDTO) {
+    public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFolderPathDTO updateFolderPathDTO, Principal principal) {
         try {
+            UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
             FolderMetadata folderToMove = informationService.getFolderMetadata(updateFolderPathDTO.getFormer_folder_id());
             String oldPath = fileUtility.resolvePathFromIdString(folderToMove.getPath());
             String newPath = fileSystemService.moveFolder(folderToMove, updateFolderPathDTO.getDestination_folder_id());
@@ -109,8 +114,9 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "file/move", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFilePathDTO updateFilePathDTO) {
+    public @ResponseBody ResponseEntity<JSONResponse> moveFile(@RequestBody UpdateFilePathDTO updateFilePathDTO, Principal principal) {
         try {
+            UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
             FileMetadata fileToMove = informationService.getFileMetadata(updateFilePathDTO.getFile_id());
             String oldPath = (updateFilePathDTO.getFolder_id() != 0 ?
                     fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(updateFilePathDTO.getFolder_id()).getPath())
@@ -132,8 +138,9 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "folder/remove", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> removeFolder(@RequestParam long folderid) {
+    public @ResponseBody ResponseEntity<JSONResponse> removeFolder(@RequestParam long folderid, Principal principal) {
         try {
+            UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
             FolderMetadata folderToRemove = informationService.getFolderMetadata(folderid);
             String oldPath = fileSystemService.removeFolder(folderToRemove);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
@@ -148,8 +155,9 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "file/remove", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> removeFile(@RequestParam long fileid) {
+    public @ResponseBody ResponseEntity<JSONResponse> removeFile(@RequestParam long fileid, Principal principal) {
         try {
+            UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
             FileMetadata fileToRemove = informationService.getFileMetadata(fileid);
             String oldPath = fileSystemService.removeFile(fileToRemove);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
@@ -168,7 +176,8 @@ public class FileSystemController {
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid, Principal principal) {
         try {
-            List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder(fileUtility.getFolderPath(folderid));
+            UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
+            List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder(fileUtility.getFolderPath(folderid, userDetailsDTO.getUsername()));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(fileSystemService.getListOfMetadataFromPath(
                             fileList, folderid, userService.currentUserDetails(principal.getName()).getId()));
