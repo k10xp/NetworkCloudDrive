@@ -5,6 +5,7 @@ import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
+import com.cloud.NetworkCloudDrive.Sessions.UserSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -30,11 +31,13 @@ import java.util.Map;
 public class FileService implements FileRepository {
     private final FileStorageProperties fileStorageProperties;
     private final SQLiteDAO sqLiteDAO;
+    private final UserSession userSession;
     private final Path rootPath;
     private final Logger logger = LoggerFactory.getLogger(FileService.class);
 
-    public FileService(FileStorageProperties fileStorageProperties, SQLiteDAO sqLiteDAO) {
+    public FileService(FileStorageProperties fileStorageProperties, SQLiteDAO sqLiteDAO, UserSession userSession) {
         this.sqLiteDAO = sqLiteDAO;
+        this.userSession = userSession;
         this.fileStorageProperties = fileStorageProperties;
         this.rootPath = Paths.get(fileStorageProperties.getBasePath());
     }
@@ -50,7 +53,8 @@ public class FileService implements FileRepository {
                 storagePath = storeFile(inputStream, file.getOriginalFilename(), folderPath);
             }
             // place holder userid 0L
-            FileMetadata metadata = new FileMetadata(file.getOriginalFilename(), folderId, 0L, file.getContentType(), file.getSize());
+            FileMetadata metadata = new FileMetadata(
+                    file.getOriginalFilename(), folderId, userSession.getId(), file.getContentType(), file.getSize());
             uploadedFiles.add(metadata);
             storagePathList.add(storagePath);
         }

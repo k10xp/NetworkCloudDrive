@@ -19,7 +19,6 @@ import java.nio.file.FileSystemException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 // Basically DAO but for multiple types*
@@ -104,18 +103,6 @@ public class SQLiteDAO {
         return new UserDetailsDTO(user.getId(), user.getName(), user.getRole());
     }
 
-    @Transactional
-    public long getCurrentUserID(String name) {
-        UserEntity user = findUserByName(name);
-        return user.getId();
-    }
-
-    @Transactional
-    public CurrentUserDTO getCurrentUserDTO(String name) {
-        UserEntity user = findUserByName(name);
-        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
-    }
-
     private UserEntity setupExampleUser(String name, String mail) {
         UserEntity userEntity = new UserEntity();
         userEntity.setName(name);
@@ -144,14 +131,6 @@ public class SQLiteDAO {
     public UserEntity findUserByNameAndMail(String name, String mail) throws SQLException {
         Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findOne(Example.of(setupExampleUser(name, mail)));
         if (userOptional.isEmpty()) throw new SQLException("User does not exist");
-        return userOptional.get();
-    }
-
-    @Transactional
-    public UserEntity findUserByName(String name) throws UsernameNotFoundException {
-        Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findByName(name);
-        if (userOptional.isEmpty())
-            throw new UsernameNotFoundException("User not found by username " + name);
         return userOptional.get();
     }
 

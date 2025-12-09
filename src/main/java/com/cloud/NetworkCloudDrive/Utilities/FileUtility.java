@@ -177,9 +177,10 @@ public class FileUtility {
                 fullPath.append(userSession.getName()).append(File.separator);
                 continue;
             }
-            String fileNameFromId = getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i)).getName();
-            if (fileNameFromId == null) throw new FileSystemException("No match found for ID " + folderIdList.get(i));
-            fullPath.append(fileNameFromId).append(File.separator);
+            FolderMetadata getMetadataFromList = getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i));
+            if (getMetadataFromList == null)
+                throw new FileSystemException("No match found for ID " + folderIdList.get(i));
+            fullPath.append(getMetadataFromList.getName()).append(File.separator);
         }
         fullPath.setLength(fullPath.length() - 1);
         logger.info("output {}", fullPath);

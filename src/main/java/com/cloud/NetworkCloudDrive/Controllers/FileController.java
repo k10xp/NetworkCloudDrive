@@ -40,7 +40,7 @@ public class FileController {
     @PostMapping("upload")
     public ResponseEntity<?> uploadFile(@RequestParam MultipartFile[] files, @RequestParam long folderid) {
         try {
-            if (files.length == 0) throw new NullPointerException();
+            if (files.length == 0) throw new NullPointerException("No file is provided");
             String folderPath = fileUtility.getFolderPath(folderid);
             return ResponseEntity.ok().body(fileService.uploadFiles(files, folderPath, folderid));
         } catch (Exception e) {
