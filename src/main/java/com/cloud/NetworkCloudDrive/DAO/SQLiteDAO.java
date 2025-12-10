@@ -99,9 +99,9 @@ public class SQLiteDAO {
     // Database service layer
 
     @Transactional
-    public UserDetailsDTO getUserIDNameAndRoleByMail(String mail) {
+    public CurrentUserDTO getUserIDNameAndRoleByMail(String mail) {
         UserEntity user = findUserByMail(mail);
-        return new UserDetailsDTO(user.getId(), user.getName(), user.getRole());
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     private UserEntity setupExampleUser(String name, String mail) {

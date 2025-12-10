@@ -45,24 +45,24 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public boolean updatePassword(UserEntity user, String newPassword) {
-        user.setPassword(newPassword);
+    public CurrentUserDTO updatePassword(UserEntity user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
         sqLiteDAO.saveUser(user);
-        return true;
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override
-    public boolean updateName(UserEntity user, String newName) {
+    public CurrentUserDTO updateName(UserEntity user, String newName) {
         user.setName(newName);
         sqLiteDAO.saveUser(user);
-        return true;
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override
-    public boolean updateMail(UserEntity user, String newMail) {
+    public CurrentUserDTO updateMail(UserEntity user, String newMail) {
         user.setMail(newMail);
         sqLiteDAO.saveUser(user);
-        return true;
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override

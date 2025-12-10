@@ -1,6 +1,7 @@
 package com.cloud.NetworkCloudDrive.Sessions;
 
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
@@ -20,6 +21,7 @@ import java.util.Optional;
 public class UserSession {
     private long id;
     private String name;
+    private String mail;
     private UserRole role;
     private final SQLiteDAO sqLiteDAO;
     private final Logger logger = LoggerFactory.getLogger(UserSession.class);
@@ -29,12 +31,14 @@ public class UserSession {
     }
 
     @Transactional
-    public UserDetailsDTO initializeUserSessionDetails(Principal principal) throws UsernameNotFoundException {
-        UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
+    public CurrentUserDTO initializeUserSessionDetails(Principal principal) throws UsernameNotFoundException {
+        CurrentUserDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
         this.id = userDetailsDTO.getId();
-        this.name = userDetailsDTO.getUsername();
-        this.role = userDetailsDTO.getUserRole();
-        logger.info("SESSION INFO: ID={} NAME={} ROLE={}", userDetailsDTO.getId(), userDetailsDTO.getUsername(), userDetailsDTO.getUserRole());
+        this.name = userDetailsDTO.getName();
+        this.mail = userDetailsDTO.getMail();
+        this.role = userDetailsDTO.getRole();
+        logger.info("SESSION INFO: ID={} NAME={} MAIL={} ROLE={}",
+                userDetailsDTO.getId(), userDetailsDTO.getName(), userDetailsDTO.getMail(), userDetailsDTO.getRole());
         return userDetailsDTO;
     }
 
@@ -49,6 +53,12 @@ public class UserSession {
     }
     public void setName(String name) {
         this.name = name;
+    }
+    public String getMail() {
+        return mail;
+    }
+    public void setMail(String mail) {
+        this.mail = mail;
     }
     public UserRole getRole() {
         return role;
