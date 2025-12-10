@@ -64,10 +64,10 @@ class NetworkCloudDriveApplicationTests {
         return userEntityRegisterDetails;
     }
 
-    public FolderMetadata setupFolderMetadataObject(String name) {
+    public FolderMetadata setupFolderMetadataObject(String name, long userid) {
         FolderMetadata folderMetadata = new FolderMetadata();
         entityManager.persist(folderMetadata);
-        folderMetadata.setUserid(0L);
+        folderMetadata.setUserid(userid);
         folderMetadata.setName(name);
         folderMetadata.setPath("0/" + folderMetadata.getId());
         logger.info("Arranged Folder Metadata: name {} ID path {} and belongs to user {}. Extra details: created at {}",
@@ -110,7 +110,7 @@ class NetworkCloudDriveApplicationTests {
     @Transactional
     public void Folder_Metadata_Save_Return_Saved_Folder_Metadata() {
         // Arrange
-        FolderMetadata folderMetadata = setupFolderMetadataObject("folderMetadata_test");
+        FolderMetadata folderMetadata = setupFolderMetadataObject("folderMetadata_test", 0L);
         // Act
         FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(folderMetadata);
 
@@ -194,7 +194,8 @@ class NetworkCloudDriveApplicationTests {
         String filePath = "";
         try {
             // Arrange
-            FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(setupFolderMetadataObject(folderNameToAssert));
+            FolderMetadata savedFolderMetadata =
+                    sqLiteDAO.saveFolder(setupFolderMetadataObject(folderNameToAssert, userEntityRegisterDetails.getId()));
             // Act
             filePath = fileUtility.resolvePathFromIdString(savedFolderMetadata.getPath());
         } catch (FileSystemException e) {
@@ -215,7 +216,8 @@ class NetworkCloudDriveApplicationTests {
         UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
         setUserSession(userEntityRegisterDetails);
         UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(userEntityRegisterDetails.getMail());
-        FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata"));
+        FolderMetadata savedFolderMetadata =
+                sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata", userEntityRegisterDetails.getId()));
         File file = new File(userDetailsDTO.getUsername() + File.separator + savedFolderMetadata.getName());
         // Act
         String IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
