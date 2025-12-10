@@ -1,6 +1,6 @@
 package com.cloud.NetworkCloudDrive;
 
-import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
+import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
@@ -216,10 +216,10 @@ class NetworkCloudDriveApplicationTests {
                         "userEntity1-Functions_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
         setUserSession(userEntityRegisterDetails);
-        UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(userEntityRegisterDetails.getMail());
+        CurrentUserDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(userEntityRegisterDetails.getMail());
         FolderMetadata savedFolderMetadata =
                 sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata", userEntityRegisterDetails.getId()));
-        File file = new File(userDetailsDTO.getUsername() + File.separator + savedFolderMetadata.getName());
+        File file = new File(userDetailsDTO.getName() + File.separator + savedFolderMetadata.getName());
         // Act
         String IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
         // Assert
