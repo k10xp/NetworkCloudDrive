@@ -8,6 +8,7 @@ import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteUserEntityRepository;
+import com.cloud.NetworkCloudDrive.Sessions.UserSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
@@ -158,8 +159,8 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public FolderMetadata queryFolderMetadata(long folderId) throws SQLException {
-        Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(folderId);
+    public FolderMetadata queryFolderMetadata(long folderId, long userId) throws SQLException {
+        Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(folderId).filter(f -> f.getUserid() == userId);
         if (folderMetadata.isEmpty())
             throw new SQLException("Folder with Id " + folderId + " does not exist");
         return folderMetadata.get();
@@ -175,8 +176,9 @@ public class SQLiteDAO {
 
     @Transactional
     public List<FolderMetadata> findAllByIdInSQLFolderMetadata(List<Long> folderIdList, long userId) {
+        logger.info("REQUESTED USER ID {}", userId);
         return sqLiteFolderRepository.findAllById(folderIdList).stream()
-                .filter(f -> f.getId() == userId)
+                .filter(f -> f.getUserid() == userId)
                 .collect(Collectors.toList());
     }
 

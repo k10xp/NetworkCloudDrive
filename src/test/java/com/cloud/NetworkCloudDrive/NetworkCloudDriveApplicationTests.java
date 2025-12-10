@@ -7,6 +7,7 @@ import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Services.UserService;
+import com.cloud.NetworkCloudDrive.Sessions.UserSession;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
@@ -34,10 +35,18 @@ class NetworkCloudDriveApplicationTests {
     FileUtility fileUtility;
     @Autowired
     UserService userService;
+    @Autowired
+    UserSession userSession;
 
     @Test
     void contextLoads() {
         logger.info("Operating System: {}", System.getProperty("os.name"));
+    }
+
+    public void setUserSession(UserEntity userEntity) {
+        userSession.setName(userEntity.getName());
+        userSession.setId(userEntity.getId());
+        userSession.setRole(userEntity.getRole());
     }
 
     public UserEntity registerUserAndLogDetails(UserEntity userEntity) {
@@ -176,6 +185,11 @@ class NetworkCloudDriveApplicationTests {
     @Test
     @Transactional
     public void File_Utility_Reserve_Path_From_ID_Path_Returns_Path() {
+        UserEntity userEntity =
+                setupUserObject(
+                        "userEntity1-Functions_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
+        setUserSession(userEntityRegisterDetails);
         String folderNameToAssert = "resolvePath_FolderMetadata";
         String filePath = "";
         try {
@@ -199,6 +213,7 @@ class NetworkCloudDriveApplicationTests {
                 setupUserObject(
                         "userEntity1-Functions_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
+        setUserSession(userEntityRegisterDetails);
         UserDetailsDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(userEntityRegisterDetails.getMail());
         FolderMetadata savedFolderMetadata = sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata"));
         File file = new File(userDetailsDTO.getUsername() + File.separator + savedFolderMetadata.getName());

@@ -92,7 +92,7 @@ public class FileUtility {
     }
 
     public String getIdPath(long folderId) throws SQLException {
-        return folderId != 0 ? sqLiteDAO.queryFolderMetadata(folderId).getPath() : "0";
+        return folderId != 0 ? sqLiteDAO.queryFolderMetadata(folderId, userSession.getId()).getPath() : "0";
     }
 
     public File returnIfItsNotADuplicate(String path) throws FileNotFoundException {
@@ -114,7 +114,7 @@ public class FileUtility {
     public String getFolderPath(long folderId) throws SQLException, FileSystemException {
         return folderId != 0
                 ?
-                resolvePathFromIdString(sqLiteDAO.queryFolderMetadata(folderId).getPath())
+                resolvePathFromIdString(sqLiteDAO.queryFolderMetadata(folderId, userSession.getId()).getPath())
                 :
                 userSession.getName();
     }
@@ -178,6 +178,7 @@ public class FileUtility {
                 continue;
             }
             FolderMetadata getMetadataFromList = getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i));
+            logger.info("IS RETURN NULL {}", (getMetadataFromList == null));
             if (getMetadataFromList == null)
                 throw new FileSystemException("No match found for ID " + folderIdList.get(i));
             fullPath.append(getMetadataFromList.getName()).append(File.separator);
