@@ -185,9 +185,10 @@ class NetworkCloudDriveApplicationTests {
     @Test
     @Transactional
     public void File_Utility_Reserve_Path_From_ID_Path_Returns_Path() {
+        String username = "userEntity1-Functions_Unit-Test";
         UserEntity userEntity =
                 setupUserObject(
-                        "userEntity1-Functions_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+                        username, "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
         setUserSession(userEntityRegisterDetails);
         String folderNameToAssert = "resolvePath_FolderMetadata";
@@ -203,7 +204,7 @@ class NetworkCloudDriveApplicationTests {
             Assertions.fail(e.getMessage());
         }
         // Assert
-        Assertions.assertEquals("test_user1" + File.separator + folderNameToAssert, filePath);
+        Assertions.assertEquals(username + File.separator + folderNameToAssert, filePath);
     }
 
     @Test
