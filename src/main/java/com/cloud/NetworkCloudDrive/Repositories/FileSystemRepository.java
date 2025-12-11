@@ -4,7 +4,6 @@ import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import org.springframework.stereotype.Repository;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Path;
@@ -30,7 +29,7 @@ public interface FileSystemRepository {
      */
     String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception;
     String moveFile(FileMetadata targetFile, long folderId) throws Exception;
-    FolderMetadata createFolder(String folderName, long folderId, long userId) throws Exception;
+    FolderMetadata createFolder(String folderName, long folderId) throws Exception;
     List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
             throws FileSystemException, SQLException;
 }

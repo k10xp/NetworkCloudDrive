@@ -1,5 +1,6 @@
 package com.cloud.NetworkCloudDrive.DAO;
 
+import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
@@ -17,6 +18,7 @@ import java.nio.file.FileSystemException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 // Basically DAO but for multiple types*
 @Component
@@ -95,15 +97,9 @@ public class SQLiteDAO {
     // Database service layer
 
     @Transactional
-    public long getCurrentUserID(String name) {
-        UserEntity user = findUserByName(name);
-        return user.getId();
-    }
-
-    @Transactional
-    public long getCurrentUsername(String name) {
-        UserEntity user = findUserByName(name);
-        return user.getId();
+    public CurrentUserDTO getUserIDNameAndRoleByMail(String mail) {
+        UserEntity user = findUserByMail(mail);
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     private UserEntity setupExampleUser(String name, String mail) {
@@ -138,14 +134,6 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public UserEntity findUserByName(String name) throws UsernameNotFoundException {
-        Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findByName(name);
-        if (userOptional.isEmpty())
-            throw new UsernameNotFoundException("User not found by username " + name);
-        return userOptional.get();
-    }
-
-    @Transactional
     public UserEntity findUserByMail(String mail) throws UsernameNotFoundException {
         Optional<UserEntity> userOptional = sqLiteUserEntityRepository.findByMail(mail);
         if (userOptional.isEmpty())
@@ -154,8 +142,10 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public List<FolderMetadata> findAllContainingSectionOfIdPathIgnoreCase(String idPath) {
-        return sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath);
+    public List<FolderMetadata> findAllContainingSectionOfIdPathIgnoreCase(String idPath, long userId) {
+        return sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath).stream()
+                .filter(f -> f.getUserid() == userId)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -167,8 +157,8 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public FolderMetadata queryFolderMetadata(long folderId) throws SQLException {
-        Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(folderId);
+    public FolderMetadata queryFolderMetadata(long folderId, long userId) throws SQLException {
+        Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(folderId).filter(f -> f.getUserid() == userId);
         if (folderMetadata.isEmpty())
             throw new SQLException("Folder with Id " + folderId + " does not exist");
         return folderMetadata.get();
@@ -183,8 +173,11 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public List<FolderMetadata> findAllByIdInSQLFolderMetadata(List<Long> folderIdList) {
-        return sqLiteFolderRepository.findAllById(folderIdList);
+    public List<FolderMetadata> findAllByIdInSQLFolderMetadata(List<Long> folderIdList, long userId) {
+        logger.info("REQUESTED USER ID {}", userId);
+        return sqLiteFolderRepository.findAllById(folderIdList).stream()
+                .filter(f -> f.getUserid() == userId)
+                .collect(Collectors.toList());
     }
 
     @Transactional

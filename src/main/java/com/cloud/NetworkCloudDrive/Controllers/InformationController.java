@@ -5,6 +5,7 @@ import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.InformationService;
+import com.cloud.NetworkCloudDrive.Sessions.UserSession;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import java.io.File;
 @RequestMapping(path = "/api/info")
 public class InformationController {
     private final FileUtility fileUtility;
+    private final UserSession userSession;
     private final FileStorageProperties fileStorageProperties;
     private final InformationService informationService;
     private final Logger logger = LoggerFactory.getLogger(InformationController.class);
@@ -25,9 +27,11 @@ public class InformationController {
     public InformationController(
             FileUtility fileUtility,
             InformationService informationService,
+            UserSession userSession,
             FileStorageProperties fileStorageProperties) {
         this.fileUtility = fileUtility;
         this.informationService = informationService;
+        this.userSession = userSession;
         this.fileStorageProperties = fileStorageProperties;
     }
 
@@ -53,7 +57,7 @@ public class InformationController {
                 folderMetadata = informationService.getFolderMetadata(folderid);
                 folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
             } else {
-                File folderRootMetadata = new File(fileStorageProperties.getFullPath());
+                File folderRootMetadata = new File(fileStorageProperties.getFullPath(userSession.getName()));
                 folderMetadata = new FolderMetadata(folderRootMetadata.getName(), folderRootMetadata.getPath());
                 folderMetadata.setId(folderid);
                 folderMetadata.setUserid(0L); //placeholder

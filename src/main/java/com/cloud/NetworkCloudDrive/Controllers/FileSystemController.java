@@ -1,16 +1,13 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
-import com.cloud.NetworkCloudDrive.DTO.UpdateFileNameDTO;
-import com.cloud.NetworkCloudDrive.DTO.UpdateFilePathDTO;
-import com.cloud.NetworkCloudDrive.DTO.UpdateFolderNameDTO;
-import com.cloud.NetworkCloudDrive.DTO.UpdateFolderPathDTO;
+import com.cloud.NetworkCloudDrive.DTO.*;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
 import com.cloud.NetworkCloudDrive.Models.JSONResponse;
-import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import com.cloud.NetworkCloudDrive.Services.InformationService;
+import com.cloud.NetworkCloudDrive.Sessions.UserSession;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,18 +24,18 @@ import java.util.List;
 public class FileSystemController {
     private final FileSystemService fileSystemService;
     private final FileUtility fileUtility;
-    private final FileStorageProperties fileStorageProperties;
     private final InformationService informationService;
+    private final UserSession userSession;
     private final Logger logger = LoggerFactory.getLogger(FileSystemController.class);
 
     public FileSystemController(
             FileSystemService fileSystemService,
-            FileStorageProperties fileStorageProperties,
             InformationService informationService,
+            UserSession userSession,
             FileUtility fileUtility) {
         this.fileSystemService = fileSystemService;
-        this.fileStorageProperties = fileStorageProperties;
         this.informationService = informationService;
+        this.userSession = userSession;
         this.fileUtility = fileUtility;
     }
 
@@ -64,7 +61,8 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "folder/rename", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> updateFolderName(@RequestBody UpdateFolderNameDTO updateFolderNameDTO) {
+    public @ResponseBody ResponseEntity<JSONResponse> updateFolderName(
+            @RequestBody UpdateFolderNameDTO updateFolderNameDTO) {
         try {
             FolderMetadata oldFolder = informationService.getFolderMetadata(updateFolderNameDTO.getFolder_id());
             String oldName = oldFolder.getName();
@@ -110,7 +108,7 @@ public class FileSystemController {
             String oldPath = (updateFilePathDTO.getFolder_id() != 0 ?
                     fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(updateFilePathDTO.getFolder_id()).getPath())
                     :
-                    fileStorageProperties.getOnlyUserName());
+                    userSession.getName());
             logger.info("old path controller {}", oldPath);
             String newPath = fileSystemService.moveFile(fileToMove, updateFilePathDTO.getFolder_id());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).

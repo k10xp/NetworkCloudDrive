@@ -35,6 +35,15 @@ public class UserEntity {
     @CreationTimestamp
     private Instant registeredAt;
 
+    // security
+//    @Column(name = "passwordUpdatedAt")
+//    @CreationTimestamp
+//    private Instant passwordUpdatedAt;
+
+//    @Column(name = "passwordUpdateCount")
+//    private long passwordUpdateCount;
+
+
     public UserEntity(String name, String mail, String password, UserRole role) {
         this.name = name;
         this.mail = mail;

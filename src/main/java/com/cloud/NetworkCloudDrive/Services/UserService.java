@@ -5,8 +5,6 @@ import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Repositories.UserRepository;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +21,8 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public CurrentUserDTO currentUserDetails(Authentication authentication) {
-        UserEntity user = sqLiteDAO.findUserByMail(authentication.getName());
+    public CurrentUserDTO currentUserDetails(String mail) {
+        UserEntity user = sqLiteDAO.findUserByMail(mail);
         return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
@@ -47,24 +45,24 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public boolean updatePassword(UserEntity user, String newPassword) {
-        user.setPassword(newPassword);
+    public CurrentUserDTO updatePassword(UserEntity user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
         sqLiteDAO.saveUser(user);
-        return true;
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override
-    public boolean updateName(UserEntity user, String newName) {
+    public CurrentUserDTO updateName(UserEntity user, String newName) {
         user.setName(newName);
         sqLiteDAO.saveUser(user);
-        return true;
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override
-    public boolean updateMail(UserEntity user, String newMail) {
+    public CurrentUserDTO updateMail(UserEntity user, String newMail) {
         user.setMail(newMail);
         sqLiteDAO.saveUser(user);
-        return true;
+        return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override

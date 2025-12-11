@@ -19,6 +19,13 @@ public class CurrentUserDTO {
         this.lastLogin = lastLogin;
     }
 
+    public CurrentUserDTO(long id, String name, String mail, UserRole role) {
+        this.id = id;
+        this.name = name;
+        this.mail = mail;
+        this.role = role;
+    }
+
     public CurrentUserDTO() {
     }
 

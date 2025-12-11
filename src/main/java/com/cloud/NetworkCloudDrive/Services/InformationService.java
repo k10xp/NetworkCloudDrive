@@ -3,6 +3,7 @@ package com.cloud.NetworkCloudDrive.Services;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Repositories.InformationRepository;
+import com.cloud.NetworkCloudDrive.Sessions.UserSession;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import org.springframework.stereotype.Service;
@@ -19,9 +20,12 @@ import java.util.List;
 public class InformationService implements InformationRepository {
     private final FileUtility fileUtility;
     private final SQLiteDAO sqLiteDAO;
+    private final UserSession userSession;
 
-    public InformationService(FileUtility fileUtility, SQLiteDAO sqLiteDAO) {
+
+    public InformationService(FileUtility fileUtility, SQLiteDAO sqLiteDAO, UserSession userSession) {
         this.fileUtility = fileUtility;
+        this.userSession = userSession;
         this.sqLiteDAO = sqLiteDAO;
     }
 
@@ -30,7 +34,7 @@ public class InformationService implements InformationRepository {
     public FolderMetadata getFolderMetadataByFolderIdAndName(long folderId, String name, List<Long> skipList)
             throws FileSystemException, SQLException {
         String idPath = fileUtility.getIdPath(folderId);
-        List<FolderMetadata> findAllByPathList = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath);
+        List<FolderMetadata> findAllByPathList = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath, userSession.getId());
         if (findAllByPathList.isEmpty())
             throw new FileSystemException("Can't resolve path");
         String[] splitOriginalPath = idPath.split("/");
@@ -59,7 +63,7 @@ public class InformationService implements InformationRepository {
 
     @Override
     public FolderMetadata getFolderMetadata(long folderId) throws IOException, SQLException {
-        FolderMetadata folder = sqLiteDAO.queryFolderMetadata(folderId);
+        FolderMetadata folder = sqLiteDAO.queryFolderMetadata(folderId, userSession.getId());
         File getFolder = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(folder.getPath()));
         return folder;
     }

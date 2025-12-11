@@ -12,8 +12,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,7 +40,7 @@ public class FileController {
     @PostMapping("upload")
     public ResponseEntity<?> uploadFile(@RequestParam MultipartFile[] files, @RequestParam long folderid) {
         try {
-            if (files.length == 0) throw new NullPointerException();
+            if (files.length == 0) throw new NullPointerException("No file is provided");
             String folderPath = fileUtility.getFolderPath(folderid);
             return ResponseEntity.ok().body(fileService.uploadFiles(files, folderPath, folderid));
         } catch (Exception e) {
@@ -60,7 +58,8 @@ public class FileController {
             logger.info("path requested {}", actualPath);
             Resource file = fileService.getFile(metadata, actualPath);
             return ResponseEntity.ok().
-                    header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + metadata.getName() + "\" "). //return filename
+                    header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + metadata.getName() + "\" "). //return filename
                             contentType(MediaType.parseMediaType(metadata.getMimiType())).
                     contentLength(metadata.getSize()).body(file);
         }
@@ -84,7 +83,8 @@ public class FileController {
     @PostMapping(value = "create/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
-            FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getName(), folderDTO.getFolder_id(), 0L);
+            FolderMetadata folderMetadata =
+                    fileSystemService.createFolder(folderDTO.getName(), folderDTO.getFolder_id());
             folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {

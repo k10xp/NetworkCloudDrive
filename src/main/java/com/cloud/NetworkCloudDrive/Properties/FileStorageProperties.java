@@ -1,7 +1,6 @@
 package com.cloud.NetworkCloudDrive.Properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -10,21 +9,13 @@ import java.io.File;
 @Component
 public class FileStorageProperties {
     private String basePath;
-    private String OnlyUserName;
 
     public FileStorageProperties() {
-        this.OnlyUserName = "test_user1";
         this.basePath = "."+ File.separator + "root" + File.separator;
     }
 
-    public String getFullPath() {
-        return basePath + OnlyUserName;
-    }
-    public String getOnlyUserName() {
-        return OnlyUserName;
-    }
-    public void setOnlyUserName(String onlyUserName) {
-        OnlyUserName = onlyUserName;
+    public String getFullPath(String username) {
+        return basePath + username;
     }
     public String getBasePath() {
         return basePath;
