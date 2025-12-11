@@ -72,13 +72,13 @@ public class UserController {
     }
 
     @PostMapping("update/mail")
-    public @ResponseBody ResponseEntity<?> updateMail(@RequestBody UpdateUserDTO updateUserDTO, Principal principal) {
+    public @ResponseBody ResponseEntity<?> updateMail(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONObjectResponse("Successfully updated user mail",
                             userService.updateMail(
                                     sqLiteDAO.findUserByMail(
-                                            userSession.initializeUserSessionDetails(principal).getMail()), updateUserDTO.getUpdate()),
+                                            userSession.getMail()), updateUserDTO.getUpdate()),
                             true));
         } catch (Exception e) {
             logger.error("Failed to update user mail reason: {}", e.getMessage());
@@ -89,13 +89,13 @@ public class UserController {
     }
 
     @PostMapping("update/name")
-    public @ResponseBody ResponseEntity<?> updateName(@RequestBody UpdateUserDTO updateUserDTO, Principal principal) {
+    public @ResponseBody ResponseEntity<?> updateName(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONObjectResponse("Successfully updated user name",
                             userService.updateName(
                                     sqLiteDAO.findUserByMail(
-                                            userSession.initializeUserSessionDetails(principal).getMail()), updateUserDTO.getUpdate()),
+                                            userSession.getMail()), updateUserDTO.getUpdate()),
                             true));
         } catch (Exception e) {
             logger.error("Failed to update user name reason: {}", e.getMessage());
@@ -106,13 +106,13 @@ public class UserController {
     }
 
     @PostMapping("update/password")
-    public @ResponseBody ResponseEntity<?> updatePassword(@RequestBody UpdateUserDTO updateUserDTO, Principal principal) {
+    public @ResponseBody ResponseEntity<?> updatePassword(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONObjectResponse("Successfully updated user password",
                             userService.updatePassword(
                                     sqLiteDAO.findUserByMail(
-                                            userSession.initializeUserSessionDetails(principal).getMail()), updateUserDTO.getUpdate()),
+                                            userSession.getMail()), updateUserDTO.getUpdate()),
                             true));
         } catch (Exception e) {
             logger.error("Failed to update user password reason: {}", e.getMessage());
@@ -123,10 +123,10 @@ public class UserController {
     }
 
     @PostMapping("delete")
-    public @ResponseBody ResponseEntity<?> deleteUser(Principal principal) {
+    public @ResponseBody ResponseEntity<?> deleteUser() {
         try {
-            if (!userService.deleteUser(sqLiteDAO.findUserByMail(userSession.initializeUserSessionDetails(principal).getMail()))) {
-                throw new SQLException("Failed to delete user: " + principal.getName());
+            if (!userService.deleteUser(sqLiteDAO.findUserByMail(userSession.getMail()))) {
+                throw new SQLException("Failed to delete user: " + userSession.getName());
             }
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse("Successfully deleted user",true));
@@ -139,11 +139,11 @@ public class UserController {
     }
 
     @GetMapping("info")
-    public @ResponseBody ResponseEntity<?> info(Principal principal) {
+    public @ResponseBody ResponseEntity<?> info() {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONObjectResponse(
-                            "Currently authenticated user info", userService.currentUserDetails(principal.getName()),
+                            "Currently authenticated user info", userService.currentUserDetails(userSession.getMail()),
                             true));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).

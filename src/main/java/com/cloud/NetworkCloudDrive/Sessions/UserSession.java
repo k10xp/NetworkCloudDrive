@@ -3,16 +3,20 @@ package com.cloud.NetworkCloudDrive.Sessions;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.context.annotation.SessionScope;
 
 import java.security.Principal;
 
-@SessionScope
+@RequestScope //TODO temporarily use RequestScope instead of SessionScope
 @Component
 public class UserSession {
     private long id;
@@ -26,14 +30,16 @@ public class UserSession {
         this.sqLiteDAO = sqLiteDAO;
     }
 
+    @PostConstruct
     @Transactional
-    public CurrentUserDTO initializeUserSessionDetails(Principal principal) throws UsernameNotFoundException {
-        CurrentUserDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(principal.getName());
+    public CurrentUserDTO initializeUserSessionDetails() throws UsernameNotFoundException {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CurrentUserDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(auth.getName());
         this.id = userDetailsDTO.getId();
         this.name = userDetailsDTO.getName();
         this.mail = userDetailsDTO.getMail();
         this.role = userDetailsDTO.getRole();
-        logger.info("SESSION INFO: ID={} NAME={} MAIL={} ROLE={}",
+        logger.info("SESSION INFO: ID={} NAME={} MAIL={} ROLE={}", //debug
                 userDetailsDTO.getId(), userDetailsDTO.getName(), userDetailsDTO.getMail(), userDetailsDTO.getRole());
         return userDetailsDTO;
     }

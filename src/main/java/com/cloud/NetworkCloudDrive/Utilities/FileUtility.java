@@ -77,7 +77,7 @@ public class FileUtility {
             String parentFolderIdPath = generateIdPaths(file.getPath(), startingIdPath);
             logger.info("generated folder path: {}", parentFolderIdPath);
             FolderMetadata folderMetadata =
-                    sqLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getName(), 0L);
+                    sqLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getName(), userSession.getId());
             // manage folders here
             //temporary comment out to test
             if (!Files.deleteIfExists(file.toPath())) {
