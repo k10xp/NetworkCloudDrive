@@ -32,13 +32,12 @@ public class UserSession {
     public UserSession(SQLiteDAO sqLiteDAO, Environment env) {
         this.sqLiteDAO = sqLiteDAO;
         this.env = env;
-        this.initializeUserSessionDetails(Boolean.parseBoolean(env.getProperty("unit-test")));
     }
 
-    //@PostConstruct
+    @PostConstruct
     @Transactional
-    public CurrentUserDTO initializeUserSessionDetails(boolean testEnv) throws UsernameNotFoundException {
-        if (testEnv) return new CurrentUserDTO();
+    public CurrentUserDTO initializeUserSessionDetails() throws UsernameNotFoundException {
+        if (Boolean.parseBoolean(env.getProperty("unit-test"))) return new CurrentUserDTO();
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (this.name != null) {
             if (this.name.equals(auth.getName())) {
@@ -50,7 +49,7 @@ public class UserSession {
         this.name = userDetailsDTO.getName();
         this.mail = userDetailsDTO.getMail();
         this.role = userDetailsDTO.getRole();
-        logger.info("SESSION INFO: ID={} NAME={} MAIL={} ROLE={}", //debug
+        logger.debug("SESSION INFO: ID={} NAME={} MAIL={} ROLE={}", //debug
                 userDetailsDTO.getId(), userDetailsDTO.getName(), userDetailsDTO.getMail(), userDetailsDTO.getRole());
         return userDetailsDTO;
     }
