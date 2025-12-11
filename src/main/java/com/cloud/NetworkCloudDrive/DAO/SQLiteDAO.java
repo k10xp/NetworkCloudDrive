@@ -1,14 +1,12 @@
 package com.cloud.NetworkCloudDrive.DAO;
 
 import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
-import com.cloud.NetworkCloudDrive.DTO.UserDetailsDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteFolderRepository;
 import com.cloud.NetworkCloudDrive.Repositories.SQLiteUserEntityRepository;
-import com.cloud.NetworkCloudDrive.Sessions.UserSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
@@ -146,7 +144,7 @@ public class SQLiteDAO {
     @Transactional
     public List<FolderMetadata> findAllContainingSectionOfIdPathIgnoreCase(String idPath, long userId) {
         return sqLiteFolderRepository.findAllByPathContainsIgnoreCase(idPath).stream()
-                .filter(f -> f.getId() == userId)
+                .filter(f -> f.getUserid() == userId)
                 .collect(Collectors.toList());
     }
 
