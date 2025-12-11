@@ -6,6 +6,7 @@ import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,15 +26,25 @@ public class UserSession {
     private UserRole role;
     private final SQLiteDAO sqLiteDAO;
     private final Logger logger = LoggerFactory.getLogger(UserSession.class);
+    private final Environment env;
 
-    public UserSession(SQLiteDAO sqLiteDAO) {
+
+    public UserSession(SQLiteDAO sqLiteDAO, Environment env) {
         this.sqLiteDAO = sqLiteDAO;
+        this.env = env;
+        this.initializeUserSessionDetails(Boolean.parseBoolean(env.getProperty("unit-test")));
     }
 
-    @PostConstruct
+    //@PostConstruct
     @Transactional
-    public CurrentUserDTO initializeUserSessionDetails() throws UsernameNotFoundException {
+    public CurrentUserDTO initializeUserSessionDetails(boolean testEnv) throws UsernameNotFoundException {
+        if (testEnv) return new CurrentUserDTO();
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (this.name != null) {
+            if (this.name.equals(auth.getName())) {
+                return new CurrentUserDTO(this.id, this.name, this.mail, this.role);
+            }
+        }
         CurrentUserDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(auth.getName());
         this.id = userDetailsDTO.getId();
         this.name = userDetailsDTO.getName();
