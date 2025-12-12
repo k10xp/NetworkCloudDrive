@@ -10,6 +10,10 @@ Local network storage API that can store files and manage them. Uses SQLite for 
 - React based Frontend for Desktop and iOS/Android phones
 - Routinely syncing database with filesystem and a way to force a resync
 
+# Run
+
+- [Using Docker](DOCKER.md)
+
 ## File Structure Visual
 
 ```mermaid
@@ -19,4 +23,3 @@ flowchart TD
     B -->|User 2 storage| D[User 2]
     B -->|User 3 storage| E[User 3]
 ```
-        
