@@ -49,17 +49,21 @@ class NetworkCloudDriveApplicationTests {
         userSession.setRole(userEntity.getRole());
     }
 
+    public String encodeUserDirectory(long id, String name, String mail) {
+        return fileUtility.encodeBase32UserFolderName(id, name, mail);
+    }
+
     public UserEntity registerUserAndLogDetails(UserEntity userEntity) {
         UserEntity userEntityRegisterDetails = userService.registerUser(userEntity.getName(), userEntity.getMail(), userEntity.getPassword());
         logger.info(
-                "Registered UserEntity ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
-                userEntityRegisterDetails.getId(),
-                userEntityRegisterDetails.getName(),
-                userEntityRegisterDetails.getMail(),
-                userEntityRegisterDetails.getPassword(),
-                userEntityRegisterDetails.getRegisteredAt(),
-                userEntityRegisterDetails.getLastLogin(),
-                userEntityRegisterDetails.getRole()
+            "Registered UserEntity ID {} details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
+            userEntityRegisterDetails.getId(),
+            userEntityRegisterDetails.getName(),
+            userEntityRegisterDetails.getMail(),
+            userEntityRegisterDetails.getPassword(),
+            userEntityRegisterDetails.getRegisteredAt(),
+            userEntityRegisterDetails.getLastLogin(),
+            userEntityRegisterDetails.getRole()
         );
         return userEntityRegisterDetails;
     }
@@ -185,12 +189,15 @@ class NetworkCloudDriveApplicationTests {
     @Test
     @Transactional
     public void File_Utility_Reserve_Path_From_ID_Path_Returns_Path() {
-        String username = "userEntity1-Functions_Unit-Test";
         UserEntity userEntity =
                 setupUserObject(
-                        username, "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+                        "userEntity1-Functions_Unit-Test",
+                        "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
         setUserSession(userEntityRegisterDetails);
+        String userFolder =
+                encodeUserDirectory(
+                        userSession.getId(), userSession.getName(), userSession.getMail());
         String folderNameToAssert = "resolvePath_FolderMetadata";
         String filePath = "";
         try {
@@ -204,7 +211,7 @@ class NetworkCloudDriveApplicationTests {
             Assertions.fail(e.getMessage());
         }
         // Assert
-        Assertions.assertEquals(username + File.separator + folderNameToAssert, filePath);
+        Assertions.assertEquals(userFolder + File.separator + folderNameToAssert, filePath);
     }
 
     @Test
@@ -219,9 +226,15 @@ class NetworkCloudDriveApplicationTests {
         CurrentUserDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(userEntityRegisterDetails.getMail());
         FolderMetadata savedFolderMetadata =
                 sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata", userEntityRegisterDetails.getId()));
-        File file = new File(userDetailsDTO.getName() + File.separator + savedFolderMetadata.getName());
+        File file = new File(encodeUserDirectory(userSession.getId(), userSession.getName(), userSession.getMail())
+                + File.separator + savedFolderMetadata.getName());
         // Act
-        String IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
+        String IdPath = null;
+        try {
+            IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
+        } catch (Exception e) {
+            Assertions.fail(e.getMessage());
+        }
         // Assert
         Assertions.assertEquals("0/" + savedFolderMetadata.getId(), IdPath);
     }
@@ -245,7 +258,8 @@ class NetworkCloudDriveApplicationTests {
     public void User_Service_Register_and_Login_User_Returns_True() {
         // Arrange
         UserEntity userEntity =
-                setupUserObject("userEntity-login_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+                setupUserObject(
+                        "userEntity-login_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         // Act
         boolean loginStatus = false;
         try {
@@ -286,5 +300,28 @@ class NetworkCloudDriveApplicationTests {
             success = true;
         }
         Assertions.assertTrue(success);
+    }
+
+    @Test
+    @Transactional
+    public void File_Utility_Encode_and_Decode_User_Directory_Compare_Returns_True() {
+        // Arrange
+        UserEntity userEntity =
+                setupUserObject(
+                        "userEntity1-login_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
+        UserEntity savedUserEntity = sqLiteDAO.saveUser(userEntity);
+        // Act
+        String encodeUserDirectory =
+                fileUtility.encodeBase32UserFolderName(savedUserEntity.getId(), savedUserEntity.getName(), savedUserEntity.getMail());
+        String decodeUserDirectory = fileUtility.decodeBase32UserFolderName(encodeUserDirectory);
+        String[] mapProps = decodeUserDirectory.split(":");
+        UserEntity decodedUserDetails = new UserEntity();
+        decodedUserDetails.setId(Long.parseLong(mapProps[0]));
+        decodedUserDetails.setName(mapProps[1]);
+        decodedUserDetails.setMail(mapProps[2]);
+        // Assert
+        Assertions.assertSame(savedUserEntity.getId(), decodedUserDetails.getId());
+        Assertions.assertEquals(savedUserEntity.getName(), decodedUserDetails.getName());
+        Assertions.assertEquals(savedUserEntity.getMail(), decodedUserDetails.getMail());
     }
 }

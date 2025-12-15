@@ -6,6 +6,7 @@ import com.cloud.NetworkCloudDrive.DTO.UserDTO;
 import com.cloud.NetworkCloudDrive.Models.*;
 import com.cloud.NetworkCloudDrive.Services.UserService;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
+import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -13,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -24,11 +25,13 @@ public class UserController {
     private final UserService userService;
     private final UserSession userSession;
     private final SQLiteDAO sqLiteDAO;
+    private final FileUtility fileUtility;
 
-    public UserController(UserService userService, UserSession userSession, SQLiteDAO sqLiteDAO) {
+    public UserController(UserService userService, UserSession userSession, SQLiteDAO sqLiteDAO, FileUtility fileUtility) {
         this.userService = userService;
         this.userSession = userSession;
         this.sqLiteDAO = sqLiteDAO;
+        this.fileUtility = fileUtility;
     }
 
     //TODO replace with 2 endpoints, one for failure to login and other for success.
@@ -53,6 +56,8 @@ public class UserController {
     public @ResponseBody ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
         try {
             UserEntity registeredUserEntity = userService.registerUser(userDTO.getName(), userDTO.getMail(), userDTO.getPassword());
+            //create user directory
+            fileUtility.createUserDirectory(registeredUserEntity.getId(), registeredUserEntity.getName(), registeredUserEntity.getMail());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONMapResponse("User successfully registered",
                             true,
@@ -68,6 +73,11 @@ public class UserController {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONErrorResponse(
                             "Failed to register user, reason: " + e.getMessage(), e.getClass().getName(), false));
+        } catch (IOException e) {
+            logger.error("Failed to create user directory reason: {}", e.getMessage());
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
+                    body(new JSONErrorResponse(
+                            "Failed to create user directory reason, reason: " + e.getMessage(), e.getClass().getName(), false));
         }
     }
 

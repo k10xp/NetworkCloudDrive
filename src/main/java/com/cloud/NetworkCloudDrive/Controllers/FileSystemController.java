@@ -158,6 +158,7 @@ public class FileSystemController {
         }
     }
 
+    //TODO add pagination max like = 12 items
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
         try {

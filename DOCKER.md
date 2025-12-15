@@ -5,11 +5,11 @@
 ## Build Options
 
 ```bash
-    cd /path/to/NetworkCloudDrive
-    docker build -t NetworkCloudDrive .
+cd /path/to/NetworkCloudDrive
+docker build -t NetworkCloudDrive .
 ```
 ## Run Options
 
 ```bash
-    docker run --network=host NetworkCloudDrive
+docker run --network=host NetworkCloudDrive
 ```
