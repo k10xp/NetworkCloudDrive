@@ -236,6 +236,21 @@ public class FileUtility {
         return createUserDirectory(userSession.getId(), userSession.getName(), userSession.getMail());
     }
 
+    public File updateUserDirectoryName(long userId, String username, String mail, String oldBase32) throws IOException {
+        File oldPath = new File(fileStorageProperties.getFullPath(oldBase32));
+        logger.info("Old path user Path: {}", oldPath);
+        if (Files.notExists(oldPath.toPath())) {
+            throw new FileSystemException("User directory does not exist");
+        }
+        String encodedUserFolder = encodeBase32UserFolderName(userId, username, mail);
+        File userDirectory = new File(fileStorageProperties.getFullPath(encodedUserFolder));
+        logger.info("User Path: {}", userDirectory);
+        Path updatedName = Files.move(oldPath.toPath(), userDirectory.toPath());
+        if (Files.notExists(updatedName))
+            throw new FileSystemException("Failed to update user directory name");
+        return updatedName.toFile();
+    }
+
     public String encodeBase32UserFolderName(long userId, String username, String mail) {
         String encode = userId + ":" + username + ":" + mail;
         return Base64.getUrlEncoder().withoutPadding().encodeToString(encode.getBytes());

@@ -5,19 +5,23 @@ import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.Repositories.UserRepository;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.sql.SQLException;
 
 @Service
 public class UserService implements UserRepository {
     private final SQLiteDAO sqLiteDAO;
+    private final FileUtility fileUtility;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(SQLiteDAO sqLiteDAO, PasswordEncoder passwordEncoder) {
+    public UserService(SQLiteDAO sqLiteDAO, PasswordEncoder passwordEncoder,FileUtility fileUtility) {
         this.sqLiteDAO = sqLiteDAO;
         this.passwordEncoder = passwordEncoder;
+        this.fileUtility = fileUtility;
     }
 
     @Override
@@ -52,21 +56,26 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public CurrentUserDTO updateName(UserEntity user, String newName) {
+    public CurrentUserDTO updateName(UserEntity user, String newName) throws IOException {
+        String oldEncoding = fileUtility.encodeBase32UserFolderName(user.getId(), user.getName(), user.getMail());
         user.setName(newName);
+        fileUtility.updateUserDirectoryName(user.getId(), user.getName(), user.getMail(), oldEncoding);
         sqLiteDAO.saveUser(user);
         return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override
-    public CurrentUserDTO updateMail(UserEntity user, String newMail) {
+    public CurrentUserDTO updateMail(UserEntity user, String newMail) throws IOException {
+        String oldEncoding = fileUtility.encodeBase32UserFolderName(user.getId(), user.getName(), user.getMail());
         user.setMail(newMail);
+        fileUtility.updateUserDirectoryName(user.getId(), user.getName(), user.getMail(), oldEncoding);
         sqLiteDAO.saveUser(user);
         return new CurrentUserDTO(user.getId(), user.getName(), user.getMail(), user.getRole(), user.getLastLogin());
     }
 
     @Override
     public boolean deleteUser(UserEntity user) {
+        //TODO delete user directory along with all files locally and db
         sqLiteDAO.deleteUser(user);
         return true;
     }
