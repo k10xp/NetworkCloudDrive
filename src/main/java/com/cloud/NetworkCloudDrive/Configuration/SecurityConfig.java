@@ -34,14 +34,13 @@ public class SecurityConfig {
                         // give everyone access to these 2 endpoints
                         .requestMatchers("/api/user/login").permitAll()
                         .requestMatchers("/api/user/register").permitAll()
-                        .requestMatchers("/api/user/info").hasRole("GUEST")
                         // but require authentication for any other endpoint
                         .anyRequest()
                         .authenticated()
                         // temporarily disable csrf protection
-                ).
-//                formLogin(withDefaults()) //shows form login (url x encoded)
-                httpBasic(withDefaults()) // Temporary use BASIC authentication
+                )
+                .httpBasic(withDefaults()) // use BASIC authentication
+                .formLogin(withDefaults()) // Use both BASIC and FORM logins
                 .csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks read more about it
                 // give everyone access to log out
                 .logout(LogoutConfigurer::permitAll);
