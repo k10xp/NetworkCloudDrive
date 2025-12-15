@@ -47,7 +47,7 @@ public class FileUtility {
         List<Path> fileTreeStream = walkFsTree(dir, true);
         for (Path path : fileTreeStream) {
             File file = path.toFile();
-            if (file.getParentFile().equals(new File(fileStorageProperties.getFullPath(userSession.getName())))) {
+            if (file.getParentFile().equals(returnUserFolder())) {
                 logger.info("Skipped base path");
                 continue;
             }
@@ -116,7 +116,7 @@ public class FileUtility {
                 ?
                 resolvePathFromIdString(sqLiteDAO.queryFolderMetadata(folderId, userSession.getId()).getPath())
                 :
-                userSession.getName();
+                encodeBase32UserFolderName(userSession.getId(), userSession.getName(), userSession.getMail());
     }
 
     public List<Path> getFileAndFolderPathsFromFolder(String folderPath) throws IOException {
@@ -127,13 +127,8 @@ public class FileUtility {
         return fileList;
     }
 
-    public boolean checkAndMakeDirectories(String path) {
-        File filePath = new File(path);
-        return filePath.exists() || filePath.mkdirs();
-    }
-
     //TODO Bug inside probeContentType() it cant detect 'yaml' format returns null instead of document of type
-    // TODO consider tika-core
+    //TODO consider tika-core
     public String getMimeTypeFromExtension(Path filePath) throws IOException {
         logger.info("File at path absolute {}, {}", filePath.toAbsolutePath(), filePath);
         return Files.probeContentType(filePath);
@@ -149,7 +144,7 @@ public class FileUtility {
         return ext.toString();
     }
 
-    public FolderMetadata getFolderMetadataByIdFromList(List<FolderMetadata> list, long targetId) {
+    private FolderMetadata getFolderMetadataByIdFromList(List<FolderMetadata> list, long targetId) {
         for (FolderMetadata folderMetadata : list) {
             if (targetId == folderMetadata.getId())
                 return folderMetadata;
@@ -174,7 +169,8 @@ public class FileUtility {
         logger.info("size {}", folderMetadataListById.size());
         for (int i = 0; i < folderIdList.size(); i++) {
             if (i == 0) {
-                fullPath.append(userSession.getName()).append(File.separator);
+                fullPath.append(encodeBase32UserFolderName(userSession.getId(), userSession.getName(), userSession.getMail()))
+                        .append(File.separator);
                 continue;
             }
             FolderMetadata getMetadataFromList = getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i));
@@ -188,23 +184,24 @@ public class FileUtility {
         return fullPath.toString();
     }
 
-    public String returnCorrectSeparatorRegex() {
+    private String returnCorrectSeparatorRegex() {
         return System.getProperty("os.name").toLowerCase().contains("windows") ? "\\\\" : "/";
     }
 
     // Generate ID path from System path
     //TODO cut folder path before generating
-    public String generateIdPaths(String filePath, String startingIdPath) {
+    public String generateIdPaths(String filePath, String startingIdPath) throws IOException {
         logger.info("String path {}", filePath);
         String[] folders = filePath.split(returnCorrectSeparatorRegex());
         StringBuilder idPath = new StringBuilder();
         //HOPEFULLY generate ID path starting from '0/'
         // cut beginning of path before to avoid having boolean conditional
+        // use replace all pattern : returnUserFolder() replace with: ""
         boolean startAdding = false;
         int depth = 0;
         idPath.append(startingIdPath).append("/");
         for (String folderName : folders) {
-            if (folderName.equals(userSession.getName())) {
+            if (folderName.equals(returnUserFolder().getName())) {
                 startAdding = !startAdding;
             }
             if (startAdding) {
@@ -221,5 +218,68 @@ public class FileUtility {
         }
         idPath.setLength(idPath.length() - 1);
         return idPath.toString();
+    }
+
+    public File createUserDirectory(long userId, String username, String mail) throws IOException {
+        String encodedUserFolder = encodeBase32UserFolderName(userId, username, mail);
+        File userDirectory = new File(fileStorageProperties.getFullPath(encodedUserFolder));
+        if (Files.notExists(userDirectory.toPath())) {
+            Files.createDirectories(userDirectory.toPath());
+            if (!Files.exists(userDirectory.toPath())) {
+                throw new FileSystemException("Could not create user directory");
+            }
+        }
+        return userDirectory;
+    }
+
+    public File returnUserFolder() throws IOException {
+        return createUserDirectory(userSession.getId(), userSession.getName(), userSession.getMail());
+    }
+
+    public String encodeBase32UserFolderName(long userId, String username, String mail) {
+        String encode = userId + ":" + username + ":" + mail;
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(encode.getBytes());
+    }
+
+    public String decodeBase32UserFolderName(String base32String) {
+        byte[] decodedString = Base64.getUrlDecoder().decode(base32String.getBytes());
+        return new String(decodedString);
+    }
+
+    // alternative algorithm to walk file tree
+    // potential candidate for move operation
+    public void traverseFileTree(Path startingPath) throws IOException {
+        int skippedFileCount = 0, skippedFolderCountInside = 0, skippedDuplicateCount = 0, discoveredFolderCount = 0, discoveredFileCount = 0;
+        File lastFolder = new File("");
+        List<Path> fileList = walkFsTree(startingPath, false);
+        for (Path orgPath : fileList) {
+            if (orgPath.toFile().isFile()) {
+                skippedFileCount++;
+                continue;
+            }
+            if (lastFolder.equals(orgPath.toFile())) {
+                skippedDuplicateCount++;
+                continue;
+            }
+            logger.info("CURRENT FOLDER -> {}", orgPath);
+            discoveredFolderCount++;
+            List<Path> returns = walkFsTree(orgPath, false);
+            for (Path paths : returns) {
+                if (!paths.toFile().isFile()) {
+                    skippedFolderCountInside++;
+                    continue;
+                }
+                logger.info("-> FILE {}", paths);
+                discoveredFileCount++;
+            }
+            lastFolder = orgPath.toFile();
+        }
+        logger.info("Traversal complete, results:" +
+                        "\nSkipped File count: {}" +
+                        "\nSkipped Folder Count Inside: {}" +
+                        "\nSkipped duplicate count: {}" +
+                        "\nDiscovered Folder Count: {}" +
+                        "\nDiscovered File Count: {}",
+                skippedFileCount, skippedFolderCountInside, skippedDuplicateCount, discoveredFolderCount, discoveredFileCount);
     }
 }

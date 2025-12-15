@@ -221,7 +221,12 @@ class NetworkCloudDriveApplicationTests {
                 sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata", userEntityRegisterDetails.getId()));
         File file = new File(userDetailsDTO.getName() + File.separator + savedFolderMetadata.getName());
         // Act
-        String IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
+        String IdPath = null;
+        try {
+            IdPath = fileUtility.generateIdPaths(file.getPath(), "0");
+        } catch (Exception e) {
+            Assertions.fail(e.getMessage());
+        }
         // Assert
         Assertions.assertEquals("0/" + savedFolderMetadata.getId(), IdPath);
     }

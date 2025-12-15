@@ -238,8 +238,8 @@ public class FileSystemService implements FileSystemRepository {
     @Override
     @Transactional
     public FolderMetadata createFolder(String folderName, long folderId) throws Exception {
-        if (!fileUtility.checkAndMakeDirectories(fileStorageProperties.getBasePath() + userSession.getName()))
-            throw new FileSystemException("Failed to create root directory");
+        //interesting???!!
+        File userFolder = fileUtility.returnUserFolder();
         String rootPath = fileStorageProperties.getBasePath();
         String idPath;
         String precedingPath;
@@ -248,7 +248,7 @@ public class FileSystemService implements FileSystemRepository {
             precedingPath = fileUtility.resolvePathFromIdString(precedingFolderMetadata.getPath());
             idPath = precedingFolderMetadata.getPath();
         } else {
-            precedingPath = userSession.getName();
+            precedingPath = userFolder.getName();
             idPath = "0";
         }
         File folder = new File(rootPath + precedingPath + File.separator + folderName);
