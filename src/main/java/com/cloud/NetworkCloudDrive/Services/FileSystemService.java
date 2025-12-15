@@ -122,11 +122,7 @@ public class FileSystemService implements FileSystemRepository {
     @Override
     @Transactional
     public String updateFileName(String newName, FileMetadata file) throws Exception {
-        String folderPath = fileStorageProperties.getBasePath() +
-                (file.getFolderId() != 0 ?
-                        fileUtility.resolvePathFromIdString(informationService.getFolderMetadata(file.getFolderId()).getPath())
-                        :
-                        userSession.getName());
+        String folderPath = fileStorageProperties.getBasePath() + fileUtility.getFolderPath(file.getFolderId());
         //find file
         File checkExists = new File(folderPath + File.separator + file.getName());
         if (!Files.exists(checkExists.toPath(), LinkOption.NOFOLLOW_LINKS))
