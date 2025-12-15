@@ -14,6 +14,12 @@ public class JSONResponse {
         this.date_time = formatDateTime();
     }
 
+    public JSONResponse(String message) {
+        this.message = message;
+        this.success = true;
+        this.date_time = formatDateTime();
+    }
+
     private String formatDateTime() {
         LocalDateTime today = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");

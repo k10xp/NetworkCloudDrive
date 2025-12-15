@@ -263,6 +263,7 @@ public class FileUtility {
 
     // alternative algorithm to walk file tree
     // potential candidate for move operation
+    // Or candidate for maintenance features
     public void traverseFileTree(Path startingPath) throws IOException {
         int skippedFileCount = 0, skippedFolderCountInside = 0, skippedDuplicateCount = 0, discoveredFolderCount = 0, discoveredFileCount = 0;
         File lastFolder = new File("");

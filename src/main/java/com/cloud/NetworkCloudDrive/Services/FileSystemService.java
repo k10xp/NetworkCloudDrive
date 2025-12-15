@@ -192,6 +192,10 @@ public class FileSystemService implements FileSystemRepository {
      * @throws Exception    throws FileSystemException and FileNotFoundException
      */
     //TODO destination ID 0 doesn't work reliably
+    //TODO move operation DOES NOT work reliably*
+    /*
+    First move folders then use generateIdPaths() at the new destination to update them??
+     */
     @Transactional
     @Override
     public String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception {
