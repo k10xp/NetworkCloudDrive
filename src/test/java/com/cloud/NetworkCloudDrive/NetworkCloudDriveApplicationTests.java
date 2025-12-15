@@ -197,7 +197,7 @@ class NetworkCloudDriveApplicationTests {
         setUserSession(userEntityRegisterDetails);
         String userFolder =
                 encodeUserDirectory(
-                        userEntityRegisterDetails.getId(), userEntityRegisterDetails.getName(), userEntityRegisterDetails.getMail());
+                        userSession.getId(), userSession.getName(), userSession.getMail());
         String folderNameToAssert = "resolvePath_FolderMetadata";
         String filePath = "";
         try {
@@ -226,7 +226,7 @@ class NetworkCloudDriveApplicationTests {
         CurrentUserDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(userEntityRegisterDetails.getMail());
         FolderMetadata savedFolderMetadata =
                 sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata", userEntityRegisterDetails.getId()));
-        File file = new File(encodeUserDirectory(userDetailsDTO.getId(), userDetailsDTO.getName(), userDetailsDTO.getMail())
+        File file = new File(encodeUserDirectory(userSession.getId(), userSession.getName(), userSession.getMail())
                 + File.separator + savedFolderMetadata.getName());
         // Act
         String IdPath = null;
@@ -318,11 +318,10 @@ class NetworkCloudDriveApplicationTests {
         UserEntity decodedUserDetails = new UserEntity();
         decodedUserDetails.setId(Long.parseLong(mapProps[0]));
         decodedUserDetails.setName(mapProps[1]);
-        decodedUserDetails.setMail(mapProps[0]);
+        decodedUserDetails.setMail(mapProps[2]);
         // Assert
-
         Assertions.assertSame(savedUserEntity.getId(), decodedUserDetails.getId());
-        Assertions.assertSame(savedUserEntity.getName(), decodedUserDetails.getName());
-        Assertions.assertSame(savedUserEntity.getMail(), decodedUserDetails.getMail());
+        Assertions.assertEquals(savedUserEntity.getName(), decodedUserDetails.getName());
+        Assertions.assertEquals(savedUserEntity.getMail(), decodedUserDetails.getMail());
     }
 }
