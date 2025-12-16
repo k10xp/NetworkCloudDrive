@@ -211,7 +211,9 @@ class NetworkCloudDriveApplicationTests {
             Assertions.fail(e.getMessage());
         }
         // Assert
-        Assertions.assertEquals(userFolder + File.separator + folderNameToAssert, filePath);
+        String expectedPath = userFolder + File.separator + folderNameToAssert;
+        logger.info("Expected path {} what it is {}", expectedPath, filePath);
+        Assertions.assertEquals(expectedPath, filePath);
     }
 
     @Test
@@ -236,7 +238,9 @@ class NetworkCloudDriveApplicationTests {
             Assertions.fail(e.getMessage());
         }
         // Assert
-        Assertions.assertEquals("0/" + savedFolderMetadata.getId(), IdPath);
+        String expectedPath = "0/" + savedFolderMetadata.getId();
+        logger.info("Expected Id path {} what it is {}", expectedPath, IdPath);
+        Assertions.assertEquals(expectedPath, IdPath);
     }
 
     @Test
@@ -320,8 +324,11 @@ class NetworkCloudDriveApplicationTests {
         decodedUserDetails.setName(mapProps[1]);
         decodedUserDetails.setMail(mapProps[2]);
         // Assert
+        logger.info("ID: Expected {} what it is {}", savedUserEntity.getId(), decodedUserDetails.getId());
         Assertions.assertSame(savedUserEntity.getId(), decodedUserDetails.getId());
+        logger.info("NAME: Expected {} what it is {}", savedUserEntity.getName(), decodedUserDetails.getName());
         Assertions.assertEquals(savedUserEntity.getName(), decodedUserDetails.getName());
+        logger.info("MAIL: Expected {} what it is {}", savedUserEntity.getMail(), decodedUserDetails.getMail());
         Assertions.assertEquals(savedUserEntity.getMail(), decodedUserDetails.getMail());
     }
 }

@@ -192,29 +192,29 @@ public class FileUtility {
     //TODO cut folder path before generating
     public String generateIdPaths(String filePath, String startingIdPath) throws IOException {
         logger.info("String path {}", filePath);
-        String[] folders = filePath.split(returnCorrectSeparatorRegex());
+        logger.info("remove start: {}", filePath.replaceAll(returnUserFolder().getPath() + File.separator, ""));
+        String[] folders =
+                filePath.replaceAll(returnUserFolder().getPath() + File.separator, "").split(returnCorrectSeparatorRegex());
         StringBuilder idPath = new StringBuilder();
         //HOPEFULLY generate ID path starting from '0/'
         // cut beginning of path before to avoid having boolean conditional
         // use replace all pattern : returnUserFolder() replace with: ""
-        boolean startAdding = false;
-        int depth = 0;
+        int depth = startingIdPath.split("/").length;
         idPath.append(startingIdPath).append("/");
         for (String folderName : folders) {
-            if (folderName.equals(returnUserFolder().getName())) {
-                startAdding = !startAdding;
-            }
-            if (startAdding) {
-                depth++;
-                List<FolderMetadata> folderResults = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString(), userSession.getId());
-                for (FolderMetadata folderMetadata : folderResults) {
-                    String[] splitId = folderMetadata.getPath().split("/");
-                    if (splitId.length == depth) {
-                        idPath.append(folderMetadata.getId()).append("/");
-                        break;
-                    }
+            logger.info("FOLDER NAME -> {} DEPTH:{}", folderName, depth);
+            List<FolderMetadata> folderResults = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString(), userSession.getId());
+            for (FolderMetadata folderMetadata : folderResults) {
+                String[] splitId = folderMetadata.getPath().split("/");
+                logger.info("IDPATH -> {} SPLITLENGTH:{}", idPath, splitId.length);
+                logger.info("ITEM: ID: {} NAME: {} PATH: {}", folderMetadata.getId(), folderMetadata.getName(), folderMetadata.getPath());
+                if (splitId.length == depth) {
+                    logger.info(":: APPEND {}", folderMetadata.getId());
+                    idPath.append(folderMetadata.getId()).append("/");
+                    logger.info("CURRENT STRING: {}", idPath.toString());
                 }
             }
+            depth++;
         }
         idPath.setLength(idPath.length() - 1);
         return idPath.toString();
