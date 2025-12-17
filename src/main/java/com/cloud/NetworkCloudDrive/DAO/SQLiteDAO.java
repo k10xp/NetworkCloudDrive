@@ -149,8 +149,8 @@ public class SQLiteDAO {
     }
 
     @Transactional
-    public FileMetadata queryFileMetadata(long fileId) throws SQLException {
-        Optional<FileMetadata> fileMetadata = sqLiteFileRepository.findById(fileId);
+    public FileMetadata queryFileMetadata(long fileId, long userId) throws SQLException {
+        Optional<FileMetadata> fileMetadata = sqLiteFileRepository.findById(fileId).filter(fl -> fl.getUserid() == userId);
         if (fileMetadata.isEmpty())
             throw new SQLException("File with Id " + fileId + " does not exist");
         return fileMetadata.get();
@@ -161,6 +161,7 @@ public class SQLiteDAO {
         Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(folderId).filter(f -> f.getUserid() == userId);
         if (folderMetadata.isEmpty())
             throw new SQLException("Folder with Id " + folderId + " does not exist");
+        logger.info("RETURN");
         return folderMetadata.get();
     }
 
@@ -174,9 +175,15 @@ public class SQLiteDAO {
 
     @Transactional
     public List<FolderMetadata> findAllByIdInSQLFolderMetadata(List<Long> folderIdList, long userId) {
-        logger.info("REQUESTED USER ID {}", userId);
         return sqLiteFolderRepository.findAllById(folderIdList).stream()
                 .filter(f -> f.getUserid() == userId)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<FileMetadata> findAllByIdInSQLFileMetadata(List<Long> fileIdList, long userId) {
+        return sqLiteFileRepository.findAllById(fileIdList).stream()
+                .filter(fl -> fl.getUserid() == userId)
                 .collect(Collectors.toList());
     }
 
@@ -213,5 +220,12 @@ public class SQLiteDAO {
         if (optionalFolderMetadata.isEmpty())
             throw new FileSystemException("Folder not found in database. Is database synced?");
         return optionalFolderMetadata.get();
+    }
+
+    @Transactional
+    public List<FolderMetadata> findAllStartsWithIdPath(String prefixIdPath) {
+        return sqLiteFolderRepository.findAll()
+                .stream().filter(fl -> fl.getPath().startsWith(prefixIdPath))
+                .collect(Collectors.toList());
     }
 }

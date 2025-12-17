@@ -1,10 +1,7 @@
 package com.cloud.NetworkCloudDrive.Controllers;
 
 import com.cloud.NetworkCloudDrive.DTO.*;
-import com.cloud.NetworkCloudDrive.Models.FileMetadata;
-import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
-import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
-import com.cloud.NetworkCloudDrive.Models.JSONResponse;
+import com.cloud.NetworkCloudDrive.Models.*;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import com.cloud.NetworkCloudDrive.Services.InformationService;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
@@ -18,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(path = "/api/filesystem")
@@ -85,8 +83,8 @@ public class FileSystemController {
             String oldPath = fileUtility.resolvePathFromIdString(folderToMove.getPath());
             String newPath = fileSystemService.moveFolder(folderToMove, updateFolderPathDTO.getDestination_folder_id());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
-                            String.format("Moved folder with Id %d from %s to %s", updateFolderPathDTO.getFormer_folder_id(), oldPath, newPath)));
+                    body(new JSONMapResponse(
+                            "Successfully moved folder with Id %d", Map.of("old_path", oldPath, "new_path", newPath)));
         } catch (Exception e) {
             logger.error("Cannot move folder. {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
@@ -151,7 +149,9 @@ public class FileSystemController {
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<?> listFiles(@RequestParam long folderid) {
         try {
+            logger.info("RWWWRRWRWRW");
             List<Path> fileList = fileUtility.getFileAndFolderPathsFromFolder(fileUtility.getFolderPath(folderid));
+            logger.info("TESRTESTTETES");
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(fileSystemService.getListOfMetadataFromPath(fileList, folderid));
         } catch (FileSystemException fileSystemException) {

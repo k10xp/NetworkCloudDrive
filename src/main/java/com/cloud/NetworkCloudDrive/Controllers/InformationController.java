@@ -55,10 +55,10 @@ public class InformationController {
                 folderMetadata = informationService.getFolderMetadata(folderid);
                 folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
             } else {
-                File folderRootMetadata = new File(fileStorageProperties.getFullPath(userSession.getName()));
+                File folderRootMetadata = fileUtility.returnUserFolder();
                 folderMetadata = new FolderMetadata(folderRootMetadata.getName(), folderRootMetadata.getPath());
                 folderMetadata.setId(folderid);
-                folderMetadata.setUserid(0L); //placeholder
+                folderMetadata.setUserid(userSession.getId());
             }
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {

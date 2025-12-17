@@ -212,6 +212,7 @@ public class FileSystemService implements FileSystemRepository {
             destinationFolderObj = fileUtility.returnFileIfItExists(
                     fileUtility.resolvePathFromIdString(destinationFolderMetadata.getPath()));
         }
+        File destiationFile = new File(fileStorageProperties.getFullPath(fileUtility.getFolderPath(destinationFolderId)));
         File sourceFolderObj = fileUtility.returnFileIfItExists(sourceFolderPath);
         // get children folders to update
         List<FolderMetadata> foldersToMove = sqLiteDAO.getChildrenFoldersInDirectory(folder.getPath());
