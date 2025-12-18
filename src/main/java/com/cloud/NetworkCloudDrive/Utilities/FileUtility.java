@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Component
@@ -48,7 +49,7 @@ public class FileUtility {
         for (Path path : fileTreeStream) {
             File file = path.toFile();
             if (file.getParentFile().equals(returnUserFolder())) {
-                logger.info("Skipped base path");
+                logger.debug("Skipped base path");
                 continue;
             }
             if (!Files.exists(file.toPath())) {
@@ -58,7 +59,7 @@ public class FileUtility {
             if (file.isFile()) {
                 // use deleteIfExists at prod
                 String parentFolderIdPath = generateIdPaths(file.getParentFile().getPath(), startingIdPath);
-                logger.info("generated file path: {}", parentFolderIdPath);
+                logger.debug("generated file path: {}", parentFolderIdPath);
                 FolderMetadata folderMetadata =
                         sqLiteDAO.getFolderMetadataFromIdPathAndName(
                                 parentFolderIdPath, file.getParentFile().getName(), userSession.getId());
@@ -70,12 +71,12 @@ public class FileUtility {
                 }
                 sqLiteDAO.deleteFile(sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(
                         folderMetadata.getId(), file.getName(), userSession.getId()));
-                logger.info("File metadata: name {} path {} Id {}", output.getName(), output.getFolderId(), output.getId());
+                logger.debug("File metadata: name {} path {} Id {}", output.getName(), output.getFolderId(), output.getId());
                 continue;
             }
             // some progress
             String parentFolderIdPath = generateIdPaths(file.getPath(), startingIdPath);
-            logger.info("generated folder path: {}", parentFolderIdPath);
+            logger.debug("generated folder path: {}", parentFolderIdPath);
             FolderMetadata folderMetadata =
                     sqLiteDAO.getFolderMetadataFromIdPathAndName(parentFolderIdPath, file.getName(), userSession.getId());
             // manage folders here
@@ -86,9 +87,20 @@ public class FileUtility {
             }
             sqLiteDAO.deleteFolder(folderMetadata);
             //check if it's correct
-            logger.info("Folder metadata: name {} path {} Id {}", folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getId());
+            logger.debug("Folder metadata: name {} path {} Id {}", folderMetadata.getName(), folderMetadata.getPath(), folderMetadata.getId());
         }
-        logger.info("Completed file tree deletion operation. Error count {}", errorCount);
+        if (errorCount == 0)
+            logger.info("Completed file tree deletion operation. Error count {}", errorCount);
+        else
+            logger.warn("Completed file tree deletion operation with some errors. Error count {}", errorCount);
+    }
+
+    public List<FolderMetadata> updateFolderIdPaths(List<FolderMetadata> folderList, String oldPrefix, String newPrefix) {
+        List<FolderMetadata> result = new ArrayList<>();
+        for (FolderMetadata folderMetadata : folderList) {
+            folderMetadata.setPath(folderMetadata.getPath().replaceAll(oldPrefix, newPrefix));
+        }
+        return result;
     }
 
     public String getIdPath(long folderId) throws SQLException {
@@ -156,17 +168,15 @@ public class FileUtility {
         String[] splitLine = idString.split("/");
         List<Long> idList = new ArrayList<>();
         for (String idAsString : splitLine) {
-            logger.debug("added {}", idAsString);
             idList.add(Long.parseLong(idAsString));
         }
-        logger.info("id size {}", idList.size());
         return appendFolderNames(idList);
     }
 
     private String appendFolderNames(List<Long> folderIdList) throws FileSystemException {
         StringBuilder fullPath = new StringBuilder();
         List<FolderMetadata> folderMetadataListById = sqLiteDAO.findAllByIdInSQLFolderMetadata(folderIdList, userSession.getId());
-        logger.info("size {}", folderMetadataListById.size());
+        logger.debug("size {}", folderMetadataListById.size());
         for (int i = 0; i < folderIdList.size(); i++) {
             if (i == 0) {
                 fullPath.append(encodeBase32UserFolderName(userSession.getId(), userSession.getName(), userSession.getMail()))
@@ -174,7 +184,6 @@ public class FileUtility {
                 continue;
             }
             FolderMetadata getMetadataFromList = getFolderMetadataByIdFromList(folderMetadataListById, folderIdList.get(i));
-            logger.info("IS RETURN NULL {}", (getMetadataFromList == null));
             if (getMetadataFromList == null)
                 throw new FileSystemException("No match found for ID " + folderIdList.get(i));
             fullPath.append(getMetadataFromList.getName()).append(File.separator);
@@ -189,32 +198,31 @@ public class FileUtility {
     }
 
     // Generate ID path from System path
-    //TODO cut folder path before generating
     public String generateIdPaths(String filePath, String startingIdPath) throws IOException {
-        logger.info("String path {}", filePath);
-        String[] folders = filePath.split(returnCorrectSeparatorRegex());
+        //TODO Fails to compile on Windows. Works fine on Linux and MacOS (UNIX)
+        String[] folders =
+                filePath.replaceAll(Pattern.quote(returnUserFolder().getPath() + returnCorrectSeparatorRegex()), "")
+                        .split(returnCorrectSeparatorRegex());
         StringBuilder idPath = new StringBuilder();
         //HOPEFULLY generate ID path starting from '0/'
         // cut beginning of path before to avoid having boolean conditional
         // use replace all pattern : returnUserFolder() replace with: ""
-        boolean startAdding = false;
-        int depth = 0;
+        int depth = startingIdPath.split("/").length;
         idPath.append(startingIdPath).append("/");
         for (String folderName : folders) {
-            if (folderName.equals(returnUserFolder().getName())) {
-                startAdding = !startAdding;
-            }
-            if (startAdding) {
-                depth++;
-                List<FolderMetadata> folderResults = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString(), userSession.getId());
-                for (FolderMetadata folderMetadata : folderResults) {
-                    String[] splitId = folderMetadata.getPath().split("/");
-                    if (splitId.length == depth) {
-                        idPath.append(folderMetadata.getId()).append("/");
-                        break;
-                    }
+            logger.debug("FOLDER NAME -> {} DEPTH:{}", folderName, depth);
+            List<FolderMetadata> folderResults = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString(), userSession.getId());
+            for (FolderMetadata folderMetadata : folderResults) {
+                String[] splitId = folderMetadata.getPath().split("/");
+                logger.debug("ID PATH -> {} SPLIT LENGTH:{}", idPath, splitId.length);
+                logger.debug("ITEM: ID: {} NAME: {} PATH: {}", folderMetadata.getId(), folderMetadata.getName(), folderMetadata.getPath());
+                if (splitId.length == depth) {
+                    logger.debug("APPEND {}", folderMetadata.getId());
+                    idPath.append(folderMetadata.getId()).append("/");
+                    logger.debug("CURRENT STATE OF STRING: {}", idPath.toString());
                 }
             }
+            depth++;
         }
         idPath.setLength(idPath.length() - 1);
         return idPath.toString();
@@ -236,19 +244,17 @@ public class FileUtility {
         return createUserDirectory(userSession.getId(), userSession.getName(), userSession.getMail());
     }
 
-    public File updateUserDirectoryName(long userId, String username, String mail, String oldBase32) throws IOException {
+    public void updateUserDirectoryName(long userId, String username, String mail, String oldBase32) throws IOException {
         File oldPath = new File(fileStorageProperties.getFullPath(oldBase32));
-        logger.info("Old path user Path: {}", oldPath);
-        if (Files.notExists(oldPath.toPath())) {
+        logger.debug("Old path user Path: {}", oldPath);
+        if (Files.notExists(oldPath.toPath()))
             throw new FileSystemException("User directory does not exist");
-        }
         String encodedUserFolder = encodeBase32UserFolderName(userId, username, mail);
         File userDirectory = new File(fileStorageProperties.getFullPath(encodedUserFolder));
-        logger.info("User Path: {}", userDirectory);
+        logger.debug("User Path: {}", userDirectory);
         Path updatedName = Files.move(oldPath.toPath(), userDirectory.toPath());
         if (Files.notExists(updatedName))
             throw new FileSystemException("Failed to update user directory name");
-        return updatedName.toFile();
     }
 
     public String encodeBase32UserFolderName(long userId, String username, String mail) {
@@ -262,8 +268,8 @@ public class FileUtility {
     }
 
     // alternative algorithm to walk file tree
-    // potential candidate for move operation
-    public void traverseFileTree(Path startingPath) throws IOException {
+    // for maintenance features
+    public String traverseFileTree(Path startingPath) throws IOException {
         int skippedFileCount = 0, skippedFolderCountInside = 0, skippedDuplicateCount = 0, discoveredFolderCount = 0, discoveredFileCount = 0;
         File lastFolder = new File("");
         List<Path> fileList = walkFsTree(startingPath, false);
@@ -295,6 +301,13 @@ public class FileUtility {
                         "\nSkipped duplicate count: {}" +
                         "\nDiscovered Folder Count: {}" +
                         "\nDiscovered File Count: {}",
+                skippedFileCount, skippedFolderCountInside, skippedDuplicateCount, discoveredFolderCount, discoveredFileCount);
+        return String.format("Traversal complete, results:" +
+                        " Skipped File count: %d" +
+                        " Skipped Folder Count Inside: %d" +
+                        " Skipped duplicate count: %d" +
+                        " Discovered Folder Count: %d" +
+                        " Discovered File Count: %d",
                 skippedFileCount, skippedFolderCountInside, skippedDuplicateCount, discoveredFolderCount, discoveredFileCount);
     }
 }

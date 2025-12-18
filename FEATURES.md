@@ -19,7 +19,7 @@
 
 | Method | 	Route                                      | 	Description                                    | Working            |
 |--------|---------------------------------------------|-------------------------------------------------|--------------------|
-| POST   | 	api/filesystem/folder/move                 | Moves folder given Id to another folder by ID   | :heavy_minus_sign: |
+| POST   | 	api/filesystem/folder/move                 | Moves folder given Id to another folder by ID   | :heavy_check_mark: |
 | POST   | 	api/filesystem/folder/remove?folderid={id} | Removes folder by ID along with child folders   | :heavy_check_mark: |
 | POST   | 	api/filesystem/folder/rename               | Renames folder with ID parameter with JSON body | :heavy_check_mark: |
 

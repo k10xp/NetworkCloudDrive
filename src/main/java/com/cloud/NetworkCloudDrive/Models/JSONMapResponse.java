@@ -10,6 +10,11 @@ public class JSONMapResponse extends JSONResponse {
         this.map_of = map_of;
     }
 
+    public JSONMapResponse(String message, Map<String, ?> map_of) {
+        super(message, true);
+        this.map_of = map_of;
+    }
+
     public Map<String, ?> getMap_of() {
         return map_of;
     }

@@ -6,6 +6,8 @@ import com.cloud.NetworkCloudDrive.Repositories.InformationRepository;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ import java.util.List;
 
 @Service
 public class InformationService implements InformationRepository {
+    private final Logger logger = LoggerFactory.getLogger(InformationService.class);
     private final FileUtility fileUtility;
     private final SQLiteDAO sqLiteDAO;
     private final UserSession userSession;
@@ -54,7 +57,7 @@ public class InformationService implements InformationRepository {
 
     @Override
     public FileMetadata getFileMetadata(long id) throws FileNotFoundException, SQLException, FileSystemException {
-        FileMetadata retrievedFile = sqLiteDAO.queryFileMetadata(id);
+        FileMetadata retrievedFile = sqLiteDAO.queryFileMetadata(id, userSession.getId());
         File fileCheck = fileUtility.returnFileIfItExists(
                 fileUtility.getFolderPath(retrievedFile.getFolderId()) + File.separator + retrievedFile.getName());
         retrievedFile.setSize(fileCheck.length()); //bytes
@@ -65,6 +68,7 @@ public class InformationService implements InformationRepository {
     public FolderMetadata getFolderMetadata(long folderId) throws IOException, SQLException {
         FolderMetadata folder = sqLiteDAO.queryFolderMetadata(folderId, userSession.getId());
         File getFolder = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(folder.getPath()));
+        logger.info("Folder: Id: {} Path: {}", folderId, getFolder);
         return folder;
     }
 }
