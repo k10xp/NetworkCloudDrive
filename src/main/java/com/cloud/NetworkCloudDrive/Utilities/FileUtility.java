@@ -198,8 +198,8 @@ public class FileUtility {
     }
 
     // Generate ID path from System path
+    // TODO can be replaced using StartsWith function in SQLiteDAO just like in moveFolders()
     public String generateIdPaths(String filePath, String startingIdPath) throws IOException {
-        //TODO Fails to compile on Windows. Works fine on Linux and MacOS (UNIX)
         String[] folders =
                 filePath.replaceAll(Pattern.quote(returnUserFolder().getPath() + returnCorrectSeparatorRegex()), "")
                         .split(returnCorrectSeparatorRegex());
@@ -210,16 +210,16 @@ public class FileUtility {
         int depth = startingIdPath.split("/").length;
         idPath.append(startingIdPath).append("/");
         for (String folderName : folders) {
-            logger.debug("FOLDER NAME -> {} DEPTH:{}", folderName, depth);
+            logger.info("FOLDER NAME -> {} DEPTH:{}", folderName, depth);
             List<FolderMetadata> folderResults = sqLiteDAO.findAllContainingSectionOfIdPathIgnoreCase(idPath.toString(), userSession.getId());
             for (FolderMetadata folderMetadata : folderResults) {
                 String[] splitId = folderMetadata.getPath().split("/");
-                logger.debug("ID PATH -> {} SPLIT LENGTH:{}", idPath, splitId.length);
-                logger.debug("ITEM: ID: {} NAME: {} PATH: {}", folderMetadata.getId(), folderMetadata.getName(), folderMetadata.getPath());
-                if (splitId.length == depth) {
-                    logger.debug("APPEND {}", folderMetadata.getId());
+                logger.info("ID PATH -> {} SPLIT LENGTH:{}", idPath, splitId.length);
+                logger.info("ITEM: ID: {} NAME: {} PATH: {}", folderMetadata.getId(), folderMetadata.getName(), folderMetadata.getPath());
+                if ((splitId.length == depth) && (folderMetadata.getName().equals(folderName))) {
+                    logger.info("APPEND {}", folderMetadata.getId());
                     idPath.append(folderMetadata.getId()).append("/");
-                    logger.debug("CURRENT STATE OF STRING: {}", idPath.toString());
+                    logger.info("CURRENT STATE OF STRING: {}", idPath.toString());
                 }
             }
             depth++;
