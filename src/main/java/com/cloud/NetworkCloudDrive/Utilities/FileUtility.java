@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Component
@@ -198,9 +199,9 @@ public class FileUtility {
 
     // Generate ID path from System path
     public String generateIdPaths(String filePath, String startingIdPath) throws IOException {
-        //TODO Fails to compile on Windows. Works fine on Linux
+        //TODO Fails to compile on Windows. Works fine on Linux and MacOS (UNIX)
         String[] folders =
-                filePath.replaceAll(returnUserFolder().getPath() + returnCorrectSeparatorRegex(), "")
+                filePath.replaceAll(Pattern.quote(returnUserFolder().getPath() + returnCorrectSeparatorRegex()), "")
                         .split(returnCorrectSeparatorRegex());
         StringBuilder idPath = new StringBuilder();
         //HOPEFULLY generate ID path starting from '0/'
@@ -243,7 +244,7 @@ public class FileUtility {
         return createUserDirectory(userSession.getId(), userSession.getName(), userSession.getMail());
     }
 
-    public File updateUserDirectoryName(long userId, String username, String mail, String oldBase32) throws IOException {
+    public void updateUserDirectoryName(long userId, String username, String mail, String oldBase32) throws IOException {
         File oldPath = new File(fileStorageProperties.getFullPath(oldBase32));
         logger.debug("Old path user Path: {}", oldPath);
         if (Files.notExists(oldPath.toPath()))
@@ -254,7 +255,6 @@ public class FileUtility {
         Path updatedName = Files.move(oldPath.toPath(), userDirectory.toPath());
         if (Files.notExists(updatedName))
             throw new FileSystemException("Failed to update user directory name");
-        return updatedName.toFile();
     }
 
     public String encodeBase32UserFolderName(long userId, String username, String mail) {
@@ -268,8 +268,7 @@ public class FileUtility {
     }
 
     // alternative algorithm to walk file tree
-    // potential candidate for move operation
-    // Or candidate for maintenance features
+    // for maintenance features
     public String traverseFileTree(Path startingPath) throws IOException {
         int skippedFileCount = 0, skippedFolderCountInside = 0, skippedDuplicateCount = 0, discoveredFolderCount = 0, discoveredFileCount = 0;
         File lastFolder = new File("");
