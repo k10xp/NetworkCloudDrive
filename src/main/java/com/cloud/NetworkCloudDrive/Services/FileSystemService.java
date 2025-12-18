@@ -179,7 +179,6 @@ public class FileSystemService implements FileSystemRepository {
         return checkDestinationExists.getPath();
     }
 
-    //TODO OPTIMIZE
     /**
      * <p>Moves folder(s) to new location.</p>
      *
@@ -191,49 +190,28 @@ public class FileSystemService implements FileSystemRepository {
      * @return  updated path
      * @throws Exception    throws FileSystemException and FileNotFoundException
      */
-    //TODO destination ID 0 doesn't work reliably
-    //TODO move operation DOES NOT work reliably*
-    /*
-    First move folders then use generateIdPaths() at the new destination to update them??
-     */
-    @Transactional
     @Override
     public String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception {
-        String sourceFolderPath = fileUtility.resolvePathFromIdString(folder.getPath());
-        File destinationFolderObj;
-        FolderMetadata destinationFolderMetadata;
-        String destinationIdPath;
-        if (destinationFolderId == 0) {
-            destinationFolderObj = new File(fileStorageProperties.getBasePath() + userSession.getName());
-            destinationIdPath = "0";
-        } else {
-            destinationFolderMetadata = informationService.getFolderMetadata(destinationFolderId);
-            destinationIdPath = destinationFolderMetadata.getPath();
-            destinationFolderObj = fileUtility.returnFileIfItExists(
-                    fileUtility.resolvePathFromIdString(destinationFolderMetadata.getPath()));
-        }
-        File destiationFile = new File(fileStorageProperties.getFullPath(fileUtility.getFolderPath(destinationFolderId)));
-        File sourceFolderObj = fileUtility.returnFileIfItExists(sourceFolderPath);
-        // get children folders to update
-        List<FolderMetadata> foldersToMove = sqLiteDAO.getChildrenFoldersInDirectory(folder.getPath());
-        String formerIdPath = destinationIdPath;
-        String backupPath = "";
-        for (int i = 0; i < foldersToMove.size(); i++) {
-            if (i != 0) {
-                foldersToMove.get(i).setPath(backupPath + "/" + foldersToMove.get(i).getId());
-                continue;
-            }
-            foldersToMove.get(i).setPath(formerIdPath + "/" + foldersToMove.get(i).getId());
-            backupPath = foldersToMove.get(i).getPath();
-        }
-        // perform filesystem move
-        String updatedPath = destinationFolderObj.getPath() + File.separator + sourceFolderObj.getName();
-        Path moveFolderAction = Files.move(sourceFolderObj.toPath(), Path.of(updatedPath));
-        if (!Files.exists(moveFolderAction))
-            throw new FileSystemException(String.format("Failed to move the folder from %s to %s", sourceFolderPath, updatedPath));
-        //save
-        sqLiteDAO.saveAllFolders(foldersToMove);
-        return updatedPath;
+        String sourcePath = fileUtility.getFolderPath(folder.getId());
+        String destinationPath = fileUtility.getFolderPath(destinationFolderId);
+        // check if source folder exists
+        File sourceFolder = fileUtility.returnFileIfItExists(sourcePath);
+        // check if destination folder exists
+        File destinationFolder = fileUtility.returnFileIfItExists(destinationPath);
+        // Get folders inside source folder
+        List<FolderMetadata> folderMetadataList = sqLiteDAO.findAllStartsWithIdPath(folder.getPath());
+        // Update ID paths of folders affected
+        folderMetadataList =
+                fileUtility.updateFolderIdPaths(folderMetadataList, folder.getPath(),
+                        fileUtility.getIdPath(destinationFolderId) + "/" + folder.getId());
+        // Move folder in system
+        Path updatedPath = Files.move(sourceFolder.toPath(), new File(destinationFolder, folder.getName()).toPath());
+        if (Files.notExists(updatedPath))
+            throw new FileSystemException(String.format("Failed to move the folder from %s to %s", sourcePath, updatedPath));
+        // Save changes
+        sqLiteDAO.saveAllFolders(folderMetadataList);
+        // return new path
+        return updatedPath.toString();
     }
 
     @Override

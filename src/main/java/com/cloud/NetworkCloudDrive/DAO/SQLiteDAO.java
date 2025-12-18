@@ -161,7 +161,6 @@ public class SQLiteDAO {
         Optional<FolderMetadata> folderMetadata = sqLiteFolderRepository.findById(folderId).filter(f -> f.getUserid() == userId);
         if (folderMetadata.isEmpty())
             throw new SQLException("Folder with Id " + folderId + " does not exist");
-        logger.info("RETURN");
         return folderMetadata.get();
     }
 
