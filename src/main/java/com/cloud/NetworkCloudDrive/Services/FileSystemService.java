@@ -193,17 +193,19 @@ public class FileSystemService implements FileSystemRepository {
     @Override
     public String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception {
         String sourcePath = fileUtility.getFolderPath(folder.getId());
-        String destinationPath = fileUtility.getFolderPath(destinationFolderId);
         // check if source folder exists
         File sourceFolder = fileUtility.returnFileIfItExists(sourcePath);
         // check if destination folder exists
-        File destinationFolder = fileUtility.returnFileIfItExists(destinationPath);
+        File destinationFolder = fileUtility.returnFileIfItExists(fileUtility.getFolderPath(destinationFolderId));
         // Get folders inside source folder
-        List<FolderMetadata> folderMetadataList = sqLiteDAO.findAllStartsWithIdPath(folder.getPath());
+        List<FolderMetadata> folderMetadataList = sqLiteDAO.findAllStartsWithIdPath(folder.getPath() + "/");
         // Update ID paths of folders affected
         folderMetadataList =
                 fileUtility.updateFolderIdPaths(folderMetadataList, folder.getPath(),
                         fileUtility.getIdPath(destinationFolderId) + "/" + folder.getId());
+        // Update ID path of source folder individually
+        folder.setPath(
+                folder.getPath().replaceAll(folder.getPath(), fileUtility.getIdPath(destinationFolderId) + "/" + folder.getId()));
         // Move folder in system
         Path updatedPath = Files.move(sourceFolder.toPath(), new File(destinationFolder, folder.getName()).toPath());
         if (Files.notExists(updatedPath))
@@ -212,12 +214,17 @@ public class FileSystemService implements FileSystemRepository {
         sqLiteDAO.saveAllFolders(folderMetadataList);
         // return new path
         return updatedPath.toString();
+        /*
+        0/1/2/3/4/5
+        2 -> 0
+        0/1/2 => (replace 0/1/2 oldprefix with 0/2 + folderid)
+        0/1/2/3 => (replace 0/1/2 oldprefix with 0/2 + folderid => )
+         */
     }
 
     @Override
     @Transactional
     public FolderMetadata createFolder(String folderName, long folderId) throws Exception {
-        //interesting???!!
         File userFolder = fileUtility.returnUserFolder();
         String rootPath = fileStorageProperties.getBasePath();
         String idPath;
