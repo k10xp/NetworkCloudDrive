@@ -292,12 +292,18 @@ public class FileUtility {
             }
             lastFolder = orgPath.toFile();
         }
-        logger.info("Traversal complete, results:" +
-                        "\nSkipped File count: {}" +
-                        "\nSkipped Folder Count Inside: {}" +
-                        "\nSkipped duplicate count: {}" +
-                        "\nDiscovered Folder Count: {}" +
-                        "\nDiscovered File Count: {}",
+        logger.info("""
+                        Traversal complete, results:\
+                        
+                        Skipped File count: {}\
+                        
+                        Skipped Folder Count Inside: {}\
+                        
+                        Skipped duplicate count: {}\
+                        
+                        Discovered Folder Count: {}\
+                        
+                        Discovered File Count: {}""",
                 skippedFileCount, skippedFolderCountInside, skippedDuplicateCount, discoveredFolderCount, discoveredFileCount);
         return String.format("Traversal complete, results:" +
                         " Skipped File count: %d" +

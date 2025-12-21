@@ -1,6 +1,5 @@
 package com.cloud.NetworkCloudDrive;
 
-import com.cloud.NetworkCloudDrive.DTO.CurrentUserDTO;
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
@@ -110,7 +109,7 @@ class NetworkCloudDriveApplicationTests {
         return userEntity;
     }
 
-    //TODO test to check if "findbyId" is working after save tests succeed
+    //TODO test to check if "findbyId()" is working after save tests succeed
 
     // JPA TESTS
     @Test
@@ -228,7 +227,6 @@ class NetworkCloudDriveApplicationTests {
                         "userEntity1-Functions_Unit-Test", "user_Unit-Test@test.com", "super_secret1234*7&", UserRole.GUEST);
         UserEntity userEntityRegisterDetails = registerUserAndLogDetails(userEntity);
         setUserSession(userEntityRegisterDetails);
-        CurrentUserDTO userDetailsDTO = sqLiteDAO.getUserIDNameAndRoleByMail(userEntityRegisterDetails.getMail());
         FolderMetadata savedFolderMetadata =
                 sqLiteDAO.saveFolder(setupFolderMetadataObject("generateIdPath_FolderMetadata", userEntityRegisterDetails.getId()));
         File file = new File(encodeUserDirectory(userSession.getId(), userSession.getName(), userSession.getMail())
