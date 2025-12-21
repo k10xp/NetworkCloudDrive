@@ -8,7 +8,7 @@ public class JSONResponse {
     private final String date_time;
     private boolean success;
 
-    public JSONResponse(String message, boolean success) {
+    public JSONResponse(boolean success, String message) {
         this.message = message;
         this.success = success;
         this.date_time = formatDateTime();
@@ -20,14 +20,14 @@ public class JSONResponse {
         this.date_time = formatDateTime();
     }
 
-    public JSONResponse(String message, Object... args) {
-        this.message = String.format(message, args);
+    public JSONResponse(String formattedString, Object... args) {
+        this.message = String.format(formattedString, args);
         this.success = true;
         this.date_time = formatDateTime();
     }
 
-    public JSONResponse(boolean success, String message, Object... args) {
-        this.message = String.format(message, args);
+    public JSONResponse(boolean success, String formattedString, Object... args) {
+        this.message = String.format(formattedString, args);
         this.success = success;
         this.date_time = formatDateTime();
     }

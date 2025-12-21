@@ -8,6 +8,7 @@ import com.cloud.NetworkCloudDrive.Models.UserEntity;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Services.UserService;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
+import com.cloud.NetworkCloudDrive.Utilities.EncodingUtility;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
@@ -34,6 +35,8 @@ class NetworkCloudDriveApplicationTests {
     @Autowired
     FileUtility fileUtility;
     @Autowired
+    EncodingUtility encodingUtility;
+    @Autowired
     UserService userService;
     @Autowired
     UserSession userSession;
@@ -50,7 +53,7 @@ class NetworkCloudDriveApplicationTests {
     }
 
     public String encodeUserDirectory(long id, String name, String mail) {
-        return fileUtility.encodeBase32UserFolderName(id, name, mail);
+        return encodingUtility.encodeBase32UserFolderName(id, name, mail);
     }
 
     public UserEntity registerUserAndLogDetails(UserEntity userEntity) {
@@ -316,8 +319,8 @@ class NetworkCloudDriveApplicationTests {
         UserEntity savedUserEntity = sqLiteDAO.saveUser(userEntity);
         // Act
         String encodeUserDirectory =
-                fileUtility.encodeBase32UserFolderName(savedUserEntity.getId(), savedUserEntity.getName(), savedUserEntity.getMail());
-        String decodeUserDirectory = fileUtility.decodeBase32StringNoPadding(encodeUserDirectory);
+                encodingUtility.encodeBase32UserFolderName(savedUserEntity.getId(), savedUserEntity.getName(), savedUserEntity.getMail());
+        String decodeUserDirectory = encodingUtility.decodeBase32StringNoPadding(encodeUserDirectory);
         String[] mapProps = decodeUserDirectory.split(":");
         UserEntity decodedUserDetails = new UserEntity();
         decodedUserDetails.setId(Long.parseLong(mapProps[0]));

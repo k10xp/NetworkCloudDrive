@@ -10,8 +10,8 @@ public class JSONErrorResponse extends JSONResponse {
         this.exception_message = exception_type.getMessage();
     }
 
-    public JSONErrorResponse(Exception exception_type, String message, Object... args) {
-        super(message, args);
+    public JSONErrorResponse(Exception exception_type, String formattedString, Object... args) {
+        super(formattedString, args);
         this.exception_type = exception_type.getClass().getName();
         this.exception_message = exception_type.getMessage();
     }

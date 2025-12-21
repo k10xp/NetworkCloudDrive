@@ -43,8 +43,8 @@ public class UserController {
                 throw new SecurityException("Wrong password");
             }
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONMapResponse("User logged in successfully",
-                            Map.of("username", userDTO.getName(), "mail", userDTO.getMail())));
+                    body(new JSONMapResponse(
+                            Map.of("username", userDTO.getName(), "mail", userDTO.getMail()), "User logged in successfully"));
         } catch (Exception e) {
             logger.error("Failed to login, reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
@@ -59,14 +59,13 @@ public class UserController {
             //create user directory
             fileUtility.createUserDirectory(registeredUserEntity.getId(), registeredUserEntity.getName(), registeredUserEntity.getMail());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONMapResponse("User successfully registered",
-                            Map.of(
+                    body(new JSONMapResponse(Map.of(
                             "id", registeredUserEntity.getId(),
                             "username", registeredUserEntity.getName(),
                             "mail", registeredUserEntity.getMail(),
                             "role", registeredUserEntity.getRole(),
                             "registeredAt", registeredUserEntity.getRegisteredAt()
-                            )));
+                    ), "User successfully registered"));
         } catch (SecurityException e) {
             logger.error("Failed to register user reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
@@ -82,9 +81,9 @@ public class UserController {
     public @ResponseBody ResponseEntity<?> updateMail(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONObjectResponse("Successfully updated user mail",
+                    body(new JSONObjectResponse(
                             userService.updateMail(sqLiteDAO.findUserByMail(userSession.getMail()),
-                                    updateUserDTO.getUpdate())));
+                                    updateUserDTO.getUpdate()), "Successfully updated user mail"));
         } catch (Exception e) {
             logger.error("Failed to update user mail reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
@@ -96,9 +95,8 @@ public class UserController {
     public @ResponseBody ResponseEntity<?> updateName(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONObjectResponse("Successfully updated user name",
-                            userService.updateName(sqLiteDAO.findUserByMail(userSession.getMail()),
-                                    updateUserDTO.getUpdate())));
+                    body(new JSONObjectResponse(userService.updateName(sqLiteDAO.findUserByMail(userSession.getMail()),
+                            updateUserDTO.getUpdate()), "Successfully updated user name"));
         } catch (Exception e) {
             logger.error("Failed to update user name reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
@@ -110,9 +108,8 @@ public class UserController {
     public @ResponseBody ResponseEntity<?> updatePassword(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONObjectResponse("Successfully updated user password",
-                            userService.updatePassword(sqLiteDAO.findUserByMail(userSession.getMail()),
-                                    updateUserDTO.getUpdate())));
+                    body(new JSONObjectResponse(userService.updatePassword(sqLiteDAO.findUserByMail(userSession.getMail()),
+                            updateUserDTO.getUpdate()), "Successfully updated user password"));
         } catch (Exception e) {
             logger.error("Failed to update user password reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
@@ -140,7 +137,7 @@ public class UserController {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONObjectResponse(
-                            "Currently authenticated user info", userService.currentUserDetails(userSession.getMail())));
+                            userService.currentUserDetails(userSession.getMail()), "Currently authenticated user info"));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONErrorResponse(e, "Failed to get user details, reason: %s", e.getMessage()));

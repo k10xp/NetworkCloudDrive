@@ -25,11 +25,17 @@ public class FileUtility {
     private final FileStorageProperties fileStorageProperties;
     private final SQLiteDAO sqLiteDAO;
     private final UserSession userSession;
+    private final EncodingUtility encodingUtility;
     private final Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
-    public FileUtility(SQLiteDAO sqLiteDAO, FileStorageProperties fileStorageProperties, UserSession userSession) {
+    public FileUtility(
+            SQLiteDAO sqLiteDAO,
+            FileStorageProperties fileStorageProperties,
+            UserSession userSession,
+            EncodingUtility encodingUtility) {
         this.fileStorageProperties = fileStorageProperties;
         this.userSession = userSession;
+        this.encodingUtility = encodingUtility;
         this.sqLiteDAO = sqLiteDAO;
     }
 
@@ -129,7 +135,7 @@ public class FileUtility {
                 ?
                 resolvePathFromIdString(sqLiteDAO.queryFolderMetadata(folderId, userSession.getId()).getPath())
                 :
-                encodeBase32UserFolderName(userSession.getId(), userSession.getName(), userSession.getMail());
+                encodingUtility.encodeBase32UserFolderName(userSession.getId(), userSession.getName(), userSession.getMail());
     }
 
     public List<Path> getFileAndFolderPathsFromFolder(String folderPath) throws IOException {
@@ -180,7 +186,7 @@ public class FileUtility {
         logger.debug("size {}", folderMetadataListById.size());
         for (int i = 0; i < folderIdList.size(); i++) {
             if (i == 0) {
-                fullPath.append(encodeBase32UserFolderName(userSession.getId(), userSession.getName(), userSession.getMail()))
+                fullPath.append(encodingUtility.encodeBase32UserFolderName(userSession.getId(), userSession.getName(), userSession.getMail()))
                         .append(File.separator);
                 continue;
             }
@@ -230,7 +236,7 @@ public class FileUtility {
     }
 
     public File createUserDirectory(long userId, String username, String mail) throws IOException {
-        String encodedUserFolder = encodeBase32UserFolderName(userId, username, mail);
+        String encodedUserFolder = encodingUtility.encodeBase32UserFolderName(userId, username, mail);
         File userDirectory = new File(fileStorageProperties.getFullPath(encodedUserFolder));
         if (Files.notExists(userDirectory.toPath())) {
             Files.createDirectories(userDirectory.toPath());
@@ -250,35 +256,12 @@ public class FileUtility {
         logger.debug("Old path user Path: {}", oldPath);
         if (Files.notExists(oldPath.toPath()))
             throw new FileSystemException("User directory does not exist");
-        String encodedUserFolder = encodeBase32UserFolderName(userId, username, mail);
+        String encodedUserFolder = encodingUtility.encodeBase32UserFolderName(userId, username, mail);
         File userDirectory = new File(fileStorageProperties.getFullPath(encodedUserFolder));
         logger.debug("User Path: {}", userDirectory);
         Path updatedName = Files.move(oldPath.toPath(), userDirectory.toPath());
         if (Files.notExists(updatedName))
             throw new FileSystemException("Failed to update user directory name");
-    }
-
-    public String encodeBase32UserFolderName(long userId, String username, String mail) {
-        String encode = userId + ":" + username + ":" + mail;
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(encode.getBytes());
-    }
-
-    public String decodeBase32StringNoPadding(String base32String) {
-        byte[] decodedString = Base64.getUrlDecoder().decode(base32String.getBytes());
-        return new String(decodedString);
-    }
-
-    public String encodeBase32FileName(long userId, String fileName, long folderId) {
-        String encode = userId + ":" + fileName + ":" + folderId;
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(encode.getBytes());
-    }
-
-    public String encodeBase32(Object... encodeIn) {
-        String encodev2 = "";
-        for (Object object : encodeIn) {
-            encodev2 += object + ":";
-        }
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(encodev2.getBytes());
     }
 
     // alternative algorithm to walk file tree

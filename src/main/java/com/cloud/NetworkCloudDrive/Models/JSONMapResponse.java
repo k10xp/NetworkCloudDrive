@@ -5,23 +5,23 @@ import java.util.Map;
 public class JSONMapResponse extends JSONResponse {
     private Map<String, ?> map_of;
 
-    public JSONMapResponse(String message, boolean success, Map<String, ?> map_of) {
+    public JSONMapResponse(Map<String, ?> map_of, boolean success, String message) {
         super(message, success);
         this.map_of = map_of;
     }
 
-    public JSONMapResponse(String message, Map<String, ?> map_of) {
+    public JSONMapResponse(Map<String, ?> map_of, String message) {
         super(message, true);
         this.map_of = map_of;
     }
 
-    public JSONMapResponse(Map<String, ?> map_of, String message, Object... args) {
-        super(message, args);
+    public JSONMapResponse(Map<String, ?> map_of, String formattedString, Object... args) {
+        super(formattedString, args);
         this.map_of = map_of;
     }
 
-    public JSONMapResponse(Map<String, ?> map_of, boolean success, String message, Object... args) {
-        super(success, message, args);
+    public JSONMapResponse(Map<String, ?> map_of, boolean success, String formattedString, Object... args) {
+        super(success, formattedString, args);
         this.map_of = map_of;
     }
 
