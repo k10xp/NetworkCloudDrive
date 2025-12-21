@@ -43,7 +43,6 @@ public class FileService implements FileRepository {
     }
 
     @Override
-    @Transactional
     public Map<String ,?> uploadFiles(MultipartFile[] files, String folderPath, long folderId) throws Exception {
         String storagePath;
         List<String> storagePathList = new ArrayList<>();
@@ -52,7 +51,6 @@ public class FileService implements FileRepository {
             try (InputStream inputStream = file.getInputStream()) {
                 storagePath = storeFile(inputStream, file.getOriginalFilename(), folderPath);
             }
-            // place holder userid 0L
             FileMetadata metadata = new FileMetadata(
                     file.getOriginalFilename(), folderId, userSession.getId(), file.getContentType(), file.getSize());
             uploadedFiles.add(metadata);

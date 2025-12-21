@@ -15,6 +15,16 @@ public class JSONMapResponse extends JSONResponse {
         this.map_of = map_of;
     }
 
+    public JSONMapResponse(Map<String, ?> map_of, String message, Object... args) {
+        super(message, args);
+        this.map_of = map_of;
+    }
+
+    public JSONMapResponse(Map<String, ?> map_of, boolean success, String message, Object... args) {
+        super(success, message, args);
+        this.map_of = map_of;
+    }
+
     public Map<String, ?> getMap_of() {
         return map_of;
     }

@@ -317,7 +317,7 @@ class NetworkCloudDriveApplicationTests {
         // Act
         String encodeUserDirectory =
                 fileUtility.encodeBase32UserFolderName(savedUserEntity.getId(), savedUserEntity.getName(), savedUserEntity.getMail());
-        String decodeUserDirectory = fileUtility.decodeBase32UserFolderName(encodeUserDirectory);
+        String decodeUserDirectory = fileUtility.decodeBase32StringNoPadding(encodeUserDirectory);
         String[] mapProps = decodeUserDirectory.split(":");
         UserEntity decodedUserDetails = new UserEntity();
         decodedUserDetails.setId(Long.parseLong(mapProps[0]));

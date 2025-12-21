@@ -44,15 +44,12 @@ public class FileSystemController {
             String oldName = oldFile.getName();
             String updatedPath = fileSystemService.updateFileName(updateFileNameDTO.getName(), oldFile);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
-                            String.format(
-                                    "Updated file with Id %d from %s to %s. Updated path %s",
-                                    updateFileNameDTO.getFile_id(), oldName, updateFileNameDTO.getName(), updatedPath)));
+                    body(new JSONResponse("Updated file with Id %d from %s to %s. Updated path %s",
+                            updateFileNameDTO.getFile_id(), oldName, updateFileNameDTO.getName(), updatedPath));
         } catch (Exception e) {
             logger.error("Cannot update name: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            String.format("Failed to update file with Id %d: %s", updateFileNameDTO.getFile_id(), e.getMessage()), e));
+                    body(new JSONErrorResponse(e, "Failed to update file with Id %d: %s", updateFileNameDTO.getFile_id(), e.getMessage()));
         }
     }
 
@@ -64,15 +61,13 @@ public class FileSystemController {
             String oldName = oldFolder.getName();
             String updatedPath = fileSystemService.updateFolderName(updateFolderNameDTO.getName(), oldFolder);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
-                            String.format(
-                                    "Updated folder name with Id %d from %s to %s. Updated path %s",
-                                    updateFolderNameDTO.getFolder_id(), oldName, updateFolderNameDTO.getName(), updatedPath)));
+                    body(new JSONResponse("Updated folder name with Id %d from %s to %s. Updated path %s",
+                            updateFolderNameDTO.getFolder_id(), oldName, updateFolderNameDTO.getName(), updatedPath));
         } catch (Exception e) {
             logger.error("Cannot update folder name. {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            String.format("Failed to update folder with Id %d: %s", updateFolderNameDTO.getFolder_id(), e.getMessage()), e));
+                    body(new JSONErrorResponse(e,
+                            "Failed to update folder with Id %d: %s", updateFolderNameDTO.getFolder_id(), e.getMessage()));
         }
     }
 
@@ -88,8 +83,8 @@ public class FileSystemController {
         } catch (Exception e) {
             logger.error("Cannot move folder. {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            String.format("Failed to move folder with Id %d: %s", updateFolderPathDTO.getFormer_folder_id(), e.getMessage()), e));
+                    body(new JSONErrorResponse(e,
+                            "Failed to move folder with Id %d: %s", updateFolderPathDTO.getFormer_folder_id(), e.getMessage()));
         }
     }
 
@@ -104,13 +99,11 @@ public class FileSystemController {
             logger.info("old path controller {}", oldPath);
             String newPath = fileSystemService.moveFile(fileToMove, updateFilePathDTO.getFolder_id());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
-                            String.format("Moved file with Id %d from %s to %s", updateFilePathDTO.getFile_id(), oldPath, newPath)));
+                    body(new JSONResponse("Moved file with Id %d from %s to %s", updateFilePathDTO.getFile_id(), oldPath, newPath));
         } catch (Exception e) {
             logger.error("Cannot move name: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            String.format("Failed to move file with Id %d: %s", updateFilePathDTO.getFile_id(), e.getMessage()), e));
+                    body(new JSONErrorResponse(e, "Failed to move file with Id %d: %s", updateFilePathDTO.getFile_id(), e.getMessage()));
         }
     }
 
@@ -120,12 +113,11 @@ public class FileSystemController {
             FolderMetadata folderToRemove = informationService.getFolderMetadata(folderid);
             String oldPath = fileSystemService.removeFolder(folderToRemove);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
-                            String.format("Folder with Id %d at path %s was successfully removed", folderToRemove.getId(), oldPath)));
+                    body(new JSONResponse("Folder with Id %d at path %s was successfully removed", folderToRemove.getId(), oldPath));
         } catch (Exception e) {
             logger.error("Cannot remove folder #{}: {}", folderid, e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(String.format("Failed remove folder with Id %d", folderid), e));
+                    body(new JSONErrorResponse(e, "Failed remove folder with Id %d", folderid));
         }
     }
 
@@ -135,13 +127,11 @@ public class FileSystemController {
             FileMetadata fileToRemove = informationService.getFileMetadata(fileid);
             String oldPath = fileSystemService.removeFile(fileToRemove);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONResponse(
-                            String.format("file with Id %d at path %s was successfully removed", fileToRemove.getId(), oldPath)));
+                    body(new JSONResponse("file with Id %d at path %s was successfully removed", fileToRemove.getId(), oldPath));
         } catch (Exception e) {
             logger.error("Cannot remove file #{}: {}", fileid, e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            String.format("Failed remove file with Id %d: %s", fileid, e.getMessage()), e));
+                    body(new JSONErrorResponse(e, "Failed remove file with Id %d: %s", fileid, e.getMessage()));
         }
     }
 
@@ -155,13 +145,11 @@ public class FileSystemController {
         } catch (FileSystemException fileSystemException) {
             logger.error("Some folders couldn't be found at folder with Id {}, reason: {}", folderid, fileSystemException.getMessage());
             return ResponseEntity.internalServerError().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(String.format("Some folders couldn't be found at folder with Id %d", folderid),
-                            fileSystemException));
+                    body(new JSONErrorResponse(fileSystemException, "Some folders couldn't be found at folder with Id %d", folderid));
         } catch (Exception e) {
             logger.error("Failed to list items in folder with Id {}, reason: {}", folderid, e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(
-                    new JSONErrorResponse(
-                            String.format("Failed to list items inside folder with Id %d", folderid), e));
+                    new JSONErrorResponse(e, "Failed to list items inside folder with Id %d", folderid));
         }
     }
 }

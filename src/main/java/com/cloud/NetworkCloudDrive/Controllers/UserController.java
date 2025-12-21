@@ -48,7 +48,7 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Failed to login, reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse("Failed to login, reason: " + e.getMessage(), e));
+                    body(new JSONErrorResponse(e, "Failed to login, reason: %s", e.getMessage()));
         }
     }
 
@@ -70,13 +70,11 @@ public class UserController {
         } catch (SecurityException e) {
             logger.error("Failed to register user reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            "Failed to register user, reason: " + e.getMessage(), e));
+                    body(new JSONErrorResponse(e, "Failed to register user, reason: %s", e.getMessage()));
         } catch (IOException e) {
             logger.error("Failed to create user directory reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            "Failed to create user directory reason, reason: " + e.getMessage(), e));
+                    body(new JSONErrorResponse(e, "Failed to create user directory reason, reason: %s", e.getMessage()));
         }
     }
 
@@ -90,8 +88,7 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Failed to update user mail reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            "Failed to update user mail, reason: " + e.getMessage(), e));
+                    body(new JSONErrorResponse(e, "Failed to update user mail, reason: %s", e.getMessage()));
         }
     }
 
@@ -105,8 +102,7 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Failed to update user name reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse(
-                            "Failed to update user name, reason: " + e.getMessage(), e));
+                    body(new JSONErrorResponse(e, "Failed to update user name, reason: %s", e.getMessage()));
         }
     }
 
@@ -120,7 +116,7 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Failed to update user password reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse("Failed to update user password, reason: " + e.getMessage(), e));
+                    body(new JSONErrorResponse(e, "Failed to update user password, reason: %s", e.getMessage()));
         }
     }
 
@@ -135,7 +131,7 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Failed to delete user reason: {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse("Failed to delete user, reason: " + e.getMessage(), e));
+                    body(new JSONErrorResponse(e, "Failed to delete user, reason: %s", e.getMessage()));
         }
     }
 
@@ -147,7 +143,7 @@ public class UserController {
                             "Currently authenticated user info", userService.currentUserDetails(userSession.getMail())));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
-                    body(new JSONErrorResponse("Failed to get user details, reason: " + e.getMessage(), e));
+                    body(new JSONErrorResponse(e, "Failed to get user details, reason: %s", e.getMessage()));
         }
     }
 }

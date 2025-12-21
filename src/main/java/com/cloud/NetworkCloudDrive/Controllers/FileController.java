@@ -46,7 +46,7 @@ public class FileController {
         } catch (Exception e) {
             logger.error("Failed to upload file. {}", e.getMessage());
             return ResponseEntity.badRequest().body(
-                    new JSONErrorResponse("Failed to upload file", e));
+                    new JSONErrorResponse(e, "Failed to upload file"));
         }
     }
 
@@ -65,12 +65,12 @@ public class FileController {
         }
         catch (FileSystemException fse) {
             logger.error("Internal error occurred. {}", fse.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONErrorResponse("Internal error occurred", fse));
+            return ResponseEntity.internalServerError().body(new JSONErrorResponse(fse, "Internal error occurred"));
         }
         catch (Exception e) {
             logger.error("Failed to download file. {}", e.getMessage());
             return ResponseEntity.internalServerError().body(
-                    new JSONErrorResponse("Failed to download file",e));
+                    new JSONErrorResponse(e, "Failed to download file"));
         }
     }
 
@@ -89,7 +89,7 @@ public class FileController {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
             logger.error("Error creating folder with name: {}. {}", folderDTO.getName(), e.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONErrorResponse(e.getMessage(),e));
+            return ResponseEntity.internalServerError().body(new JSONErrorResponse(e));
         }
     }
 }

@@ -48,7 +48,6 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     @Override
-    @Transactional
     public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
             throws FileSystemException, SQLException {
         List<Object> folderAndFileMetadata = new ArrayList<>();
@@ -70,7 +69,6 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     @Override
-    @Transactional
     public String removeFile(FileMetadata file) throws Exception {
         //find folder
         File checkExists = fileUtility.returnFileIfItExists(
@@ -98,7 +96,6 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     @Override
-    @Transactional
     public String updateFolderName(String newName, FolderMetadata folder) throws Exception {
         //find file
         File checkExists = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(folder.getPath()));
@@ -120,7 +117,6 @@ public class FileSystemService implements FileSystemRepository {
     }
 
     @Override
-    @Transactional
     public String updateFileName(String newName, FileMetadata file) throws Exception {
         String folderPath = fileStorageProperties.getBasePath() + fileUtility.getFolderPath(file.getFolderId());
         //find file
@@ -139,7 +135,7 @@ public class FileSystemService implements FileSystemRepository {
         if (!Files.exists(newUpdatedPath))
             throw new FileSystemException(String.format("Failed to rename the file to %s", renamedFile.getName()));
         // get ready for transaction
-        // mimetype has bug in the library (cant detect types such as yaml)
+        // mimetype has bug in the library (cant detect types such as YAML)
         String newMimeType = fileUtility.getMimeTypeFromExtension(newUpdatedPath); /* <- get new mimetype of file */
         //set new name and path
         file.setName(newName + oldExtension);
@@ -151,7 +147,6 @@ public class FileSystemService implements FileSystemRepository {
         return renamedFile.getPath();
     }
 
-    @Transactional
     @Override
     public String moveFile(FileMetadata targetFile, long folderId) throws Exception {
         String destinationFolder = fileStorageProperties.getBasePath() + fileUtility.getFolderPath(folderId);
@@ -214,12 +209,6 @@ public class FileSystemService implements FileSystemRepository {
         sqLiteDAO.saveAllFolders(folderMetadataList);
         // return new path
         return updatedPath.toString();
-        /*
-        0/1/2/3/4/5
-        2 -> 0
-        0/1/2 => (replace 0/1/2 oldprefix with 0/2 + folderid)
-        0/1/2/3 => (replace 0/1/2 oldprefix with 0/2 + folderid => )
-         */
     }
 
     @Override

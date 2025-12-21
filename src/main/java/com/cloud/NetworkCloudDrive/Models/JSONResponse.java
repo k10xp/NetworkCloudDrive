@@ -20,6 +20,18 @@ public class JSONResponse {
         this.date_time = formatDateTime();
     }
 
+    public JSONResponse(String message, Object... args) {
+        this.message = String.format(message, args);
+        this.success = true;
+        this.date_time = formatDateTime();
+    }
+
+    public JSONResponse(boolean success, String message, Object... args) {
+        this.message = String.format(message, args);
+        this.success = success;
+        this.date_time = formatDateTime();
+    }
+
     private String formatDateTime() {
         LocalDateTime today = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");

@@ -42,6 +42,7 @@ public class FileUtility {
     }
 
     //WHAT A MESS
+    //TODO instead of generating Id paths use startsWith from DAO and filter files by found folders id's then delete them both from db and system
     public void deleteFsTree(Path dir, String startingIdPath) throws IOException {
         logger.info("Start File Tree deletion operation");
         long errorCount = 0;
@@ -262,9 +263,22 @@ public class FileUtility {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(encode.getBytes());
     }
 
-    public String decodeBase32UserFolderName(String base32String) {
+    public String decodeBase32StringNoPadding(String base32String) {
         byte[] decodedString = Base64.getUrlDecoder().decode(base32String.getBytes());
         return new String(decodedString);
+    }
+
+    public String encodeBase32FileName(long userId, String fileName, long folderId) {
+        String encode = userId + ":" + fileName + ":" + folderId;
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(encode.getBytes());
+    }
+
+    public String encodeBase32(Object... encodeIn) {
+        String encodev2 = "";
+        for (Object object : encodeIn) {
+            encodev2 += object + ":";
+        }
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(encodev2.getBytes());
     }
 
     // alternative algorithm to walk file tree

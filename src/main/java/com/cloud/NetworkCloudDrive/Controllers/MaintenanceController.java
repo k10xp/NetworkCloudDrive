@@ -38,7 +38,7 @@ public class MaintenanceController {
                             Path.of(fileStorageProperties.getFullPath(fileUtility.getFolderPath(folderid))))));
         } catch (Exception e) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON)
-                    .body(new JSONErrorResponse("error scanning", e));
+                    .body(new JSONErrorResponse(e, "error scanning"));
         }
     }
 }
