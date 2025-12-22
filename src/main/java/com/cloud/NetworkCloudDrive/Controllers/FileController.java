@@ -15,7 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
+import java.sql.SQLException;
 
 @RestController
 @RequestMapping(path = "/api/file")
@@ -40,13 +43,19 @@ public class FileController {
     @PostMapping("upload")
     public ResponseEntity<?> uploadFile(@RequestParam MultipartFile[] files, @RequestParam long folderid) {
         try {
-            if (files.length == 0) throw new NullPointerException("No file is provided");
+            if (files.length == 0)
+                throw new NullPointerException("No file is provided");
             String folderPath = fileUtility.getFolderPath(folderid);
             return ResponseEntity.ok().body(fileService.uploadFiles(files, folderPath, folderid));
-        } catch (Exception e) {
+        } catch(FileAlreadyExistsException fileAlreadyExistsException) {
+            logger.error("File already exists at destination {}", fileAlreadyExistsException.getMessage());
+            return ResponseEntity.badRequest().body(new JSONErrorResponse(fileAlreadyExistsException));
+        } catch (IOException e) {
             logger.error("Failed to upload file. {}", e.getMessage());
-            return ResponseEntity.badRequest().body(
-                    new JSONErrorResponse(e, "Failed to upload file"));
+            return ResponseEntity.internalServerError().body(new JSONErrorResponse(e, "Failed to upload file"));
+        } catch (SQLException sqlException) {
+            logger.error("SQL error occurred {}", sqlException.getMessage());
+            return ResponseEntity.internalServerError().body(new JSONErrorResponse(sqlException, "SQL error occurred"));
         }
     }
 

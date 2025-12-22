@@ -4,14 +4,13 @@ import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileRepository;
-import com.cloud.NetworkCloudDrive.Repositories.SQLiteFileRepository;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
+import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,10 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,20 +30,28 @@ public class FileService implements FileRepository {
     private final UserSession userSession;
     private final Path rootPath;
     private final Logger logger = LoggerFactory.getLogger(FileService.class);
+    private final FileUtility fileUtility;
 
-    public FileService(FileStorageProperties fileStorageProperties, SQLiteDAO sqLiteDAO, UserSession userSession) {
+    public FileService(FileStorageProperties fileStorageProperties, SQLiteDAO sqLiteDAO, UserSession userSession, FileUtility fileUtility) {
         this.sqLiteDAO = sqLiteDAO;
         this.userSession = userSession;
         this.fileStorageProperties = fileStorageProperties;
         this.rootPath = Paths.get(fileStorageProperties.getBasePath());
+        this.fileUtility = fileUtility;
     }
 
     @Override
-    public Map<String ,?> uploadFiles(MultipartFile[] files, String folderPath, long folderId) throws Exception {
+    public Map<String ,?> uploadFiles(MultipartFile[] files, String folderPath, long folderId) throws IOException {
         String storagePath;
         List<String> storagePathList = new ArrayList<>();
         List<FileMetadata> uploadedFiles = new ArrayList<>();
+        List<Path> filesInside = fileUtility.getFileAndFolderPathsFromFolder(folderPath);
         for (MultipartFile file : files) {
+            //check for duplicates at destination
+            if (filesInside.stream().anyMatch(dup -> dup.toFile().getName().equals(file.getOriginalFilename()))) {
+                logger.info("duplicate {}", file.getOriginalFilename());
+                continue;
+            }
             try (InputStream inputStream = file.getInputStream()) {
                 storagePath = storeFile(inputStream, file.getOriginalFilename(), folderPath);
             }
@@ -56,6 +60,8 @@ public class FileService implements FileRepository {
             uploadedFiles.add(metadata);
             storagePathList.add(storagePath);
         }
+        if (storagePathList.isEmpty())
+            throw new FileAlreadyExistsException("File(s) already exists at destination");
         return Map.of("files", sqLiteDAO.saveAllFiles(uploadedFiles), "storage_path", storagePathList);
     }
 
