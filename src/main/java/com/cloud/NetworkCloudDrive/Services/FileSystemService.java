@@ -1,10 +1,13 @@
 package com.cloud.NetworkCloudDrive.Services;
 
+import com.cloud.NetworkCloudDrive.DTO.FileListItemDTO;
+import com.cloud.NetworkCloudDrive.DTO.FolderListItemDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileSystemRepository;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
+import com.cloud.NetworkCloudDrive.Utilities.EncodingUtility;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import jakarta.persistence.EntityManager;
@@ -31,6 +34,7 @@ public class FileSystemService implements FileSystemRepository {
     private final UserSession userSession;
     private final SQLiteDAO sqLiteDAO;
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
+    private final EncodingUtility encodingUtility;
 
     public FileSystemService(
             InformationService informationService,
@@ -38,13 +42,14 @@ public class FileSystemService implements FileSystemRepository {
             EntityManager entityManager,
             UserSession userSession,
             FileUtility fileUtility,
-            SQLiteDAO sqLiteDAO) {
+            SQLiteDAO sqLiteDAO, EncodingUtility encodingUtility) {
         this.fileStorageProperties = fileStorageProperties;
         this.informationService = informationService;
         this.entityManager = entityManager;
         this.userSession = userSession;
         this.fileUtility = fileUtility;
         this.sqLiteDAO = sqLiteDAO;
+        this.encodingUtility = encodingUtility;
     }
 
     @Override
@@ -55,14 +60,19 @@ public class FileSystemService implements FileSystemRepository {
         for (Path path : filePaths) {
             File file = path.toFile();
             logger.info("file/folder in queue {}", file);
+            String actualFileName = encodingUtility.decodedBase32SplitArray(file.getName())[1];
             if (file.isFile()) {
-                folderAndFileMetadata.add(
-                        sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), userSession.getId()));
+                FileMetadata foundFile = sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), userSession.getId());
+                FileListItemDTO fileListItemDTO = new FileListItemDTO(foundFile);
+                fileListItemDTO.setName(actualFileName);
+                folderAndFileMetadata.add(fileListItemDTO);
                 continue;
             }
             FolderMetadata foundFolderMetadata =
                     informationService.getFolderMetadataByFolderIdAndName(currentFolderId, file.getName(), lastIdList);
-            folderAndFileMetadata.add(foundFolderMetadata);
+            FolderListItemDTO folderListItemDTO = new FolderListItemDTO(foundFolderMetadata);
+            folderListItemDTO.setName(actualFileName);
+            folderAndFileMetadata.add(folderListItemDTO);
             lastIdList.add(foundFolderMetadata.getId());
         }
         return folderAndFileMetadata;
@@ -226,18 +236,20 @@ public class FileSystemService implements FileSystemRepository {
             precedingPath = userFolder.getName();
             idPath = "0";
         }
-        File folder = new File(rootPath + precedingPath + File.separator + folderName);
-        if (folder.exists())
-            throw new FileAlreadyExistsException(
-                    String.format("Folder with name %s already exists at this path %s.", folderName, folder.getPath()));
-        if (!folder.mkdir())
-            throw new IOException(
-                    String.format("Cannot create directory, with name %s. Make sure you are creating a single folder.", folderName));
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
+        String encodedFolderName = encodingUtility.encodeBase32FolderName(createdFolder.getId(), folderName, userSession.getId());
         createdFolder.setPath(idPath + "/" + createdFolder.getId());
         createdFolder.setUserid(userSession.getId());
-        createdFolder.setName(folderName);
+        createdFolder.setName(encodedFolderName);
+        File folder = new File(rootPath + precedingPath + File.separator + encodedFolderName);
+        if (Files.exists(folder.toPath()))
+            throw new FileAlreadyExistsException(
+                    String.format("Folder with name %s already exists at this path %s.", folderName, folder.getPath()));
+        Path createdFolderPath = Files.createDirectory(folder.toPath());
+        if (Files.notExists(createdFolderPath))
+            throw new IOException(
+                    String.format("Cannot create directory, with name %s. Make sure you are creating a single folder.", folderName));
         return sqLiteDAO.saveFolder(createdFolder);
     }
 }

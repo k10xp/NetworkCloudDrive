@@ -50,12 +50,12 @@ public class FileController {
         } catch(FileAlreadyExistsException fileAlreadyExistsException) {
             logger.error("File already exists at destination {}", fileAlreadyExistsException.getMessage());
             return ResponseEntity.badRequest().body(new JSONErrorResponse(fileAlreadyExistsException));
-        } catch (IOException e) {
-            logger.error("Failed to upload file. {}", e.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONErrorResponse(e, "Failed to upload file"));
         } catch (SQLException sqlException) {
             logger.error("SQL error occurred {}", sqlException.getMessage());
             return ResponseEntity.internalServerError().body(new JSONErrorResponse(sqlException, "SQL error occurred"));
+        } catch (Exception e) {
+            logger.error("Failed to upload file. {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(new JSONErrorResponse(e, "Failed to upload file"));
         }
     }
 

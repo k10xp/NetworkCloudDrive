@@ -6,12 +6,12 @@ public class JSONMapResponse extends JSONResponse {
     private Map<String, ?> map_of;
 
     public JSONMapResponse(Map<String, ?> map_of, boolean success, String message) {
-        super(message, success);
+        super(success, message);
         this.map_of = map_of;
     }
 
     public JSONMapResponse(Map<String, ?> map_of, String message) {
-        super(message, true);
+        super(true, message);
         this.map_of = map_of;
     }
 

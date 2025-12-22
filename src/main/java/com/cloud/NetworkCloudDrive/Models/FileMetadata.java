@@ -32,7 +32,7 @@ public class FileMetadata {
     @CreationTimestamp
     private Instant createdAt;
 
-    public FileMetadata(String name, Long folderId,Long userid, String mimiType, Long size) {
+    public FileMetadata(String name, Long folderId, Long userid, String mimiType, Long size) {
         this.name = name;
         this.folderId = folderId;
         this.userid = userid;

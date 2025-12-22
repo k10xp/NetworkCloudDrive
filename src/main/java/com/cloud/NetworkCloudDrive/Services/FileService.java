@@ -5,12 +5,15 @@ import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileRepository;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
+import com.cloud.NetworkCloudDrive.Utilities.EncodingUtility;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
+import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,36 +31,52 @@ import java.util.Map;
 public class FileService implements FileRepository {
     private final FileStorageProperties fileStorageProperties;
     private final SQLiteDAO sqLiteDAO;
+    private final EntityManager entityManager;
     private final UserSession userSession;
     private final Path rootPath;
     private final Logger logger = LoggerFactory.getLogger(FileService.class);
     private final FileUtility fileUtility;
+    private final EncodingUtility encodingUtility;
 
-    public FileService(FileStorageProperties fileStorageProperties, SQLiteDAO sqLiteDAO, UserSession userSession, FileUtility fileUtility) {
+    public FileService(
+            FileStorageProperties fileStorageProperties,
+            SQLiteDAO sqLiteDAO,
+            UserSession userSession,
+            FileUtility fileUtility,
+            EncodingUtility encodingUtility,
+            EntityManager entityManager) {
         this.sqLiteDAO = sqLiteDAO;
+        this.entityManager = entityManager;
         this.userSession = userSession;
         this.fileStorageProperties = fileStorageProperties;
         this.rootPath = Paths.get(fileStorageProperties.getBasePath());
         this.fileUtility = fileUtility;
+        this.encodingUtility = encodingUtility;
     }
 
     @Override
-    public Map<String ,?> uploadFiles(MultipartFile[] files, String folderPath, long folderId) throws IOException {
+    @Transactional
+    public Map<String ,?> uploadFiles(MultipartFile[] files, String folderPath, long folderId) throws IOException, NoSuchAlgorithmException {
         String storagePath;
         List<String> storagePathList = new ArrayList<>();
         List<FileMetadata> uploadedFiles = new ArrayList<>();
         List<Path> filesInside = fileUtility.getFileAndFolderPathsFromFolder(folderPath);
         for (MultipartFile file : files) {
+            String fileName = file.getOriginalFilename();
             //check for duplicates at destination
-            if (filesInside.stream().anyMatch(dup -> dup.toFile().getName().equals(file.getOriginalFilename()))) {
+            if (filesInside.stream().anyMatch(dup -> encodingUtility.decodedBase32SplitArray(dup.toFile().getName())[1].equals(fileName))) {
                 logger.info("duplicate {}", file.getOriginalFilename());
                 continue;
             }
+            // Construct file metadata
+            FileMetadata metadata = new FileMetadata(fileName, folderId, userSession.getId(), file.getContentType(), file.getSize());
+            entityManager.persist(metadata);
+            // Encode in BASE32
+            String encodedFileName = encodingUtility.encodeBase32FileName(metadata.getId(), fileName, userSession.getId());
             try (InputStream inputStream = file.getInputStream()) {
-                storagePath = storeFile(inputStream, file.getOriginalFilename(), folderPath);
+                storagePath = storeFile(inputStream, encodedFileName, folderPath);
             }
-            FileMetadata metadata = new FileMetadata(
-                    file.getOriginalFilename(), folderId, userSession.getId(), file.getContentType(), file.getSize());
+            metadata.setName(encodedFileName);
             uploadedFiles.add(metadata);
             storagePathList.add(storagePath);
         }
@@ -78,10 +98,12 @@ public class FileService implements FileRepository {
     @Override
     public Resource getFile(FileMetadata file, String path) throws Exception {
         Path filePath = Path.of(fileStorageProperties.getBasePath() + File.separator + path + File.separator + file.getName());
-        logger.info("fileservice path: {}", filePath);
+        logger.info("file service path: {}", filePath);
         Path normalizedRoot = rootPath.normalize().toAbsolutePath();
-        if (filePath.startsWith(normalizedRoot)) throw new SecurityException("Unauthorized access");
-        if (!Files.exists(filePath)) throw new IOException("File does not exist");
+        if (filePath.startsWith(normalizedRoot))
+            throw new SecurityException("Unauthorized access");
+        if (!Files.exists(filePath))
+            throw new IOException("File does not exist");
         return new UrlResource(filePath.toAbsolutePath().toUri());
     }
 }

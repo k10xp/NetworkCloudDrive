@@ -79,7 +79,8 @@ public class FileSystemController {
             String newPath = fileSystemService.moveFolder(folderToMove, updateFolderPathDTO.getDestination_folder_id());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONMapResponse(
-                            Map.of("old_path", oldPath, "new_path", newPath), "Successfully moved folder with Id %d"));
+                            Map.of("old_path", oldPath, "new_path", newPath),
+                            "Successfully moved folder with Id %d", updateFolderPathDTO.getFormer_folder_id()));
         } catch (Exception e) {
             logger.error("Cannot move folder. {}", e.getMessage());
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).
