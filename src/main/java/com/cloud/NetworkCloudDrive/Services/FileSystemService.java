@@ -56,24 +56,23 @@ public class FileSystemService implements FileSystemRepository {
     public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
             throws FileSystemException, SQLException {
         List<Object> folderAndFileMetadata = new ArrayList<>();
-        List<Long> lastIdList = new ArrayList<>();
         for (Path path : filePaths) {
             File file = path.toFile();
             logger.info("file/folder in queue {}", file);
-            String actualFileName = encodingUtility.decodedBase32SplitArray(file.getName())[1];
+            String[] arrayString = encodingUtility.decodedBase32SplitArray(file.getName());
+            long actualFileId = Long.parseLong(arrayString[0]);
+            String actualFileName = arrayString[1];
             if (file.isFile()) {
-                FileMetadata foundFile = sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), userSession.getId());
+                FileMetadata foundFile = sqLiteDAO.queryFileMetadata(actualFileId, userSession.getId());
                 FileListItemDTO fileListItemDTO = new FileListItemDTO(foundFile);
                 fileListItemDTO.setName(actualFileName);
                 folderAndFileMetadata.add(fileListItemDTO);
                 continue;
             }
-            FolderMetadata foundFolderMetadata =
-                    informationService.getFolderMetadataByFolderIdAndName(currentFolderId, file.getName(), lastIdList);
+            FolderMetadata foundFolderMetadata = sqLiteDAO.queryFolderMetadata(actualFileId, userSession.getId());
             FolderListItemDTO folderListItemDTO = new FolderListItemDTO(foundFolderMetadata);
             folderListItemDTO.setName(actualFileName);
             folderAndFileMetadata.add(folderListItemDTO);
-            lastIdList.add(foundFolderMetadata.getId());
         }
         return folderAndFileMetadata;
     }
@@ -109,19 +108,22 @@ public class FileSystemService implements FileSystemRepository {
     public String updateFolderName(String newName, FolderMetadata folder) throws Exception {
         //find file
         File checkExists = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(folder.getPath()));
+        // Encode newName in BASE32
+        String encodeBase32FolderName = encodingUtility.encodeBase32FolderName(folder.getId(), newName, folder.getUserid());
         //rename file
         //check duplicate
-        File renamedFolder = fileUtility.returnIfItsNotADuplicate(Path.of(checkExists.getPath()).getParent() + File.separator + newName);
+        File renamedFolder =
+                fileUtility.returnIfItsNotADuplicate(Path.of(checkExists.getPath()).getParent() + File.separator + encodeBase32FolderName);
         logger.info("estimated path: {}", renamedFolder.getPath());
         Path newUpdatedPath = Files.move(checkExists.toPath(), renamedFolder.toPath());
         if (Files.exists(newUpdatedPath)) {
             //set new name and path
-            folder.setName(newName);
+            folder.setName(encodeBase32FolderName);
             //save
             sqLiteDAO.saveFolder(folder);
             logger.info("Renamed folder full path: {}", renamedFolder.getPath());
         } else {
-            throw new FileSystemException(String.format("Failed to rename the folder to %s", renamedFolder.getName()));
+            throw new FileSystemException(String.format("Failed to rename the folder to %s", newName));
         }
         return renamedFolder.getPath();
     }
@@ -133,10 +135,13 @@ public class FileSystemService implements FileSystemRepository {
         File checkExists = new File(folderPath + File.separator + file.getName());
         if (!Files.exists(checkExists.toPath(), LinkOption.NOFOLLOW_LINKS))
             throw new FileNotFoundException("File not found");
+        String decodeOldFileName = encodingUtility.decodedBase32SplitArray(file.getName())[1];
         //save extension
-        String oldExtension = fileUtility.getFileExtension(file.getName());
+        String oldExtension = fileUtility.getFileExtension(decodeOldFileName);
+        // Encode newName in BASE32
+        String encodeBase32FolderName = encodingUtility.encodeBase32FolderName(file.getId(), newName + oldExtension, file.getUserid());
         //rename file
-        File renamedFile = new File(folderPath + File.separator + newName + fileUtility.getFileExtension(file.getName()));
+        File renamedFile = new File(folderPath + File.separator + encodeBase32FolderName);
         //check duplicate
         if (Files.exists(renamedFile.toPath()))
             throw new FileAlreadyExistsException(String.format("File with name %s already exists", renamedFile.getName()));
@@ -148,7 +153,7 @@ public class FileSystemService implements FileSystemRepository {
         // mimetype has bug in the library (cant detect types such as YAML)
         String newMimeType = fileUtility.getMimeTypeFromExtension(newUpdatedPath); /* <- get new mimetype of file */
         //set new name and path
-        file.setName(newName + oldExtension);
+        file.setName(encodeBase32FolderName);
         file.setMimiType(newMimeType != null ? (newMimeType.equals(file.getMimiType())
                 ? file.getMimiType() : newMimeType) : file.getMimiType());
         //save
