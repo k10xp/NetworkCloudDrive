@@ -20,8 +20,7 @@ public class EncodingUtility {
      * @return  BASE32 encoded user folder name
      */
     public String encodeBase32UserFolderName(long userId, String username, String mail) {
-        String encode = userId + ":" + username + ":" + mail;
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(encode.getBytes());
+        return Base64.getUrlEncoder().withoutPadding().encodeToString((userId + ":" + username + ":" + mail).getBytes());
     }
 
     /**
@@ -30,14 +29,13 @@ public class EncodingUtility {
      * @return  decoded BASE32 string
      */
     public String decodeBase32StringNoPadding(String base32String) {
-        byte[] decodedString = Base64.getUrlDecoder().decode(base32String.getBytes());
-        return new String(decodedString);
+        return new String(Base64.getUrlDecoder().decode(base32String.getBytes()));
     }
 
     /**
-     * Decode BASE32 encoded file/folder names
+     * Decode BASE32 encoded file/folder names.
      * @param base32String  BASE32 encoded file/folder name
-     * @return  decoded BASE32 string split by ":"
+     * @return  decoded BASE32 string split by ":". Split result 0 is file/folder ID, 1 is file/folder name and 2 is userID
      */
     public String[] decodedBase32SplitArray(String base32String) {
         return decodeBase32StringNoPadding(base32String).split(":");
@@ -51,8 +49,7 @@ public class EncodingUtility {
      * @return  BASE32 encoded Folder name
      */
     public String encodeBase32FolderName(long folderId, String folderName, long userId) {
-        String encode = folderId + ":" + folderName + ":" + userId;
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(encode.getBytes());
+        return Base64.getUrlEncoder().withoutPadding().encodeToString((folderId + ":" + folderName + ":" + userId).getBytes());
     }
 
     /**
@@ -66,7 +63,6 @@ public class EncodingUtility {
         return encodeBase32FolderName(fileId, fileName, userId);
     }
 
-    // Hashes
     /**
      * Hashes string in given algorithms
      * @param originalString    string to hash
@@ -78,12 +74,8 @@ public class EncodingUtility {
         // Source - https://stackoverflow.com/a/5531479
         // Posted by Jon Skeet, modified by community. See post 'Timeline' for change history
         // Retrieved 2025-12-22, License - CC BY-SA 4.0
-        if (originalString == null)
-            throw new NullPointerException("String to hash is null");
-        if (algorithm == null)
-            throw new NullPointerException("No hash algorithm given");
-        MessageDigest digest = MessageDigest.getInstance(algorithm);
-        byte[] hash = digest.digest(originalString.getBytes(StandardCharsets.UTF_8));
-        return new String(hash);
+        if (originalString == null) throw new NullPointerException("String to hash is null");
+        if (algorithm == null) throw new NullPointerException("No hash algorithm given");
+        return new String(MessageDigest.getInstance(algorithm).digest(originalString.getBytes(StandardCharsets.UTF_8)));
     }
 }

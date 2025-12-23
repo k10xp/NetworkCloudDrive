@@ -107,12 +107,12 @@ public class FileSystemService implements FileSystemRepository {
     public String updateFolderName(String newName, FolderMetadata folder) throws Exception {
         //find file
         File checkExists = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(folder.getPath()));
+        //check duplicate
+        if (fileUtility.checkIfFileExistsDecodeNames(fileUtility.returnParentFolderPathFromFolderID(folder.getId()), newName))
+            throw new FileAlreadyExistsException(String.format("Folder with name %s already exists", newName));
         // Encode newName in BASE32
         String encodeBase32FolderName = encodingUtility.encodeBase32FolderName(folder.getId(), newName, folder.getUserid());
         //rename file
-        //check duplicate
-        if (fileUtility.checkIfFileExistsDecodeNames(fileUtility.getFolderPath(folder.getId()), newName))
-            throw new FileAlreadyExistsException(String.format("Folder with name %s already exists", newName));
         File renamedFolder =
                 fileUtility.returnIfItsNotADuplicate(Path.of(checkExists.getPath()).getParent() + File.separator + encodeBase32FolderName);
         logger.info("estimated path: {}", renamedFolder.getPath());
@@ -231,21 +231,26 @@ public class FileSystemService implements FileSystemRepository {
     @Override
     @Transactional
     public FolderMetadata createFolder(String folderName, long folderId) throws Exception {
+        // Paths
         String idPath = fileUtility.getIdPath(folderId);
         String userFolder = fileUtility.getFolderPath(folderId);
         String fullPath = fileStorageProperties.getFullPath(userFolder);
+        // Folder metadata
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
         String encodedFolderName = encodingUtility.encodeBase32FolderName(createdFolder.getId(), folderName, userSession.getId());
         createdFolder.setPath(idPath + "/" + createdFolder.getId());
         createdFolder.setUserid(userSession.getId());
         createdFolder.setName(encodedFolderName);
-        File folder = new File(fullPath + File.separator + encodedFolderName);
+        // Check if duplicate
         if (fileUtility.checkIfFileExistsDecodeNames(userFolder, folderName))
             throw new FileAlreadyExistsException(String.format("Folder with name %s already exists at this path %s.", folderName, fullPath));
+        // Create directory
+        File folder = new File(fullPath + File.separator + encodedFolderName);
         Path createdFolderPath = Files.createDirectory(folder.toPath());
         if (Files.notExists(createdFolderPath))
             throw new IOException(String.format("Cannot create directory, with name %s.", folderName));
+        // save and return metadata
         return sqLiteDAO.saveFolder(createdFolder);
     }
 }

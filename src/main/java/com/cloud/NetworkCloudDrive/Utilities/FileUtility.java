@@ -158,6 +158,12 @@ public class FileUtility {
         return checkExists;
     }
 
+    public String returnParentFolderPathFromFolderID(long folderId) throws SQLException, FileSystemException {
+        String[] splitPath = sqLiteDAO.queryFolderMetadata(folderId, userSession.getId()).getPath().split("/");
+        long parentFolderId = Long.parseLong(splitPath[splitPath.length - 2]);
+        return getFolderPath(parentFolderId);
+    }
+
     /**
      * Returns User folder or path to folder using folderId
      * @param folderId  get path to folder with ID passed
@@ -227,8 +233,8 @@ public class FileUtility {
      * @throws IOException  if filepath is invalid
      */
     public boolean checkIfFileExistsDecodeNames(String filePath, String decodedFileName) throws IOException {
-        List<Path> files = getFileAndFolderPathsFromFolder(filePath);
-        return files.stream().anyMatch(file -> encodingUtility.decodedBase32SplitArray(file.toFile().getName())[1].equals(decodedFileName));
+        return getFileAndFolderPathsFromFolder(filePath).stream().
+                anyMatch(file -> encodingUtility.decodedBase32SplitArray(file.toFile().getName())[1].equals(decodedFileName));
     }
 
     //TODO Can be replaced with Streams().AnyMatches()
@@ -287,11 +293,16 @@ public class FileUtility {
         return fullPath.toString();
     }
 
+    /**
+     * Return correct file separator (regex compliant)
+     * @return  correct file separator
+     */
     private String returnCorrectSeparatorRegex() {
         return System.getProperty("os.name").toLowerCase().contains("windows") ? "\\\\" : "/";
     }
 
     // Generate ID path from System path
+    // rewrite
     // TODO can be replaced using StartsWith function in SQLiteDAO just like in moveFolders()
     public String generateIdPaths(String filePath, String startingIdPath) throws IOException {
         String[] folders =

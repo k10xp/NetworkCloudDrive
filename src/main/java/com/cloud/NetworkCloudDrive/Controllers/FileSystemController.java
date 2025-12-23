@@ -5,6 +5,7 @@ import com.cloud.NetworkCloudDrive.Models.*;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import com.cloud.NetworkCloudDrive.Services.InformationService;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
+import com.cloud.NetworkCloudDrive.Utilities.EncodingUtility;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +26,18 @@ public class FileSystemController {
     private final InformationService informationService;
     private final UserSession userSession;
     private final Logger logger = LoggerFactory.getLogger(FileSystemController.class);
+    private final EncodingUtility encodingUtility;
 
     public FileSystemController(
             FileSystemService fileSystemService,
             InformationService informationService,
             UserSession userSession,
-            FileUtility fileUtility) {
+            FileUtility fileUtility, EncodingUtility encodingUtility) {
         this.fileSystemService = fileSystemService;
         this.informationService = informationService;
         this.userSession = userSession;
         this.fileUtility = fileUtility;
+        this.encodingUtility = encodingUtility;
     }
 
     @PostMapping(value = "file/rename", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -54,11 +57,10 @@ public class FileSystemController {
     }
 
     @PostMapping(value = "folder/rename", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody ResponseEntity<JSONResponse> updateFolderName(
-            @RequestBody UpdateFolderNameDTO updateFolderNameDTO) {
+    public @ResponseBody ResponseEntity<JSONResponse> updateFolderName(@RequestBody UpdateFolderNameDTO updateFolderNameDTO) {
         try {
             FolderMetadata oldFolder = informationService.getFolderMetadata(updateFolderNameDTO.getFolder_id());
-            String oldName = oldFolder.getName();
+            String oldName = encodingUtility.decodedBase32SplitArray(oldFolder.getName())[1];
             String updatedPath = fileSystemService.updateFolderName(updateFolderNameDTO.getName(), oldFolder);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse("Updated folder name with Id %d from %s to %s. Updated path %s",

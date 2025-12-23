@@ -97,7 +97,7 @@ class NetworkCloudDriveApplicationTests {
     }
 
     public UserEntity setupUserObject(String name, String mail, String password, UserRole userRole) {
-        UserEntity userEntity = new UserEntity(name, mail, password, userRole);
+        UserEntity userEntity = new UserEntity(name, mail.toLowerCase(), password, userRole);
         logger.info("Arranged UserEntity details: name {} mail {} and password {}. Extra details: registered at {}, last login {} and role {}",
                 userEntity.getName(),
                 userEntity.getMail(),
