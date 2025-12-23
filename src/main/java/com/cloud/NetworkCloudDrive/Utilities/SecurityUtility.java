@@ -3,8 +3,6 @@ package com.cloud.NetworkCloudDrive.Utilities;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import com.cloud.NetworkCloudDrive.Enum.UserRole;
 import com.cloud.NetworkCloudDrive.Models.UserEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,7 +19,7 @@ public class SecurityUtility implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserEntity returnedUser = sqLiteDAO.findUserByMail(username);
+        UserEntity returnedUser = sqLiteDAO.findUserByMail(username.toLowerCase());
         return User.builder().
                 username(returnedUser.getMail()).
                 password(returnedUser.getPassword()).

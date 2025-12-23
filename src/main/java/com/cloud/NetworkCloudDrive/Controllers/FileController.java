@@ -5,6 +5,7 @@ import com.cloud.NetworkCloudDrive.Models.*;
 import com.cloud.NetworkCloudDrive.Services.FileService;
 import com.cloud.NetworkCloudDrive.Services.FileSystemService;
 import com.cloud.NetworkCloudDrive.Services.InformationService;
+import com.cloud.NetworkCloudDrive.Utilities.EncodingUtility;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
 import java.sql.SQLException;
@@ -28,16 +28,18 @@ public class FileController {
     private final InformationService informationService;
     private final FileUtility fileUtility;
     private final Logger logger = LoggerFactory.getLogger(FileController.class);
+    private final EncodingUtility encodingUtility;
 
     public FileController(
             FileSystemService fileSystemService,
             FileService fileService,
             InformationService informationService,
-            FileUtility fileUtility) {
+            FileUtility fileUtility, EncodingUtility encodingUtility) {
         this.fileService = fileService;
         this.fileSystemService = fileSystemService;
         this.informationService = informationService;
         this.fileUtility = fileUtility;
+        this.encodingUtility = encodingUtility;
     }
 
     @PostMapping("upload")
@@ -64,11 +66,12 @@ public class FileController {
         try {
             FileMetadata metadata = informationService.getFileMetadata(fileid);
             String actualPath = fileUtility.getFolderPath(metadata.getFolderId());
+            String decodedFileName = encodingUtility.decodedBase32SplitArray(metadata.getName())[1];
             logger.info("path requested {}", actualPath);
             Resource file = fileService.getFile(metadata, actualPath);
             return ResponseEntity.ok().
                     header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + metadata.getName() + "\" "). //return filename
+                            "attachment; filename=\"" + decodedFileName + "\" "). //return filename
                             contentType(MediaType.parseMediaType(metadata.getMimiType())).
                     contentLength(metadata.getSize()).body(file);
         }
@@ -92,13 +95,15 @@ public class FileController {
     @PostMapping(value = "create/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
         try {
-            FolderMetadata folderMetadata =
-                    fileSystemService.createFolder(folderDTO.getName(), folderDTO.getFolder_id());
+            FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getName(), folderDTO.getFolder_id());
             folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
+        } catch (FileAlreadyExistsException fae) {
+            logger.error("Folder with name {} already exists. {}", folderDTO.getName(), fae.getMessage());
+            return ResponseEntity.badRequest().body(new JSONErrorResponse(fae));
         } catch (Exception e) {
             logger.error("Error creating folder with name: {}. {}", folderDTO.getName(), e.getMessage());
-            return ResponseEntity.internalServerError().body(new JSONErrorResponse(e));
+            return ResponseEntity.internalServerError().body(new JSONErrorResponse(e, "IO Error"));
         }
     }
 }

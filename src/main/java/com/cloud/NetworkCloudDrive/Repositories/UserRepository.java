@@ -13,6 +13,6 @@ public interface UserRepository {
     CurrentUserDTO updatePassword(UserEntity user, String newPassword);
     CurrentUserDTO updateMail(UserEntity user, String newMail) throws IOException;
     CurrentUserDTO updateName(UserEntity user, String newName) throws IOException;
-    boolean deleteUser(UserEntity user);
+    void deleteUser(UserEntity user);
     boolean elevateUserPrivileges();
 }

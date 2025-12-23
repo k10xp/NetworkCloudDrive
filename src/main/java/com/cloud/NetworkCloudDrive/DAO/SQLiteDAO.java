@@ -206,7 +206,6 @@ public class SQLiteDAO {
 
     @Transactional
     public FolderMetadata getFolderMetadataFromIdPathAndName(String idPath, String name, long userId) throws FileSystemException {
-        logger.info("dummy\nname: {}\npath: {}\nuserid: {}", name, idPath, userId);
         // dummy metadata for search
         FolderMetadata dummyFolderMetadata = new FolderMetadata();
         dummyFolderMetadata.setName(name);

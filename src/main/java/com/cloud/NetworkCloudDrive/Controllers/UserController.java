@@ -120,9 +120,7 @@ public class UserController {
     @PostMapping("delete")
     public @ResponseBody ResponseEntity<?> deleteUser() {
         try {
-            if (!userService.deleteUser(sqLiteDAO.findUserByMail(userSession.getMail()))) {
-                throw new SQLException("Failed to delete user: " + userSession.getName());
-            }
+            userService.deleteUser(sqLiteDAO.findUserByMail(userSession.getMail()));
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
                     body(new JSONResponse("Successfully deleted user"));
         } catch (Exception e) {

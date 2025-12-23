@@ -7,6 +7,7 @@ import java.time.Instant;
 public class FolderListItemDTO {
     private long id;
     private String name;
+    private String path;
     private Instant createdAt;
 
     public FolderListItemDTO() {}
@@ -14,6 +15,7 @@ public class FolderListItemDTO {
     public FolderListItemDTO(FolderMetadata folderMetadata) {
         this.id = folderMetadata.getId();
         this.name = folderMetadata.getName();
+        this.path = folderMetadata.getPath();
         this.createdAt = folderMetadata.getCreatedAt();
     }
 
@@ -28,6 +30,12 @@ public class FolderListItemDTO {
     }
     public void setName(String name) {
         this.name = name;
+    }
+    public String getPath() {
+        return path;
+    }
+    public void setPath(String path) {
+        this.path = path;
     }
     public Instant getCreatedAt() {
         return createdAt;
