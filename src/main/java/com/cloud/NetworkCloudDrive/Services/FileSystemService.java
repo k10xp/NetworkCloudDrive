@@ -1,10 +1,13 @@
 package com.cloud.NetworkCloudDrive.Services;
 
+import com.cloud.NetworkCloudDrive.DTO.FileListItemDTO;
+import com.cloud.NetworkCloudDrive.DTO.FolderListItemDTO;
 import com.cloud.NetworkCloudDrive.Models.FileMetadata;
 import com.cloud.NetworkCloudDrive.Models.FolderMetadata;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Repositories.FileSystemRepository;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
+import com.cloud.NetworkCloudDrive.Utilities.EncodingUtility;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import com.cloud.NetworkCloudDrive.DAO.SQLiteDAO;
 import jakarta.persistence.EntityManager;
@@ -20,52 +23,57 @@ import java.nio.file.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 //TODO Migrate from io to nio for thread safety
 @Service
 public class FileSystemService implements FileSystemRepository {
     private final FileStorageProperties fileStorageProperties;
     private final EntityManager entityManager;
-    private final InformationService informationService;
     private final FileUtility fileUtility;
     private final UserSession userSession;
     private final SQLiteDAO sqLiteDAO;
     private final Logger logger = LoggerFactory.getLogger(FileSystemService.class);
+    private final EncodingUtility encodingUtility;
 
     public FileSystemService(
-            InformationService informationService,
             FileStorageProperties fileStorageProperties,
             EntityManager entityManager,
             UserSession userSession,
             FileUtility fileUtility,
-            SQLiteDAO sqLiteDAO) {
+            SQLiteDAO sqLiteDAO,
+            EncodingUtility encodingUtility) {
         this.fileStorageProperties = fileStorageProperties;
-        this.informationService = informationService;
         this.entityManager = entityManager;
         this.userSession = userSession;
         this.fileUtility = fileUtility;
         this.sqLiteDAO = sqLiteDAO;
+        this.encodingUtility = encodingUtility;
     }
 
     @Override
-    public List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
-            throws FileSystemException, SQLException {
-        List<Object> folderAndFileMetadata = new ArrayList<>();
-        List<Long> lastIdList = new ArrayList<>();
+    public Map<String, List<?>> getListOfMetadataFromPath(List<Path> filePaths) throws FileSystemException, SQLException {
+        List<FileListItemDTO> fileList = new ArrayList<>();
+        List<FolderListItemDTO> folderList = new ArrayList<>();
         for (Path path : filePaths) {
             File file = path.toFile();
             logger.info("file/folder in queue {}", file);
+            String[] arrayString = encodingUtility.decodedBase32SplitArray(file.getName());
+            long actualFileId = Long.parseLong(arrayString[0]);
+            String actualFileName = arrayString[1];
             if (file.isFile()) {
-                folderAndFileMetadata.add(
-                        sqLiteDAO.getFileMetadataByFolderIdNameAndUserId(currentFolderId, file.getName(), userSession.getId()));
+                FileMetadata foundFile = sqLiteDAO.queryFileMetadata(actualFileId, userSession.getId());
+                FileListItemDTO fileListItemDTO = new FileListItemDTO(foundFile);
+                fileListItemDTO.setName(actualFileName);
+                fileList.add(fileListItemDTO);
                 continue;
             }
-            FolderMetadata foundFolderMetadata =
-                    informationService.getFolderMetadataByFolderIdAndName(currentFolderId, file.getName(), lastIdList);
-            folderAndFileMetadata.add(foundFolderMetadata);
-            lastIdList.add(foundFolderMetadata.getId());
+            FolderMetadata foundFolderMetadata = sqLiteDAO.queryFolderMetadata(actualFileId, userSession.getId());
+            FolderListItemDTO folderListItemDTO = new FolderListItemDTO(foundFolderMetadata);
+            folderListItemDTO.setName(actualFileName);
+            folderList.add(folderListItemDTO);
         }
-        return folderAndFileMetadata;
+        return Map.of("files", fileList, "folders", folderList);
     }
 
     @Override
@@ -74,14 +82,14 @@ public class FileSystemService implements FileSystemRepository {
         File checkExists = fileUtility.returnFileIfItExists(
                 fileUtility.getFolderPath(file.getFolderId()) + File.separator + file.getName());
         //remove Folder
-        if (!checkExists.delete())
+        // use nio instead
+        if (!Files.deleteIfExists(checkExists.toPath()))
             throw new FileSystemException(String.format("Failed to remove folder at path %s\n", checkExists.getPath()));
         sqLiteDAO.deleteFile(file);
         return checkExists.getPath();
     }
 
     @Override
-    @Transactional
     public String removeFolder(FolderMetadata folder) throws IOException {
         String pathToRemove = fileUtility.resolvePathFromIdString(folder.getPath());
         logger.info("pathToRemove = {}", pathToRemove);
@@ -99,37 +107,47 @@ public class FileSystemService implements FileSystemRepository {
     public String updateFolderName(String newName, FolderMetadata folder) throws Exception {
         //find file
         File checkExists = fileUtility.returnFileIfItExists(fileUtility.resolvePathFromIdString(folder.getPath()));
-        //rename file
         //check duplicate
-        File renamedFolder = fileUtility.returnIfItsNotADuplicate(Path.of(checkExists.getPath()).getParent() + File.separator + newName);
+        if (fileUtility.checkIfFileExistsDecodeNames(fileUtility.returnParentFolderPathFromFolderID(folder.getId()), newName))
+            throw new FileAlreadyExistsException(String.format("Folder with name %s already exists", newName));
+        // Encode newName in BASE32
+        String encodeBase32FolderName = encodingUtility.encodeBase32FolderName(folder.getId(), newName, folder.getUserid());
+        //rename file
+        File renamedFolder =
+                fileUtility.returnIfItsNotADuplicate(Path.of(checkExists.getPath()).getParent() + File.separator + encodeBase32FolderName);
         logger.info("estimated path: {}", renamedFolder.getPath());
         Path newUpdatedPath = Files.move(checkExists.toPath(), renamedFolder.toPath());
         if (Files.exists(newUpdatedPath)) {
             //set new name and path
-            folder.setName(newName);
+            folder.setName(encodeBase32FolderName);
             //save
             sqLiteDAO.saveFolder(folder);
             logger.info("Renamed folder full path: {}", renamedFolder.getPath());
         } else {
-            throw new FileSystemException(String.format("Failed to rename the folder to %s", renamedFolder.getName()));
+            throw new FileSystemException(String.format("Failed to rename the folder to %s", newName));
         }
         return renamedFolder.getPath();
     }
 
     @Override
     public String updateFileName(String newName, FileMetadata file) throws Exception {
-        String folderPath = fileStorageProperties.getBasePath() + fileUtility.getFolderPath(file.getFolderId());
+        String folderPath = fileStorageProperties.getFullPath(fileUtility.getFolderPath(file.getFolderId()));
         //find file
         File checkExists = new File(folderPath + File.separator + file.getName());
         if (!Files.exists(checkExists.toPath(), LinkOption.NOFOLLOW_LINKS))
             throw new FileNotFoundException("File not found");
-        //save extension
-        String oldExtension = fileUtility.getFileExtension(file.getName());
+        // Encode newName in BASE32
+        if (!fileUtility.hasFileExtension(newName)) {
+            String decodeOldFileName = encodingUtility.decodedBase32SplitArray(file.getName())[1];
+            //save extension
+            String oldExtension = fileUtility.getFileExtension(decodeOldFileName);
+            newName = newName + oldExtension;
+        }
+        String encodeBase32FolderName = encodingUtility.encodeBase32FolderName(file.getId(), newName, file.getUserid());
         //rename file
-        File renamedFile = new File(folderPath + File.separator + newName + fileUtility.getFileExtension(file.getName()));
-        //check duplicate
-        if (Files.exists(renamedFile.toPath()))
-            throw new FileAlreadyExistsException(String.format("File with name %s already exists", renamedFile.getName()));
+        File renamedFile = new File(folderPath + File.separator + encodeBase32FolderName);
+        if (fileUtility.checkIfFileExistsDecodeNames(fileUtility.getFolderPath(file.getFolderId()), newName))
+            throw new FileAlreadyExistsException(String.format("File with name %s already exists", newName));
         // Perform movement
         Path newUpdatedPath = Files.move(checkExists.toPath(), renamedFile.toPath());
         if (!Files.exists(newUpdatedPath))
@@ -138,9 +156,8 @@ public class FileSystemService implements FileSystemRepository {
         // mimetype has bug in the library (cant detect types such as YAML)
         String newMimeType = fileUtility.getMimeTypeFromExtension(newUpdatedPath); /* <- get new mimetype of file */
         //set new name and path
-        file.setName(newName + oldExtension);
-        file.setMimiType(newMimeType != null ? (newMimeType.equals(file.getMimiType())
-                ? file.getMimiType() : newMimeType) : file.getMimiType());
+        file.setName(encodeBase32FolderName);
+        file.setMimiType(newMimeType != null ? newMimeType : file.getMimiType());
         //save
         sqLiteDAO.saveFile(file);
         logger.info("Renamed file full path: {}", renamedFile.getPath());
@@ -179,7 +196,7 @@ public class FileSystemService implements FileSystemRepository {
      *
      * <p>How it works:</p>
      * Generates Folder ID path if the target is 0 and the source is at 0/1/4/2 then it will be 0/2
-     * original source will be 0/1/4 if target is 0/5/9 then it will be 0/5/9/2 and contents will be 0/5/9/2/x
+     * preceding source will be 0/1/4 if target is 0/5/9 then it will be 0/5/9/2 and contents will be 0/5/9/2/x
      * @param folder source folder metadata
      * @param destinationFolderId   destination folder id
      * @return  updated path
@@ -214,30 +231,26 @@ public class FileSystemService implements FileSystemRepository {
     @Override
     @Transactional
     public FolderMetadata createFolder(String folderName, long folderId) throws Exception {
-        File userFolder = fileUtility.returnUserFolder();
-        String rootPath = fileStorageProperties.getBasePath();
-        String idPath;
-        String precedingPath;
-        if (folderId != 0) {
-            FolderMetadata precedingFolderMetadata = informationService.getFolderMetadata(folderId);
-            precedingPath = fileUtility.resolvePathFromIdString(precedingFolderMetadata.getPath());
-            idPath = precedingFolderMetadata.getPath();
-        } else {
-            precedingPath = userFolder.getName();
-            idPath = "0";
-        }
-        File folder = new File(rootPath + precedingPath + File.separator + folderName);
-        if (folder.exists())
-            throw new FileAlreadyExistsException(
-                    String.format("Folder with name %s already exists at this path %s.", folderName, folder.getPath()));
-        if (!folder.mkdir())
-            throw new IOException(
-                    String.format("Cannot create directory, with name %s. Make sure you are creating a single folder.", folderName));
+        // Paths
+        String idPath = fileUtility.getIdPath(folderId);
+        String userFolder = fileUtility.getFolderPath(folderId);
+        String fullPath = fileStorageProperties.getFullPath(userFolder);
+        // Folder metadata
         FolderMetadata createdFolder = new FolderMetadata();
         entityManager.persist(createdFolder);
+        String encodedFolderName = encodingUtility.encodeBase32FolderName(createdFolder.getId(), folderName, userSession.getId());
         createdFolder.setPath(idPath + "/" + createdFolder.getId());
         createdFolder.setUserid(userSession.getId());
-        createdFolder.setName(folderName);
+        createdFolder.setName(encodedFolderName);
+        // Check if duplicate
+        if (fileUtility.checkIfFileExistsDecodeNames(userFolder, folderName))
+            throw new FileAlreadyExistsException(String.format("Folder with name %s already exists at this path %s.", folderName, fullPath));
+        // Create directory
+        File folder = new File(fullPath + File.separator + encodedFolderName);
+        Path createdFolderPath = Files.createDirectory(folder.toPath());
+        if (Files.notExists(createdFolderPath))
+            throw new IOException(String.format("Cannot create directory, with name %s.", folderName));
+        // save and return metadata
         return sqLiteDAO.saveFolder(createdFolder);
     }
 }

@@ -9,6 +9,7 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public interface FileSystemRepository {
@@ -30,6 +31,5 @@ public interface FileSystemRepository {
     String moveFolder(FolderMetadata folder, long destinationFolderId) throws Exception;
     String moveFile(FileMetadata targetFile, long folderId) throws Exception;
     FolderMetadata createFolder(String folderName, long folderId) throws Exception;
-    List<Object> getListOfMetadataFromPath(List<Path> filePaths, long currentFolderId)
-            throws FileSystemException, SQLException;
+    Map<String, List<?>> getListOfMetadataFromPath(List<Path> filePaths) throws FileSystemException, SQLException;
 }

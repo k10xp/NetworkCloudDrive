@@ -41,7 +41,7 @@ public class UserService implements UserRepository {
     public UserEntity registerUser(String name, String mail, String password) throws SecurityException {
         UserEntity userEntityLogin = new UserEntity();
         userEntityLogin.setName(name);
-        userEntityLogin.setMail(mail);
+        userEntityLogin.setMail(mail.toLowerCase());
         userEntityLogin.setPassword(passwordEncoder.encode(password));
         userEntityLogin.setRole(UserRole.GUEST);
         if (sqLiteDAO.checkIfUserExistsByMail(userEntityLogin.getMail())) {
@@ -81,10 +81,8 @@ public class UserService implements UserRepository {
     }
 
     @Override
-    public boolean deleteUser(UserEntity user) {
-        //TODO delete user directory along with all files locally and db
+    public void deleteUser(UserEntity user) {
         sqLiteDAO.deleteUser(user);
-        return true;
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.cloud.NetworkCloudDrive.Models.JSONErrorResponse;
 import com.cloud.NetworkCloudDrive.Properties.FileStorageProperties;
 import com.cloud.NetworkCloudDrive.Services.InformationService;
 import com.cloud.NetworkCloudDrive.Sessions.UserSession;
+import com.cloud.NetworkCloudDrive.Utilities.EncodingUtility;
 import com.cloud.NetworkCloudDrive.Utilities.FileUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,25 +21,28 @@ import java.io.File;
 public class InformationController {
     private final FileUtility fileUtility;
     private final UserSession userSession;
-    private final FileStorageProperties fileStorageProperties;
     private final InformationService informationService;
     private final Logger logger = LoggerFactory.getLogger(InformationController.class);
+    private final EncodingUtility encodingUtility;
 
     public InformationController(
             FileUtility fileUtility,
             InformationService informationService,
             UserSession userSession,
-            FileStorageProperties fileStorageProperties) {
+            EncodingUtility encodingUtility) {
         this.fileUtility = fileUtility;
         this.informationService = informationService;
         this.userSession = userSession;
-        this.fileStorageProperties = fileStorageProperties;
+        this.encodingUtility = encodingUtility;
     }
 
     @GetMapping(value = "get/filemetadata", produces = MediaType.ALL_VALUE)
     public @ResponseBody ResponseEntity<?> getFile(@RequestParam long fileid) {
         try {
             FileMetadata fileMetadata = informationService.getFileMetadata(fileid);
+            String decodeName = encodingUtility.decodeBase32StringNoPadding(fileMetadata.getName());
+            String[] splitColons = decodeName.split(":");
+            fileMetadata.setName(splitColons[1]);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(fileMetadata);
         } catch (Exception e) {
             logger.error("Failed to get file metadata for fileId: {}. {}", fileid, e.getMessage());
@@ -60,6 +64,9 @@ public class InformationController {
                 folderMetadata.setId(folderid);
                 folderMetadata.setUserid(userSession.getId());
             }
+            String decodeName = encodingUtility.decodeBase32StringNoPadding(folderMetadata.getName());
+            String[] splitColons = decodeName.split(":");
+            folderMetadata.setName(splitColons[1]);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(folderMetadata);
         } catch (Exception e) {
             logger.error("Failed to get folder metadata for fileId: {}. {}", folderid, e.getMessage());
