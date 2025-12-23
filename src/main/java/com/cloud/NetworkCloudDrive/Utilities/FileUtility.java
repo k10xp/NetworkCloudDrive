@@ -158,6 +158,13 @@ public class FileUtility {
         return checkExists;
     }
 
+    /**
+     * Return path of parent folder from current Folder ID
+     * @param folderId  current Folder ID
+     * @return  parent folder's path
+     * @throws SQLException if Folder ID can't be found or invalid
+     * @throws FileSystemException  if path is invalid
+     */
     public String returnParentFolderPathFromFolderID(long folderId) throws SQLException, FileSystemException {
         String[] splitPath = sqLiteDAO.queryFolderMetadata(folderId, userSession.getId()).getPath().split("/");
         long parentFolderId = Long.parseLong(splitPath[splitPath.length - 2]);
