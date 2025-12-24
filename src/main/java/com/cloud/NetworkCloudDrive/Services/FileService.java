@@ -22,9 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class FileService implements FileRepository {
@@ -60,7 +58,9 @@ public class FileService implements FileRepository {
         List<String> storagePathList = new ArrayList<>();
         List<FileMetadata> uploadedFiles = new ArrayList<>();
         List<Path> filesInside = fileUtility.getFileAndFolderPathsFromFolder(folderPath);
-        for (MultipartFile file : files) {
+        // sort by size lowest to highest
+        List<MultipartFile> sortedBySize = Arrays.stream(files).sorted(Comparator.comparingLong(MultipartFile::getSize)).toList();
+        for (MultipartFile file : sortedBySize) {
             String fileName = file.getOriginalFilename();
             //check for duplicates at destination
             if (filesInside.stream().anyMatch(dup -> encodingUtility.decodedBase32SplitArray(dup.toFile().getName())[1].equals(fileName))) {
