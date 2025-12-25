@@ -77,7 +77,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("update/mail")
+    @PutMapping("update/mail")
     public @ResponseBody ResponseEntity<?> updateMail(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
@@ -91,7 +91,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("update/name")
+    @PutMapping("update/name")
     public @ResponseBody ResponseEntity<?> updateName(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
@@ -104,7 +104,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("update/password")
+    @PutMapping("update/password")
     public @ResponseBody ResponseEntity<?> updatePassword(@RequestBody UpdateUserDTO updateUserDTO) {
         try {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).
@@ -117,7 +117,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("delete")
+    @DeleteMapping("delete")
     public @ResponseBody ResponseEntity<?> deleteUser() {
         try {
             userService.deleteUser(sqLiteDAO.findUserByMail(userSession.getMail()));
