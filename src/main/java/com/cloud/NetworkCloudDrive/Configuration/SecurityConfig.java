@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -36,17 +35,17 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((requests) -> requests
                         // give everyone access to these 2 endpoints
-                        .requestMatchers("/api/user/login").permitAll()
+                        .requestMatchers("/login").permitAll()
                         .requestMatchers("/api/user/register").permitAll()
                         // but require authentication for any other endpoint
                         .anyRequest()
                         .authenticated()
                         // temporarily disable csrf protection
                 )
-                .httpBasic(withDefaults()) // use BASIC authentication
+//                .httpBasic(withDefaults()) // use BASIC authentication
                 .formLogin(withDefaults()) // Use both BASIC and FORM logins
-                .csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks read more about it
-                .cors(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks
+                .cors(withDefaults())
                 // give everyone access to log out
                 .logout(LogoutConfigurer::permitAll);
         return http.build();
@@ -77,4 +76,6 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return new CorsFilter(source);
     }
+
+
 }
