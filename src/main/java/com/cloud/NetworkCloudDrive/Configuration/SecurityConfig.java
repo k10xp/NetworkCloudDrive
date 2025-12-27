@@ -72,6 +72,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS", "DELETE"));
         configuration.setMaxAge(3600L);
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Content-Disposition")); //expose disposition for JS to see
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return new CorsFilter(source);
