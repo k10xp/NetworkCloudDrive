@@ -19,9 +19,8 @@ RUN mvn package
 
 # Rename file from NetworkCloudDrive-0.0.1-SNAPSHOT.jar to NetworkCloudDriveDocker.jar
 RUN mv /app/target/*.jar /app/target/NetworkCloudDriveDocker.jar
+# Expose port 8080, you want ENTRYPOINT or CMD to be last final step of dockerfile
+EXPOSE 8080
 
 # Finally run the API
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Dspring.profiles.active=container","-jar","/app/target/NetworkCloudDriveDocker.jar"]
-# Expose port 8080
-EXPOSE 8080
-
