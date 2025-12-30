@@ -36,6 +36,10 @@ public class UserController {
 
     //TODO replace with 2 endpoints, one for failure to login and other for success.
     // On success initialize SessionScope user details and update lastlogin
+    
+    //handle login success or fail page in frontend, /login should return json body with a bool field
+    //i.e. {loginSuccess: true,userId: 123,role:ADMIN}
+    //frontend reads loginSuccess to redirect page, can reuse loginSuccess in other pages
     @PostMapping("login")
     public @ResponseBody ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
         try {

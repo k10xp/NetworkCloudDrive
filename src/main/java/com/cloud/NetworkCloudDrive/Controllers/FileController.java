@@ -94,6 +94,21 @@ public class FileController {
      */
     @PostMapping(value = "create/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderDTO folderDTO) {
+        //allow relative paths from current working directory but block path traversal
+        String name = folderDTO.getName();
+
+        if (name == null || name.isBlank()) {
+        return ResponseEntity.badRequest()
+                .body(new JSONErrorResponse("Folder name is required"));
+        }
+
+        //unix uses /, windows uses \
+        if (name.startsWith("../") || name.startsWith("..\\") ||
+        name.contains("/../") || name.contains("\\..\\")) {
+        return ResponseEntity.badRequest()
+                .body(new JSONErrorResponse("Invalid folder name"));
+        }
+        
         try {
             FolderMetadata folderMetadata = fileSystemService.createFolder(folderDTO.getName(), folderDTO.getFolder_id());
             folderMetadata.setPath(fileUtility.resolvePathFromIdString(folderMetadata.getPath()));
