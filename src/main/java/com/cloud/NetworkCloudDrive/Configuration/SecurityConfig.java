@@ -10,6 +10,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,21 +36,29 @@ public class SecurityConfig {
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests((requests) -> requests
-                        // give everyone access to these 2 endpoints
-                        .requestMatchers("/api/user/login").permitAll()
-                        .requestMatchers("/api/user/register").permitAll()
-                        // but require authentication for any other endpoint
-                        .anyRequest()
-                        .authenticated()
+                                // give everyone access to these 2 endpoints
+                                .requestMatchers("/api/user/login").permitAll()
+                                .requestMatchers("/api/user/register").permitAll()
+                                // but require authentication for any other endpoint
+                                .anyRequest()
+                                .authenticated()
                         // temporarily disable csrf protection
                 )
                 .httpBasic(withDefaults()) // use BASIC authentication
-                .formLogin(withDefaults()) // Use both BASIC and FORM logins
-                .csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks read more about it
+                .formLogin(formLogin -> {
+                    formLogin.successHandler(authenticationHandler())
+                            .failureHandler(authenticationHandler());
+                }) // Use both BASIC and FORM logins
+                .csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks
                 .cors(Customizer.withDefaults())
                 // give everyone access to log out
                 .logout(LogoutConfigurer::permitAll);
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationHandler authenticationHandler() {
+        return new AuthenticationHandler();
     }
 
     // default strength is 10 might bump it up to 16
