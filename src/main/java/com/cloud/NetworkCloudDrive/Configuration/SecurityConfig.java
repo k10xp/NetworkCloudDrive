@@ -19,8 +19,6 @@ import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -34,21 +32,26 @@ public class SecurityConfig {
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests((requests) -> requests
-                        // give everyone access to these 2 endpoints
-                        .requestMatchers("/login").permitAll()
-                        .requestMatchers("/api/user/register").permitAll()
-                        // but require authentication for any other endpoint
-                        .anyRequest()
-                        .authenticated()
+                                // give everyone access to these 2 endpoints
+                                .requestMatchers("/api/user/register").permitAll()
+                                // but require authentication for any other endpoint
+                                .anyRequest()
+                                .authenticated()
                         // temporarily disable csrf protection
                 )
-//                .httpBasic(withDefaults()) // use BASIC authentication
-                .formLogin(withDefaults()) // Use both BASIC and FORM logins
+                .formLogin(formLogin ->
+                        formLogin.successHandler(authenticationHandler())
+                                .failureHandler(authenticationHandler())) // Use both BASIC and FORM logins
                 .csrf(AbstractHttpConfigurer::disable) // blocks POST and cross-platform attacks
-                .cors(withDefaults())
+                .cors(Customizer.withDefaults())
                 // give everyone access to log out
                 .logout(LogoutConfigurer::permitAll);
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationHandler authenticationHandler() {
+        return new AuthenticationHandler();
     }
 
     // default strength is 10 might bump it up to 16
@@ -67,7 +70,8 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://192.168.1.*:3000"));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000", "http://192.168.1.*:3000", "http://localhost:5173", "http://192.168.1.*:5173"));
         configuration.setAllowedHeaders(List.of("Origin", "Content-Type", "Accept", "responseType", "Authorization"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS", "DELETE"));
         configuration.setMaxAge(3600L);
